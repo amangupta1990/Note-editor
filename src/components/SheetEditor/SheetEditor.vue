@@ -218,7 +218,7 @@
               <!-- height of 3 stave heights(overriden by javascript anyway) -->
               <!-- use rather div, but before that resolve NaNs in viewbox problem -->
               <!-- <div id="svg-container" width="800" height="420"></div> -->
-              <svg id="svg-container" width="800" height="420"></svg>
+              <svg id="svg-container" class="w-full h-full" ref="svgcontainer"></svg>
             </div>
           </div>
         </div>
@@ -229,20 +229,112 @@
 
 
 <script>
+import Vexflow from "vexflow";
+const scoreJson = {
+  "score-partwise": {
+    "@version": "3.0",
+    "part-list": {
+      "score-part": {
+        "@id": "P1",
+        "part-name": {}
+      }
+    },
+    part: [
+      {
+        "@id": "P1",
+        measure: [
+          {
+            "@number": 1,
+            attributes: {
+              divisions: 4,
+              key: {
+                fifths: 0,
+                mode: "major"
+              },
+              time: {
+                beats: 4,
+                "beat-type": 4
+              },
+              clef: {
+                sign: "G",
+                line: 2
+              }
+            },
+            note: [
+              {
+                rest: null,
+                duration: 16
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+};
+
 export default {
   name: "SheetEditor",
   props: {},
   data() {
     return {
+      renderer: Object,
+      ctx: Object,
+      editor: Object,
+      mode: String,
       tab: String,
       note: String,
-      accidental: String
+      selected: Object,
+      mousePos: Object,
+      accidental: String,
+      staveWidth: Number,
+      staveHeight: Number,
+      noteWidth: Number,
+      gl_VfStaves: Array, // array with currently rendered vexflow measures(Vex.Flow.Stave)
+      gl_StaveAttributes: Array, // array of attributes for each measure
+      gl_VfStaveNotes: Array // array of arrays with notes to corresponding stave in gl_VfStaves
     };
   },
   mounted: function() {
     this.tab = "note";
+    this.mode = "measure";
     this.note = "w";
     this.accidental = "bb";
+    this.staveWidth = 150;
+    this.staveHeight = 140;
+    this.noteWidth = 40;
+    this.gl_VfStaves = [];
+    this.gl_StaveAttributes = [];
+    this.gl_VfStaveNotes = [];
+    console.log(this.$refs.svgcontainer);
+    this.renderer = new Vexflow.Flow.Renderer(
+      this.$refs.svgcontainer,
+      Vexflow.Flow.Renderer.Backends.SVG
+    );
+    this.ctx = this.renderer.getContext();
+
+    this.selected = {
+      cursorNoteKey: "b/4",
+      measure: {
+        id: "m0",
+        previousId: "m0"
+      },
+      note: {
+        id: "m0n0",
+        previousId: "m0n0"
+      }
+    };
+
+    this.mousePos = {
+      current: {
+        x: 0,
+        y: 0
+      },
+      previous: {
+        x: 0,
+        y: 0
+      }
+    };
   },
   methods: {
     focus() {
