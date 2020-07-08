@@ -76,7 +76,7 @@ methods: {
         newNote.addAccidental(0, new this.Vex.Flow.Accidental(accOfSelNote));
   
       // set id for note DOM element in svg
-      newNote.setId(this.selected.note.id);
+      newNote.setAttribute('id',`m${measureIndex}n${noteIndex}`);
       // set dots for a rest, however, currently supports only one dot(see parse.js line 140)
       if(vfStaveNote.isDotted()) {
         var dots = vfStaveNote.getDots().length;
@@ -101,6 +101,7 @@ methods: {
   
       var xmlDuration = this.getDurationFromStaveNote(newNote, divisions);
       this.scoreJson["score-partwise"].part[0].measure[measureIndex].note[noteIndex].duration = xmlDuration;
+      
   
     },
   

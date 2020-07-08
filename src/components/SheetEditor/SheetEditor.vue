@@ -141,23 +141,23 @@
             <div class="tool-section flex">
               <label class="mr-2">Duration:</label>
               
-              <label for="note_1" v-on:click="noteValue='w'" class="cursor-pointer">
+              <label for="note_1" v-on:click="noteValue='w'; editNoteDuration(); drawSelectedMeasure()" class="cursor-pointer">
                 <img src="icons/note_1.svg" class="w-4 h-2 mt-2 mr-2" alt="whole note">
               </label>
               
-              <label for="note_2" v-on:click="noteValue='h'; " class="cursor-pointer">
+              <label for="note_2" v-on:click="noteValue='h'; editNoteDuration(); drawSelectedMeasure() " class="cursor-pointer">
                 <img src="icons/note_2.svg" class="w-4 h-10 -mt-2 mr-2" alt="half note">
               </label>
               
-              <label for="note_4" v-on:click="noteValue='q'" class="cursor-pointer">
+              <label for="note_4" v-on:click="noteValue='q'; editNoteDuration(); drawSelectedMeasure();" class="cursor-pointer">
                 <img src="icons/note_4.svg" class="w-4 h-10 -mt-2 mr-2" alt="quarter note">
               </label>
               
-              <label for="note_8" v-on:click="noteValue='8'" class="cursor-pointer">
+              <label for="note_8" v-on:click="noteValue='8' ;editNoteDuration(); drawSelectedMeasure();" class="cursor-pointer">
                 <img src="icons/note_8.svg" class="w-4 h-10 -mt-2 mr-2" alt="8th note">
               </label>
               
-              <label for="note_16" v-on:click="noteValue='16'" class="cursor-pointer">
+              <label for="note_16" v-on:click="noteValue='16'; editNoteDuration(); drawSelectedMeasure();" class="cursor-pointer">
                 <img src="icons/note_16.svg" class="w-4 h-10 -mt-2 mr-2" alt="16th note">
               </label>
             </div>
@@ -176,11 +176,11 @@
             <div class="tool-section flex">
               <label class="mr-2">Accidental:</label>
               
-              <label for="double-flat" class="cursor-pointer" v-on:click="accidental='bb'">
+              <label for="double-flat" class="cursor-pointer" v-on:click="accidental='bb'; editNoteAccidental(accidental); drawSelectedMeasure();">
                 <img src="icons/double-flat.svg" class="w-6 h-10 -mt-2 mr-2" alt="double-flat">
               </label>
               
-              <label for="flat" class="cursor-pointer" v-on:click="accidental='b'">
+              <label for="flat" class="cursor-pointer" v-on:click="accidental='b'; editNoteAccidental(accidental); drawSelectedMeasure();">
                 <img src="icons/flat.svg" class="w-4 h-10 -mt-2 mr-2" alt="flat">
               </label>
               
@@ -238,6 +238,9 @@ import noteToolMixin from "./Editor.noteTool.mixin";
 import addMixin from './Editor.add.mixin';
 import eventsMixin from './Editors.events.mixin';
 import editMixin from './Editor.edit.mixin';
+import VexflowExtensions from './VexflowExtensions'
+
+
 
 const scoreJson = {
   "score-partwise": {
@@ -315,7 +318,7 @@ export default {
   },
   methods: {
     initEditor: function(){
-    this.Vex = Vexflow;
+    this.Vex = VexflowExtensions(Vexflow);
     this.scoreJson = scoreJson;
     this.tab = "note";
     this.mode = "measure";
