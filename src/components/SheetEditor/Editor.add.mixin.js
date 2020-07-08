@@ -17,14 +17,13 @@ methods: {
       // add empty attributes for measure
       this.gl_StaveAttributes.splice(measureIndex + 1, 0, {});
       // fill measure with whole rest
-      var wholeRest = new this.Vex.Flow.StaveNote({ keys: ["b/4"], duration: "wr" });
-      wholeRest.setId('m' + measureIndex + 'n0');
+      var wholeRest = new this.Vex.Flow.StaveNote({ keys: ["b/4"], duration: "wr" , id:'m' + measureIndex + 'n0' });
       this.gl_VfStaveNotes.splice(measureIndex + 1, 0, [wholeRest]);
   
       // re-number all following notes ids in measures in part
       for(var m = measureIndex + 1; m < this.gl_VfStaveNotes.length; m++) {
         for(var n = 0; n < this.gl_VfStaveNotes[m].length; n++) {
-          this.gl_VfStaveNotes[m][n].setId('m' + m + 'n' + n);
+          this.gl_VfStaveNotes[m][n].attrs.id = ('m' + m + 'n' + n);
         }
       }
   
@@ -54,7 +53,7 @@ methods: {
       //eslint-disable-next-line
       var vfStaveNote = this.gl_VfStaveNotes[measureIndex][noteIndex];
   
-      var noteValue = this.getRadioValue('note-value');
+      var noteValue = this.noteValue;
       // var noteValue = vfStaveNote.getDuration();     //w, h, q, 8, 16
       var dot = this.dotted ? 'd' : '';
       // var dot = vfStaveNote.isDotted() ? 'd' : '';
@@ -63,10 +62,11 @@ methods: {
       var newNote = new this.Vex.Flow.StaveNote({
         keys: [ this.selected.cursorNoteKey ],
         duration: noteValue + dot,
-        auto_stem: true
+        auto_stem: true,
+        id:this.selected.note.id
       });
       // set id for note DOM element in svg
-      newNote.setId(this.selected.note.id);
+     
   
       if(dot === 'd')
         newNote.addDotToAll();
@@ -132,7 +132,7 @@ methods: {
       if(measureIndex > 0) {
         var previousClef = this.getCurAttrForMeasure(measureIndex - 1, 'vfClef');
         if(clefDropdown === previousClef) {
-          vfStave.removeClef();
+          vfStave.clef = null;
           delete this.gl_StaveAttributes[measureIndex].vfClef;
           delete this.gl_StaveAttributes[measureIndex].xmlClef;
           if(this.scoreJson["score-partwise"].part[0].measure[measureIndex].attributes)
@@ -169,7 +169,7 @@ methods: {
       if(measureIndex > 0) {
         var previousKeysig = this.getCurAttrForMeasure(measureIndex - 1, 'vfKeySpec');
         if(keySig === previousKeysig) {
-          vfStave.removeKeySignature();
+          vfStave.keySignature=null;
           delete this.gl_StaveAttributes[measureIndex].vfKeySpec;
           delete this.gl_StaveAttributes[measureIndex].xmlFifths;
           if(this.scoreJson["score-partwise"].part[0].measure[measureIndex].attributes)

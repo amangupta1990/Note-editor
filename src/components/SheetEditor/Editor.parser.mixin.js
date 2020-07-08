@@ -1,6 +1,6 @@
 /*
 performs transformation from scoreJson to gl_VfStaves[] and gl_VfStaveNotes[]
-prepares gl_VfStaves[] and gl_VfStaveNotes[] for editor.draw.score() function
+prepares gl_VfStaves[] and gl_VfStaveNotes[] for editor.drawScore() function
 */
 import __ from "underscore";
 const parserMixin = {
@@ -203,13 +203,14 @@ const parserMixin = {
         keys: [step + vfAcc + "/" + oct],
         duration: staveNoteDuration + rest,
         clef: rest === "" ? currentClef : "treble",
-        auto_stem: true
+        auto_stem: true,
+        id:("m" + measureIndex + "n" + noteIndex)
       });
 
       // console.log(vfStaveNote.getKeys().toString()+' '+staveNoteDuration);
 
       // set id for note DOM element in svg
-      vfStaveNote.setId("m" + measureIndex + "n" + noteIndex);
+      //vfStaveNote.attrs.id=;
 
       // set accidental
       if (vfAcc !== "")

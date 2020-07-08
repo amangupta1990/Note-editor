@@ -1,4 +1,4 @@
-import __ from "underscore";
+import __ from "underscore"
 const editor = {};
 editor.draw = {
   // clears svg and draws all measures (whole score) again
@@ -120,28 +120,34 @@ editor.draw = {
       // remove clef and key signature when not newline
       else {
         // vexflow extension
-        stave.removeClef();
-        stave.removeKeySignature();
+        stave.clef=null;
+        stave.keySignature=null;
       }
 
-      this.draw.measure(staveIndex, false);
+      this.drawMeasure(staveIndex, false);
 
       // set start x position for next measure
       staveX = staveX + staveWidth;
     } // loop over measures
 
     // highlight selected note
-    if (this.mode === "note")
-      this.$refs.svgcontainer
-        .querySelector("#vf-" + this.selected.note.id)
-        .colourNote("red");
+    if (this.mode === "note"){    
+        let note = this.$refs.svgcontainer.querySelector("#vf-" + this.selected.note.id);
+        this.colourNote(note,"red");
+    }
   },
 
   // removes particular measure(stave) from svg and draws it again
   drawMeasure: function(drawnMeasureIndex, cursorNoteEnabled) {
     // $('#vf-mg'+drawnMeasureIndex).empty();
 
+    try{
     this.$refs.svgcontainer.querySelector("#vf-m" + drawnMeasureIndex).remove();
+    }
+    catch(e){
+      //eslint-disable-next-line
+      console.log("no measure")
+    }
 
     var stave = this.gl_VfStaves[drawnMeasureIndex];
 
@@ -171,7 +177,7 @@ editor.draw = {
     for (var a = drawnMeasureIndex; a >= 0; a--) {
       // finds attributes of closest previous measure or current measure
       if (
-        !__.isEmptyObject(this.gl_StaveAttributes[a]) &&
+        !__.isEmpty(this.gl_StaveAttributes[a]) &&
         this.gl_StaveAttributes[a].vfTimeSpec
       ) {
         var timeSplitted = this.gl_StaveAttributes[a].vfTimeSpec.split("/");
@@ -192,7 +198,7 @@ editor.draw = {
     voice.addTickables(this.gl_VfStaveNotes[drawnMeasureIndex]);
 
     //https://github.com/0xfe/vexflow/wiki/Automatic-Beaming:
-    var beams = new this.Vex.Flow.Beam.generateBeams(
+    var beams =  this.Vex.Flow.Beam.generateBeams(
       this.gl_VfStaveNotes[drawnMeasureIndex],
       {
         groups: [new this.Vex.Flow.Fraction(beats, beat_type)]
@@ -209,7 +215,7 @@ editor.draw = {
       +selMeasureIndex === drawnMeasureIndex &&
       cursorNoteEnabled
     ) {
-      var noteValue = this.note;
+      var noteValue = this.noteValue;
       var dot = this.dotted ? "d" : "";
       // get note properties
       // var noteValue = selVFStaveNote.getDuration();     //w, h, q, 8, 16
@@ -296,8 +302,10 @@ editor.draw = {
     for (var n = 0; n < this.gl_VfStaveNotes[drawnMeasureIndex].length; n++) {
       // adding listeners for interactivity: (from vexflow stavenote_tests.js line 463)
       // item is svg group: <g id="vf-m1n3" class="vf-stavenote">
-      var item = this.gl_VfStaveNotes[drawnMeasureIndex][n].getElem();
-      this.attachListenersToNote(item);
+
+      //eslint-disable-next-line
+      var item = this.$refs.svgcontainer.querySelector(`#vf-${this.selected.note.id}`) //this.gl_VfStaveNotes[drawnMeasureIndex][n].getElem();
+      //this.attachListenersToNote(item);
       // var noteBBox = gl_VfStaveNotes[drawnMeasureIndex][n].getBoundingBox();
       // noteBBox.draw(this.ctx);
     }
@@ -309,11 +317,12 @@ editor.draw = {
     //eslint-disable-next-line
     console.log("redraw measure[" + measureIndex + "]");
 
-    this.draw.measure(measureIndex, cursorNoteEnabled);
+    this.drawMeasure(measureIndex, cursorNoteEnabled);
 
     // highlight selected note
     if (this.mode === "note")
-      this.$refs.svgcontainer("#vf-" + this.selected.note.id).colourNote("red");
+      this.colourNote(this.$refs.svgcontainer.querySelector("#vf-" + this.selected.note.id),"red")
+      
   }
 };
 

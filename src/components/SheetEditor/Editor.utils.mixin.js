@@ -36,25 +36,25 @@ const utilsMixin = {
         // get new note below mouse cursor
         this.selected.cursorNoteKey = this.getCursorNoteKey();
 
-        this.svgElem.addEventListener("click", this.add.note, false);
+        this.$refs.svgcontainer.addEventListener("click", this.addNote, false);
 
         // redraw only when cursor note changed pitch
         // (mouse changed y position between staff lines/spaces)
         if (this.lastCursorNote !== this.selected.cursorNoteKey) {
           // console.log(this.selected.cursorNoteKey);
-          this.draw.selectedMeasure(true);
+          this.drawSelectedMeasure(true);
         }
         // save previous cursor note for latter comparison
         this.lastCursorNote = this.selected.cursorNoteKey;
       }
       // mouse cursor is NOT within note column
       else {
-        this.svgElem.removeEventListener("click", this.add.note, false);
+        this.$refs.svgcontainer.removeEventListener("click", this.addNote, false);
 
         // mouse cursor just left note column(previous position was inside n.c.)
         if (this.isCursorInBoundingBox(bb, this.mousePos.previous)) {
           // redraw measure to erase cursor note
-          this.draw.selectedMeasure(false);
+          this.drawSelectedMeasure(false);
           this.mousePos.previous = this.mousePos.current;
           this.lastCursorNote = "";
         }
@@ -213,7 +213,12 @@ TODO: documentary comment...
     // in `source` if necessary.
     mergePropertiesInPlace: function(source, destination) {
       for (var property in source) destination[property] = source[property];
-    }
+    },
+    colourNote: function(note, color) {
+      if (!note) return;
+      note.style.fill = color;
+      note.style.stroke = color;
+    },
   }
 };
 

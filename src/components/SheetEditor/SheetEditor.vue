@@ -69,11 +69,11 @@
               <label>Measure:</label>
               <button
                 class="btn btn-default btn-lg"
-                onclick="this.addMeasure();this.draw.score();"
+                onclick="this.addMeasure();this.drawScore();"
               >+</button>
               <button
                 class="btn btn-default btn-lg"
-                onclick="this.delete.measure();this.draw.score();"
+                onclick="this.delete.measure();this.drawScore();"
               >-</button>
             </div>
             <div class="tool-section ml-4">
@@ -130,11 +130,11 @@
               <label>Pitch:</label>
               <button
                 class="h-8 rounded-lg bg-gray-300 mx-2 px-4"
-                onclick="this.edit.notePitch(1); this.draw.selectedMeasure(false);"
+                onclick="this.edit.notePitch(1); this.drawSelectedMeasure(false);"
               >Up</button>
               <button
                 class="h-8 rounded-lg bg-gray-300 mx-2 px-4"
-                onclick="this.edit.notePitch(-1); this.draw.selectedMeasure(false);"
+                onclick="this.edit.notePitch(-1); this.drawSelectedMeasure(false);"
               >Down</button>
             </div>
 
@@ -169,7 +169,7 @@
                 type="checkbox"
                 id="dotted-checkbox"
                 name="note-dot"
-                onclick="this.edit.noteDot();this.draw.selectedMeasure(false);"
+                onclick="this.edit.noteDot();this.drawSelectedMeasure(false);"
               >
             </div>
 
@@ -200,7 +200,7 @@
             <div class="tool-section">
               <button
                 class="btn btn-danger"
-                onclick="this.delete.note(); this.draw.selectedMeasure(false);"
+                onclick="this.delete.note(); this.drawSelectedMeasure(false);"
               >
                 <span class="glyphicon glyphicon-trash" aria-hidden="true"></span>
               </button>
@@ -236,6 +236,7 @@ import drawMixin from "./Editor.draw.mixin";
 import utilsMixin from "./Editor.utils.mixin";
 import noteToolMixin from "./Editor.noteTool.mixin";
 import addMixin from './Editor.add.mixin';
+import eventsMixin from './Editors.events.mixin';
 
 const scoreJson = {
   "score-partwise": {
@@ -282,7 +283,7 @@ const scoreJson = {
 
 export default {
   name: "SheetEditor",
-  mixins: [utilsMixin, noteToolMixin, parserMixin, tableMixin, drawMixin,addMixin],
+  mixins: [utilsMixin, noteToolMixin, parserMixin, tableMixin, drawMixin,addMixin, eventsMixin],
   props: {},
   data() {
     return {
@@ -308,7 +309,12 @@ export default {
     };
   },
   mounted: function() {
-    this.Vex = Vexflow;
+   this.$nextTick()
+   .then(()=>this.initEditor())
+  },
+  methods: {
+    initEditor: function(){
+       this.Vex = Vexflow;
     this.scoreJson = scoreJson;
     this.tab = "note";
     this.mode = "measure";
@@ -352,8 +358,8 @@ export default {
 
     this.parseAll();
     this.switchToNoteMode();
-  },
-  methods: {
+    },
+
     switchToNoteMode: function() {
       if (this.mode !== "note") {
         this.mode = "note";
@@ -362,7 +368,7 @@ export default {
           this.redrawMeasureWithCursorNote,
           false
         );
-        this.score();
+        this.drawScore();
       }
     },
 
@@ -374,7 +380,7 @@ export default {
           this.redrawMeasureWithCursorNote,
           false
         );
-        this.score();
+        this.drawScore();
       }
     }
   }
