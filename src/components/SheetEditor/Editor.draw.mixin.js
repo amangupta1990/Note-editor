@@ -2,8 +2,8 @@ import __ from "underscore";
 const editor = {};
 editor.draw = {
   // clears svg and draws all measures (whole score) again
-  score: function() {
-    console.log("draw");
+  drawScore: function() {
+
     var canvasWidth = this.$refs.svgcontainer.clientWidth;
     //var canvasHeight = document.getElementById('svg-wrapper').clientHeight;
     this.$refs.svgcontainer.style.width = canvasWidth;
@@ -106,11 +106,11 @@ editor.draw = {
           stave.setTimeSignature(attributes.vfTimeSpec);
         // number of accidentals in key signature
         var numOfAcc =
-          this.table.SHARP_MAJOR_KEY_SIGNATURES.indexOf(attributes.vfKeySpec) +
+          this.SHARP_MAJOR_KEY_SIGNATURES.indexOf(attributes.vfKeySpec) +
           1;
         if (!numOfAcc)
           numOfAcc =
-            this.table.FLAT_MAJOR_KEY_SIGNATURES.indexOf(attributes.vfKeySpec) +
+            this.FLAT_MAJOR_KEY_SIGNATURES.indexOf(attributes.vfKeySpec) +
             1;
 
         // TODO extend width of measure with clef | keysig | timesig
@@ -138,9 +138,9 @@ editor.draw = {
   },
 
   // removes particular measure(stave) from svg and draws it again
-  measure: function(drawnMeasureIndex, cursorNoteEnabled) {
+  drawMeasure: function(drawnMeasureIndex, cursorNoteEnabled) {
     // $('#vf-mg'+drawnMeasureIndex).empty();
-    debugger;
+
     this.$refs.svgcontainer.querySelector("#vf-m" + drawnMeasureIndex).remove();
 
     var stave = this.gl_VfStaves[drawnMeasureIndex];
@@ -303,9 +303,10 @@ editor.draw = {
     }
   },
 
-  selectedMeasure: function(cursorNoteEnabled) {
+  drawSelectedMeasure: function(cursorNoteEnabled) {
     var measureIndex = this.getSelectedMeasureIndex();
 
+    //eslint-disable-next-line
     console.log("redraw measure[" + measureIndex + "]");
 
     this.draw.measure(measureIndex, cursorNoteEnabled);

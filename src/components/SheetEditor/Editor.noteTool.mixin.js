@@ -49,6 +49,7 @@ const NoteTool = {
 
       if (count === 20)
         // TODO throw exception
+        //eslint-disable-next-line
         console.error("No proper StaveNote type");
 
       var dots = 0;
@@ -128,11 +129,7 @@ const NoteTool = {
 };
 
 const noteToolMixin = {
-  data: function() {
-    return {
-      ...NoteTool
-    };
-  }
+  ...NoteTool
 };
 
 export default noteToolMixin;

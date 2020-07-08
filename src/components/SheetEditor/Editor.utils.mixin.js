@@ -13,7 +13,6 @@ const utilsMixin = {
     redrawMeasureWithCursorNote: function(event) {
       // get mouse position
       this.mousePos.current = this.getMousePos(this.$refs.svgcontainer, event);
-      debugger;
       // get selected measure and note
       var vfStaveNote = this.getSelectedNote();
       var vfStave = this.getSelectedMeasure();

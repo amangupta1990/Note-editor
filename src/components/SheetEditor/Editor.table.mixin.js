@@ -155,7 +155,7 @@ editor.MidiClefOffsets = {
 const tableMixin = {
   data: function() {
     return {
-      ...editor
+      ...editor.table
     };
   }
 };

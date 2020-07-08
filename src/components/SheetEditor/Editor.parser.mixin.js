@@ -6,7 +6,6 @@ import __ from "underscore";
 const parserMixin = {
   methods: {
     parseAll: function() {
-      console.log("parse");
       // clear global arrays
       this.gl_VfStaves = [];
       this.gl_VfStaveNotes = [];
@@ -84,12 +83,13 @@ const parserMixin = {
         if (xmlAttributes.clef) {
           let clef;
           if (__.isArray(xmlAttributes.clef)) {
+            //eslint-disable-next-line
             console.warn("Multiple clefs for measure currently not supported.");
             clef = xmlAttributes.clef[0];
           } else clef = xmlAttributes.clef;
 
           staveAttributes.xmlClef = clef.sign + "/" + clef.line;
-          staveAttributes.vfClef = this.table.CLEF_TYPE_DICT[
+          staveAttributes.vfClef = this.CLEF_TYPE_DICT[
             staveAttributes.xmlClef
           ];
           vfStave.setClef(staveAttributes.vfClef);
@@ -102,9 +102,9 @@ const parserMixin = {
             var fifths = +xmlAttributes.key.fifths;
             if (fifths === 0) this.keySpec = "C";
             else if (fifths > 0)
-              this.keySpec = this.table.SHARP_MAJOR_KEY_SIGNATURES[fifths - 1];
+              this.keySpec = this.SHARP_MAJOR_KEY_SIGNATURES[fifths - 1];
             else
-              this.keySpec = this.table.FLAT_MAJOR_KEY_SIGNATURES[-fifths - 1];
+              this.keySpec = this.FLAT_MAJOR_KEY_SIGNATURES[-fifths - 1];
             vfStave.setKeySignature(this.keySpec);
             vfStave.setWidth(vfStave.getWidth() + Math.abs(fifths) * 30);
             staveAttributes.vfKeySpec = this.keySpec;
@@ -116,6 +116,7 @@ const parserMixin = {
         if (xmlAttributes.time) {
           let time;
           if (__.isArray(xmlAttributes.time)) {
+            //eslint-disable-next-line
             console.warn(
               "Multiple pairs of beats and beat-type elements in time signature not supported."
             );
@@ -145,6 +146,7 @@ const parserMixin = {
       var rest = "",
         step = "",
         oct = "",
+        //eslint-disable-next-line
         dot = "",
         vfAcc = "";
       // get MusicXML divisions from attributes for current measure
@@ -191,7 +193,7 @@ const parserMixin = {
           typeof note.accidental === "string"
             ? note.accidental
             : note.accidental["#text"];
-        vfAcc = this.table.ACCIDENTAL_DICT[mXmlAcc];
+        vfAcc = this.ACCIDENTAL_DICT[mXmlAcc];
       }
 
       // get current clef

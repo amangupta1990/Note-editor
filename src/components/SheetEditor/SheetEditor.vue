@@ -69,7 +69,7 @@
               <label>Measure:</label>
               <button
                 class="btn btn-default btn-lg"
-                onclick="this.add.measure();this.draw.score();"
+                onclick="this.addMeasure();this.draw.score();"
               >+</button>
               <button
                 class="btn btn-default btn-lg"
@@ -235,6 +235,8 @@ import tableMixin from "./Editor.table.mixin";
 import drawMixin from "./Editor.draw.mixin";
 import utilsMixin from "./Editor.utils.mixin";
 import noteToolMixin from "./Editor.noteTool.mixin";
+import addMixin from './Editor.add.mixin';
+
 const scoreJson = {
   "score-partwise": {
     "@version": "3.0",
@@ -280,7 +282,7 @@ const scoreJson = {
 
 export default {
   name: "SheetEditor",
-  mixins: [utilsMixin, noteToolMixin, parserMixin, tableMixin, drawMixin],
+  mixins: [utilsMixin, noteToolMixin, parserMixin, tableMixin, drawMixin,addMixin],
   props: {},
   data() {
     return {
@@ -318,7 +320,6 @@ export default {
     this.gl_VfStaves = [];
     this.gl_StaveAttributes = [];
     this.gl_VfStaveNotes = [];
-    console.log(this.$refs.svgcontainer);
     this.renderer = new Vexflow.Flow.Renderer(
       this.$refs.svgcontainer,
       Vexflow.Flow.Renderer.Backends.SVG
@@ -348,7 +349,7 @@ export default {
       }
     };
 
-    debugger;
+
     this.parseAll();
     this.switchToNoteMode();
   },
