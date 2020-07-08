@@ -2,7 +2,7 @@
   <div class="text-gray-900">
     <nav class="border shadow-md p-4 w-full" id="fixed-header">
       <div class="container">
-        <ul class="flex p4 mb-4" id="editor-tabs">
+        <ul class="flex p4 mb-4" id="this-tabs">
           <li class="mr-6">
             <a v-on:click="tab='file'" data-toggle="tab">File</a>
           </li>
@@ -18,7 +18,7 @@
               name="play"
               id="button-play"
               class="btn btn-success btn-sm play-button"
-              onclick="editor.play();"
+              onclick="this.play();"
             >
               <span class="glyphicon glyphicon-play" aria-hidden="true"></span>
             </button>
@@ -27,7 +27,7 @@
               name="stop"
               id="button-stop"
               class="btn btn-danger btn-sm play-button"
-              onclick="editor.stop();"
+              onclick="this.stop();"
             >
               <span class="glyphicon glyphicon-stop" aria-hidden="true"></span>
             </button>
@@ -69,11 +69,11 @@
               <label>Measure:</label>
               <button
                 class="btn btn-default btn-lg"
-                onclick="editor.add.measure();editor.draw.score();"
+                onclick="this.add.measure();this.draw.score();"
               >+</button>
               <button
                 class="btn btn-default btn-lg"
-                onclick="editor.delete.measure();editor.draw.score();"
+                onclick="this.delete.measure();this.draw.score();"
               >-</button>
             </div>
             <div class="tool-section ml-4">
@@ -130,34 +130,34 @@
               <label>Pitch:</label>
               <button
                 class="h-8 rounded-lg bg-gray-300 mx-2 px-4"
-                onclick="editor.edit.notePitch(1); editor.draw.selectedMeasure(false);"
+                onclick="this.edit.notePitch(1); this.draw.selectedMeasure(false);"
               >Up</button>
               <button
                 class="h-8 rounded-lg bg-gray-300 mx-2 px-4"
-                onclick="editor.edit.notePitch(-1); editor.draw.selectedMeasure(false);"
+                onclick="this.edit.notePitch(-1); this.draw.selectedMeasure(false);"
               >Down</button>
             </div>
 
             <div class="tool-section flex">
               <label class="mr-2">Duration:</label>
               
-              <label for="note_1" v-on:clikc="note='w'" class="cursor-pointer">
+              <label for="note_1" v-on:clikc="noteValue='w'" class="cursor-pointer">
                 <img src="icons/note_1.svg" class="w-4 h-2 mt-2 mr-2" alt="whole note">
               </label>
               
-              <label for="note_2" v-on:clikc="note='h'" class="cursor-pointer">
+              <label for="note_2" v-on:clikc="noteValue='h'" class="cursor-pointer">
                 <img src="icons/note_2.svg" class="w-4 h-10 -mt-2 mr-2" alt="half note">
               </label>
               
-              <label for="note_4" v-on:clikc="note='q'">
+              <label for="note_4" v-on:clikc="noteValue='q'">
                 <img src="icons/note_4.svg" class="w-4 h-10 -mt-2 mr-2" alt="quarter note">
               </label>
               
-              <label for="note_8" v-on:clikc="note='8'">
+              <label for="note_8" v-on:clikc="noteValue='8'">
                 <img src="icons/note_8.svg" class="w-4 h-10 -mt-2 mr-2" alt="8th note">
               </label>
               
-              <label for="note_16" v-on:clikc="note='16'">
+              <label for="note_16" v-on:clikc="noteValue='16'">
                 <img src="icons/note_16.svg" class="w-4 h-10 -mt-2 mr-2" alt="16th note">
               </label>
             </div>
@@ -169,7 +169,7 @@
                 type="checkbox"
                 id="dotted-checkbox"
                 name="note-dot"
-                onclick="editor.edit.noteDot();editor.draw.selectedMeasure(false);"
+                onclick="this.edit.noteDot();this.draw.selectedMeasure(false);"
               >
             </div>
 
@@ -200,7 +200,7 @@
             <div class="tool-section">
               <button
                 class="btn btn-danger"
-                onclick="editor.delete.note(); editor.draw.selectedMeasure(false);"
+                onclick="this.delete.note(); this.draw.selectedMeasure(false);"
               >
                 <span class="glyphicon glyphicon-trash" aria-hidden="true"></span>
               </button>
@@ -230,6 +230,11 @@
 
 <script>
 import Vexflow from "vexflow";
+import parserMixin from "./Editor.parser.mixin";
+import tableMixin from "./Editor.table.mixin";
+import drawMixin from "./Editor.draw.mixin";
+import utilsMixin from "./Editor.utils.mixin";
+import noteToolMixin from "./Editor.noteTool.mixin";
 const scoreJson = {
   "score-partwise": {
     "@version": "3.0",
@@ -275,15 +280,19 @@ const scoreJson = {
 
 export default {
   name: "SheetEditor",
+  mixins: [utilsMixin, noteToolMixin, parserMixin, tableMixin, drawMixin],
   props: {},
   data() {
     return {
+      Vex: Object,
+      scoreJson: Object,
       renderer: Object,
       ctx: Object,
-      editor: Object,
+      this: Object,
       mode: String,
       tab: String,
-      note: String,
+      noteValue: String,
+      dotted: Boolean,
       selected: Object,
       mousePos: Object,
       accidental: String,
@@ -292,13 +301,16 @@ export default {
       noteWidth: Number,
       gl_VfStaves: Array, // array with currently rendered vexflow measures(Vex.Flow.Stave)
       gl_StaveAttributes: Array, // array of attributes for each measure
-      gl_VfStaveNotes: Array // array of arrays with notes to corresponding stave in gl_VfStaves
+      gl_VfStaveNotes: Array, // array of arrays with notes to corresponding stave in gl_VfStaves
+      newLine: Boolean
     };
   },
   mounted: function() {
+    this.Vex = Vexflow;
+    this.scoreJson = scoreJson;
     this.tab = "note";
     this.mode = "measure";
-    this.note = "w";
+    this.noteValue = "w";
     this.accidental = "bb";
     this.staveWidth = 150;
     this.staveHeight = 140;
@@ -335,10 +347,34 @@ export default {
         y: 0
       }
     };
+
+    debugger;
+    this.parseAll();
+    this.switchToNoteMode();
   },
   methods: {
-    focus() {
-      // MacOS FireFox and Safari do not focus when clicked
+    switchToNoteMode: function() {
+      if (this.mode !== "note") {
+        this.mode = "note";
+        this.$refs.svgcontainer.addEventListener(
+          "mousemove",
+          this.redrawMeasureWithCursorNote,
+          false
+        );
+        this.score();
+      }
+    },
+
+    switchToMeasureMode: function() {
+      if (this.mode !== "measure") {
+        this.mode = "measure";
+        this.$refs.svgcontainer.removeEventListener(
+          "mousemove",
+          this.redrawMeasureWithCursorNote,
+          false
+        );
+        this.score();
+      }
     }
   }
 };
