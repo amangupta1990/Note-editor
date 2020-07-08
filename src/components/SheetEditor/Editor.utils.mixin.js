@@ -166,8 +166,8 @@ TODO: documentary comment...
       if (!timeSig)
         timeSig = this.getCurAttrForMeasure(measureIndex, "vfTimeSpec");
       if (timeSig) {
-        this.timeSigTop(timeSig.split("/")[0]);
-        this.timeSigBottom(timeSig.split("/")[1]);
+        this.timeSigTop = timeSig.split("/")[0];
+        this.timeSigBottom = timeSig.split("/")[1];
         // $('#timeSigTop').val(timeSig.split('/')[0]);
         // $('#timeSigBottom').val(timeSig.split('/')[1]);
       }

@@ -99,7 +99,7 @@ editor.draw = {
       stave.setContext(this.ctx);
 
       // clef and key signature must be rendered on every first measure on new line
-      if (this.newLine === true || staveIndex === 0) {
+      if (this.newLine === true && staveIndex === 0) {
         stave.setClef(attributes.vfClef);
         stave.setKeySignature(attributes.vfKeySpec);
         if (!this.newLine && attributes.vfTimeSpec)

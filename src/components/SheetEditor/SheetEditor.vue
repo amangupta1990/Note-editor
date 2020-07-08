@@ -69,16 +69,16 @@
               <label>Measure:</label>
               <button
                 class="btn btn-default btn-lg"
-                v-on:click="addMeasure();this.drawScore();"
+                v-on:click="addMeasure();drawScore();"
               >+</button>
               <button
                 class="btn btn-default btn-lg"
-                v-on:click="deleteMeasure();this.drawScore();"
+                v-on:click="deleteMeasure();drawScore();"
               >-</button>
             </div>
             <div class="tool-section ml-4">
               <label>Clef:</label>
-              <select id="clef-dropdown">
+              <select id="clef-dropdown" v-model="clef" v-on:change="addClef(); drawScore()">
                 <option>treble</option>
                 <option>bass</option>
                 <option>alto</option>
@@ -107,14 +107,14 @@
             </div>
             <div class="tool-section ml-4">
               <label>Time Signature</label>
-              <select id="timeSigTop">
+              <select id="timeSigTop" v-model="timeSigTop" v-on:change="addTimeSignature(); drawScore()">
                 <option value="2">2</option>
                 <option value="3">3</option>
                 <option value="4" selected>4</option>
                 <option value="5">5</option>
                 <option value="6">6</option>
               </select>
-              <select id="timeSigBottom">
+              <select id="timeSigBottom" v-model="timeSigBottom" v-on:change="addTimeSignature(); drawScore()">
                 <option value="1">1</option>
                 <option value="2">2</option>
                 <option value="4" selected>4</option>
@@ -238,7 +238,8 @@ import noteToolMixin from "./Editor.noteTool.mixin";
 import addMixin from './Editor.add.mixin';
 import eventsMixin from './Editors.events.mixin';
 import editMixin from './Editor.edit.mixin';
-import VexflowExtensions from './VexflowExtensions'
+import VexflowExtensions from './VexflowExtensions';
+import deleteMixin from './Editor.delete.mixin'
 
 
 
@@ -287,7 +288,7 @@ const scoreJson = {
 
 export default {
   name: "SheetEditor",
-  mixins: [utilsMixin, noteToolMixin, parserMixin, tableMixin, drawMixin,addMixin, eventsMixin, editMixin],
+  mixins: [utilsMixin, noteToolMixin, parserMixin, tableMixin, drawMixin,addMixin, eventsMixin, editMixin, deleteMixin],
   props: {},
   data() {
     return {
