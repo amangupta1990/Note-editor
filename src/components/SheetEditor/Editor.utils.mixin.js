@@ -1,12 +1,4 @@
 const utilsMixin = {
-  data: function() {
-    return {
-      keySig: String,
-      timeSigTop: String,
-      clef: String,
-      timeSig: String
-    };
-  },
   methods: {
     // draws note, which is to be added, below mouse cursor when it is
     // moving in column of selected note(only rest currenly)

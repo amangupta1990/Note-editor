@@ -39,7 +39,7 @@ const events = {
       measureRectElem.addEventListener("mouseenter", ()=> {
         if (this.selected.measure.id !== measureRectElem.id)
             measureRectElem.style.fill= this.measureColor;
-            measureRectElem.opacity ="0.1";
+            measureRectElem.style.opacity ="0.1";
          // $(this).css({ fill: this.measureColor, opacity: "0.1" });
       });
       measureRectElem.addEventListener("mouseleave", ()=> {

@@ -87,7 +87,7 @@
             </div>
             <div class="tool-section ml-4">
               <label>Key Signature:</label>
-              <select id="keySig-dropdown">
+              <select id="keySig-dropdown" v-model="keySig" v-on:change="addKeySignature(); drawScore()">
                 <option>C</option>
                 <option>G</option>
                 <option>D</option>
@@ -184,15 +184,15 @@
                 <img src="icons/flat.svg" class="w-4 h-10 -mt-2 mr-2" alt="flat">
               </label>
               
-              <label for="natural" class="w-4 h-10 mr-2" v-on:click="accidental='n'">
+              <label for="natural" class="w-4 h-10 mr-2" v-on:click="accidental='n'; editNoteAccidental(accidental); drawSelectedMeasure();">
                 <img src="icons/natural.svg" class="w-4 h-8" alt="natural">
               </label>
               
-              <label for="sharp" class="w-4 h-10 mr-2" v-on:click="accidental='#'">
+              <label for="sharp" class="w-4 h-10 mr-2" v-on:click="accidental='#'; editNoteAccidental(accidental); drawSelectedMeasure();">
                 <img src="icons/sharp.svg" class="w-4 h-10 -mt-2 mr-2" alt="sharp">
               </label>
               
-              <label for="double-sharp" class="w-4 h-10 mr-2" v-on:click="accidental='##'">
+              <label for="double-sharp" class="w-4 h-10 mr-2" v-on:click="accidental='##'; editNoteAccidental(accidental); drawSelectedMeasure();">
                 <img src="icons/double-sharp.svg" class="w-4 h-8" alt="double-sharp">
               </label>
             </div>
@@ -301,6 +301,7 @@ export default {
       noteValue: String,
       dotted: Boolean,
       selected: Object,
+      measureColor: "lightblue",
       mousePos: Object,
       accidental: String,
       staveWidth: Number,
@@ -309,7 +310,12 @@ export default {
       gl_VfStaves: Array, // array with currently rendered vexflow measures(Vex.Flow.Stave)
       gl_StaveAttributes: Array, // array of attributes for each measure
       gl_VfStaveNotes: Array, // array of arrays with notes to corresponding stave in gl_VfStaves
-      newLine: Boolean
+      newLine: Boolean,
+            keySig: String,
+      timeSigTop: String,
+      timeSigBottom:String,
+      clef: String,
+      timeSig: String
     };
   },
   mounted: function() {
@@ -320,6 +326,14 @@ export default {
     initEditor: function(){
     this.Vex = VexflowExtensions(Vexflow);
     this.scoreJson = scoreJson;
+
+    this.keySig="C";
+    this.timeSigTop = 4;
+    this.timeSigBottom = 4;
+    this.clef="treble";
+
+
+
     this.tab = "note";
     this.mode = "measure";
     this.noteValue = "w";

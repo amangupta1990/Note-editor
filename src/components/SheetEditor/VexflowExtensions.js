@@ -89,19 +89,19 @@ const extend = function(Vex){
       //Prepare the notes to be sent
       var notes = [];
       
-      for(var i = 0; i < this.keys.length; i++){
-        notes.push(MIDI.keyToNote[this.keys[i].replace('/','').toUpperCase()]);
+      for(let i = 0; i < this.keys.length; i++){
+        notes.push(this.MIDI.keyToNote[this.keys[i].replace('/','').toUpperCase()]);
       }
     
       //Set clef offset for notes
       for (var i = 0; i < notes.length; i++) {
-        notes[i] += editor.MidiClefOffsets[playInfo.clef];
-      };
+        notes[i] += this.MidiClefOffsets[playInfo.clef];
+      }
     
-      var keyPressTime = playInfo.defaultTime / editor.table.DURATION_DICT[this.duration];
+      var keyPressTime = playInfo.defaultTime / this.DURATION_DICT[this.duration];
     
       //Set the modifiers for this note (update note value)
-      for (var i = 0; i < this.modifiers.length; i++) {
+      for (let i = 0; i < this.modifiers.length; i++) {
         var modifier = this.modifiers[i];
         if(modifier instanceof Vex.Flow.Accidental){
           var modValue;
@@ -130,7 +130,7 @@ const extend = function(Vex){
           keyPressTime *= 1.5;
         }
         
-      };
+      }
     
       // we don't play rests
       if(this.isRest())
