@@ -18,7 +18,7 @@
               name="play"
               id="button-play"
               class="btn btn-success btn-sm play-button"
-              onclick="this.play();"
+              v-on:click="play();"
             >
               <span class="glyphicon glyphicon-play" aria-hidden="true"></span>
             </button>
@@ -27,7 +27,7 @@
               name="stop"
               id="button-stop"
               class="btn btn-danger btn-sm play-button"
-              onclick="this.stop();"
+              v-on:click="stop();"
             >
               <span class="glyphicon glyphicon-stop" aria-hidden="true"></span>
             </button>
@@ -57,7 +57,7 @@
               <a
                 href
                 id="link"
-                onclick="setupDownloadLink(this)"
+                v-on:click="setupDownloadLink(this)"
                 download
                 class="btn btn-default"
               >MusicXML export</a>
@@ -69,11 +69,11 @@
               <label>Measure:</label>
               <button
                 class="btn btn-default btn-lg"
-                onclick="this.addMeasure();this.drawScore();"
+                v-on:click="addMeasure();this.drawScore();"
               >+</button>
               <button
                 class="btn btn-default btn-lg"
-                onclick="this.delete.measure();this.drawScore();"
+                v-on:click="deleteMeasure();this.drawScore();"
               >-</button>
             </div>
             <div class="tool-section ml-4">
@@ -130,34 +130,34 @@
               <label>Pitch:</label>
               <button
                 class="h-8 rounded-lg bg-gray-300 mx-2 px-4"
-                onclick="this.edit.notePitch(1); this.drawSelectedMeasure(false);"
+                v-on:click="editNotePitch(1); drawSelectedMeasure(false);"
               >Up</button>
               <button
                 class="h-8 rounded-lg bg-gray-300 mx-2 px-4"
-                onclick="this.edit.notePitch(-1); this.drawSelectedMeasure(false);"
+                v-on:click="editNotePitch(-1); drawSelectedMeasure(false);"
               >Down</button>
             </div>
 
             <div class="tool-section flex">
               <label class="mr-2">Duration:</label>
               
-              <label for="note_1" v-on:clikc="noteValue='w'" class="cursor-pointer">
+              <label for="note_1" v-on:click="noteValue='w'" class="cursor-pointer">
                 <img src="icons/note_1.svg" class="w-4 h-2 mt-2 mr-2" alt="whole note">
               </label>
               
-              <label for="note_2" v-on:clikc="noteValue='h'" class="cursor-pointer">
+              <label for="note_2" v-on:click="noteValue='h'; " class="cursor-pointer">
                 <img src="icons/note_2.svg" class="w-4 h-10 -mt-2 mr-2" alt="half note">
               </label>
               
-              <label for="note_4" v-on:clikc="noteValue='q'">
+              <label for="note_4" v-on:click="noteValue='q'" class="cursor-pointer">
                 <img src="icons/note_4.svg" class="w-4 h-10 -mt-2 mr-2" alt="quarter note">
               </label>
               
-              <label for="note_8" v-on:clikc="noteValue='8'">
+              <label for="note_8" v-on:click="noteValue='8'" class="cursor-pointer">
                 <img src="icons/note_8.svg" class="w-4 h-10 -mt-2 mr-2" alt="8th note">
               </label>
               
-              <label for="note_16" v-on:clikc="noteValue='16'">
+              <label for="note_16" v-on:click="noteValue='16'" class="cursor-pointer">
                 <img src="icons/note_16.svg" class="w-4 h-10 -mt-2 mr-2" alt="16th note">
               </label>
             </div>
@@ -169,7 +169,7 @@
                 type="checkbox"
                 id="dotted-checkbox"
                 name="note-dot"
-                onclick="this.edit.noteDot();this.drawSelectedMeasure(false);"
+                v-on:click="editNoteDot();drawSelectedMeasure(false);"
               >
             </div>
 
@@ -180,7 +180,7 @@
                 <img src="icons/double-flat.svg" class="w-6 h-10 -mt-2 mr-2" alt="double-flat">
               </label>
               
-              <label for="flat" class="cursor-pointer" v-on:clikc="accidental='b'">
+              <label for="flat" class="cursor-pointer" v-on:click="accidental='b'">
                 <img src="icons/flat.svg" class="w-4 h-10 -mt-2 mr-2" alt="flat">
               </label>
               
@@ -200,7 +200,7 @@
             <div class="tool-section">
               <button
                 class="btn btn-danger"
-                onclick="this.delete.note(); this.drawSelectedMeasure(false);"
+                v-on:click="deleteNote(); drawSelectedMeasure(false);"
               >
                 <span class="glyphicon glyphicon-trash" aria-hidden="true"></span>
               </button>
@@ -237,6 +237,7 @@ import utilsMixin from "./Editor.utils.mixin";
 import noteToolMixin from "./Editor.noteTool.mixin";
 import addMixin from './Editor.add.mixin';
 import eventsMixin from './Editors.events.mixin';
+import editMixin from './Editor.edit.mixin';
 
 const scoreJson = {
   "score-partwise": {
@@ -283,7 +284,7 @@ const scoreJson = {
 
 export default {
   name: "SheetEditor",
-  mixins: [utilsMixin, noteToolMixin, parserMixin, tableMixin, drawMixin,addMixin, eventsMixin],
+  mixins: [utilsMixin, noteToolMixin, parserMixin, tableMixin, drawMixin,addMixin, eventsMixin, editMixin],
   props: {},
   data() {
     return {
@@ -314,7 +315,7 @@ export default {
   },
   methods: {
     initEditor: function(){
-       this.Vex = Vexflow;
+    this.Vex = Vexflow;
     this.scoreJson = scoreJson;
     this.tab = "note";
     this.mode = "measure";
@@ -326,6 +327,7 @@ export default {
     this.gl_VfStaves = [];
     this.gl_StaveAttributes = [];
     this.gl_VfStaveNotes = [];
+    this.dotted = '';
     this.renderer = new Vexflow.Flow.Renderer(
       this.$refs.svgcontainer,
       Vexflow.Flow.Renderer.Backends.SVG

@@ -204,9 +204,9 @@ const parserMixin = {
         duration: staveNoteDuration + rest,
         clef: rest === "" ? currentClef : "treble",
         auto_stem: true,
-        id:("m" + measureIndex + "n" + noteIndex)
+        
       });
-
+        vfStaveNote.setAttribute("id",("m" + measureIndex + "n" + noteIndex))
       // console.log(vfStaveNote.getKeys().toString()+' '+staveNoteDuration);
 
       // set id for note DOM element in svg

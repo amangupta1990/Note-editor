@@ -17,7 +17,8 @@ methods: {
       // add empty attributes for measure
       this.gl_StaveAttributes.splice(measureIndex + 1, 0, {});
       // fill measure with whole rest
-      var wholeRest = new this.Vex.Flow.StaveNote({ keys: ["b/4"], duration: "wr" , id:'m' + measureIndex + 'n0' });
+      var wholeRest = new this.Vex.Flow.StaveNote({ keys: ["b/4"], duration: "wr"});
+      wholeRest.setAttribute("id",'m' + measureIndex + 'n0' )
       this.gl_VfStaveNotes.splice(measureIndex + 1, 0, [wholeRest]);
   
       // re-number all following notes ids in measures in part
@@ -63,10 +64,9 @@ methods: {
         keys: [ this.selected.cursorNoteKey ],
         duration: noteValue + dot,
         auto_stem: true,
-        id:this.selected.note.id
       });
       // set id for note DOM element in svg
-     
+      newNote.setAttribute("id",this.selected.note.id)
   
       if(dot === 'd')
         newNote.addDotToAll();

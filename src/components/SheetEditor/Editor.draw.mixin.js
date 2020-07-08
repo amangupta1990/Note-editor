@@ -275,14 +275,14 @@ editor.draw = {
     // mouse events listeners on <rect> for selecting measures
     if (this.mode === "measure") {
       this.$refs
-        .svgcontainer(".measureRect#m" + drawnMeasureIndex)
-        .each(function() {
-          this.attachListenersToMeasureRect(this.$refs.svgcontainer);
+        .svgcontainer.querySelectorAll(".measureRect#m" + drawnMeasureIndex)
+        .forEach((ele)=> {
+          this.attachListenersToMeasureRect(ele);
         });
       // highlight selected measure
       if (drawnMeasureIndex === selMeasureIndex)
-        this.$refs.svgcontainer(
-          "svg .measureRect#m" + selMeasureIndex
+        this.$refs.svgcontainer.querySelector(
+          ".measureRect#m" + selMeasureIndex
         ).style = ` fill : ${this.measureColor}; opacity: 0.4`;
     }
 
@@ -298,17 +298,17 @@ editor.draw = {
     // svg measure group
     this.ctx.closeGroup();
 
-    // adding event listeners to note objects
-    for (var n = 0; n < this.gl_VfStaveNotes[drawnMeasureIndex].length; n++) {
-      // adding listeners for interactivity: (from vexflow stavenote_tests.js line 463)
-      // item is svg group: <g id="vf-m1n3" class="vf-stavenote">
+    // // adding event listeners to note objects
+    this.gl_VfStaveNotes.map(collection=>  collection.map((note)=>{
 
+      var item = this.$refs.svgcontainer.querySelector(`#vf-${note.attrs.id}`) ||  this.$refs.svgcontainer.querySelector(`#vf-auto1010`)      //this.gl_VfStaveNotes[drawnMeasureIndex][n].getElem();
       //eslint-disable-next-line
-      var item = this.$refs.svgcontainer.querySelector(`#vf-${this.selected.note.id}`) //this.gl_VfStaveNotes[drawnMeasureIndex][n].getElem();
-      //this.attachListenersToNote(item);
-      // var noteBBox = gl_VfStaveNotes[drawnMeasureIndex][n].getBoundingBox();
-      // noteBBox.draw(this.ctx);
-    }
+      console.log('note listeners->',item)
+      this.attachListenersToNote(item);
+    }  ) )
+
+    
+
   },
 
   drawSelectedMeasure: function(cursorNoteEnabled) {

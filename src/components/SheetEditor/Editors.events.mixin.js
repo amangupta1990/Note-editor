@@ -14,21 +14,21 @@ const events = {
   methods: {
     attachListenersToMeasureRect: function(measureRectElem) {
       // to avoid multiple handlers attachment
-      if (measureRectElem.data("handlers-added")) return true;
-      measureRectElem.data("handlers-added", true);
+      if (measureRectElem.getAttribute("handlers-added")) return true;
+      measureRectElem.setAttribute("handlers-added", true);
 
-      measureRectElem.addEventListener("click", function() {
+      measureRectElem.addEventListener("click", ()=> {
           measureRectElem.style.fill = this.measureColor
           measureRectElem.style.opacity="0.4";
         
         
         // if it is not second click on already selected measure
-        if (this.selected.measure.id !== measureRectElem.attrs.id) {
+        if (this.selected.measure.id !== measureRectElem.id) {
           // save currently selected id to previous
           this.selected.measure.previousId = this.selected.measure.id;
-          this.selected.measure.id = measureRectElem.atts.id ; // $(this).attr("id");
+          this.selected.measure.id = measureRectElem.id ; // $(this).attr("id");
           this.selected.note.previousId = this.selected.note.id;
-          this.selected.note.id = measureRectElem.attrs.id + "n0";
+          this.selected.note.id = measureRectElem.id + "n0";
           var prevId = this.selected.measure.previousId;
           this.$refs.svgcontainer.querySelector(".measureRect#" + prevId).style.fill="transparent";
           this.$refs.svgcontainer.querySelector(".measureRect#" + this.selected.measure.id).style.fill=this.measureColor
@@ -36,14 +36,14 @@ const events = {
           this.highlightSelectedMeasureProperties();
         }
       });
-      measureRectElem.addEventListener("mouseenter", function() {
-        if (this.selected.measure.id !== measureRectElem.attr.id)
+      measureRectElem.addEventListener("mouseenter", ()=> {
+        if (this.selected.measure.id !== measureRectElem.id)
             measureRectElem.style.fill= this.measureColor;
             measureRectElem.opacity ="0.1";
          // $(this).css({ fill: this.measureColor, opacity: "0.1" });
       });
-      measureRectElem.on("mouseleave", function() {
-        if (this.selected.measure.id !== measureRectElem.attrs.id)
+      measureRectElem.addEventListener("mouseleave", ()=> {
+        if (this.selected.measure.id !== measureRectElem.id)
          measureRectElem.style.fill = "transparent"
    
       });
@@ -51,15 +51,19 @@ const events = {
 
     // for highlighting notes
     attachListenersToNote: function(noteElem) {
+
+    if(!noteElem) return ;
+
+
       noteElem.addEventListener(
         "mouseover",
-        function() {
+        ()=> {
           // if this is in mode for working with notes
           if (this.mode === "note") {
             // don't change colour of already selected note
             if (
               this.selected.note.id !==
-              noteElem.attrs.id
+              noteElem.id
                 .split("-")[1]
             ) {
               // change colour for each note parts - stem, head, dot, accidental...
@@ -72,11 +76,11 @@ const events = {
 
       noteElem.addEventListener(
         "mouseout",
-        function() {
+        ()=>{
           if (this.mode === "note") {
             if (
               this.selected.note.id !==
-             noteElem.attrs.id
+             noteElem.id
                 .split("-")[1]
             ) {
               this.colourNote(noteElem, "black");
@@ -88,12 +92,12 @@ const events = {
 
       noteElem.addEventListener(
         "click",
-        function() {
+        ()=> {
           if (this.mode === "note") {
             // if it is not second click on already selected note
             if (
               this.selected.note.id !==
-              noteElem.attrs.id
+              noteElem.id
                 .split("-")[1]
             ) {
               this.colourNote(noteElem, "red");
@@ -101,12 +105,12 @@ const events = {
               this.selected.measure.previousId = this.selected.measure.id;
               this.selected.note.previousId = this.selected.note.id;
               // format of id: id='vf-m13n10' - eleventh note in fourteenth measure(indexing from 0)
-              var mnId = noteElem.attrs.id;
+              var mnId = noteElem.id;
               // save id of newly selected note
               this.selected.measure.id = mnId.split("-")[1].split("n")[0]; // 'm13'
               this.selected.note.id = mnId.split("-")[1]; // 'm13n10'
               // unhighlight previous selected note
-              let elm = this.$refs.querySelectors(
+              let elm = this.$refs.svgcontainer.querySelector(
                 "svg #vf-" + this.selected.note.previousId
               );
               this.colourNote(elm, "black");

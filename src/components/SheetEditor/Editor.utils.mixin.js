@@ -174,8 +174,8 @@ TODO: documentary comment...
       if (!timeSig)
         timeSig = this.getCurAttrForMeasure(measureIndex, "vfTimeSpec");
       if (timeSig) {
-        this.timeSigTop.selectOption(timeSig.split("/")[0]);
-        this.timeSigBottom.selectOption(timeSig.split("/")[1]);
+        this.timeSigTop(timeSig.split("/")[0]);
+        this.timeSigBottom(timeSig.split("/")[1]);
         // $('#timeSigTop').val(timeSig.split('/')[0]);
         // $('#timeSigBottom').val(timeSig.split('/')[1]);
       }
@@ -216,8 +216,10 @@ TODO: documentary comment...
     },
     colourNote: function(note, color) {
       if (!note) return;
-      note.style.fill = color;
-      note.style.stroke = color;
+      this.Vex.forEach(note.querySelectorAll("*"), function(child) {
+        child.setAttribute("fill", color);
+        child.setAttribute("stroke", color);
+      });
     },
   }
 };
