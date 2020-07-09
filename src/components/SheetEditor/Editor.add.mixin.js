@@ -4,6 +4,26 @@ module for note/measure addition...
 const AddMixin = {
 methods: {
     // inserts new measure filled with whole rest AFTER selected measure
+    
+    addRest: function(measureIndex,noteIndex,restNote){
+      restNote.setAttribute("id", this.formatNoteId(measureIndex,noteIndex) )
+      this.gl_VfStaveNotes[measureIndex].push(restNote);
+
+      // update json
+      this.scoreJson["score-partwise"].part[0].measure[measureIndex].note.push({rest:null,duration: null})
+      
+
+
+    },
+    updateNoteIds: function(measureIndex){
+      for(var m = measureIndex + 1; m < this.gl_VfStaveNotes.length; m++) {
+        for(var n = 0; n < this.gl_VfStaveNotes[m].length; n++) {
+          this.gl_VfStaveNotes[m][n].attrs.id = ('m' + m + 'n' + n);
+        }
+      }
+
+    },
+    
     addMeasure: function(){
       // get and parse id of selected measure (id='m13')
       var measureIndex = +this.selected.measure.id.split('m')[1];
@@ -16,17 +36,13 @@ methods: {
       this.gl_VfStaves.splice(measureIndex + 1, 0, vfNewStave);
       // add empty attributes for measure
       this.gl_StaveAttributes.splice(measureIndex + 1, 0, {});
+      
       // fill measure with whole rest
       var wholeRest = new this.Vex.Flow.StaveNote({ keys: ["b/4"], duration: "wr"});
-      wholeRest.setAttribute("id",'m' + measureIndex + 'n0' )
-      this.gl_VfStaveNotes.splice(measureIndex + 1, 0, [wholeRest]);
+      this.addRest(measureIndex,wholeRest)
   
       // re-number all following notes ids in measures in part
-      for(var m = measureIndex + 1; m < this.gl_VfStaveNotes.length; m++) {
-        for(var n = 0; n < this.gl_VfStaveNotes[m].length; n++) {
-          this.gl_VfStaveNotes[m][n].attrs.id = ('m' + m + 'n' + n);
-        }
-      }
+      this.updateNoteIds(measureIndex);
   
       // add new measure to scoreJson
       var newMeasure = {
@@ -39,7 +55,7 @@ methods: {
           }
         ]
       };
-      // insert new measure to json
+      
       this.scoreJson["score-partwise"].part[0].measure.splice(measureIndex + 1, 0, newMeasure);
       
       // shift numbering for all following measures in part
@@ -48,7 +64,7 @@ methods: {
       }
     },
     addNote: function(){
-      // get and parse id of selected note (id='m13n10')
+      // get and parse id of selected rest (id='m13n10')
       var measureIndex = this.getSelectedMeasureIndex();
       var noteIndex = this.getSelectedNoteIndex();
       //eslint-disable-next-line
@@ -66,7 +82,7 @@ methods: {
         auto_stem: true,
       });
       // set id for note DOM element in svg
-      newNote.setAttribute("id",this.selected.note.id)
+      newNote.setAttribute("id",this.formatNoteId(measureIndex,noteIndex))
   
       if(dot === 'd')
         newNote.addDotToAll();
@@ -89,19 +105,44 @@ methods: {
       this.scoreJson["score-partwise"].part[0].measure[measureIndex].note[noteIndex].duration = xmlDuration;
   
       this.$refs.svgcontainer.removeEventListener('click', this.addNote, false); 
-      this.drawSelectedMeasure(false);
+      
+
+      // add a following rest 
+      let rests = [];
+      switch(noteValue){
+        case 'w':
+          rests = []; break;
+        case 'h':
+          rests = ['hr']; break;
+        case 'q':
+          rests = ['qr','qr','qr']  
+      }
+
+      // append the rests accordingly 
+
+      rests.map((r,i )=> {
+          var restNote = new this.Vex.Flow.StaveNote({ keys: ["b/4"], duration: r});
+          this.addRest(measureIndex,noteIndex+1+i,restNote)
+          
+      })
+      this.updateNoteIds(measureIndex);
+      this.drawSelectedMeasure(true)
   
       // fluent creating of score:
       // add new measure, if current one is the last one and the note is also the last one
-      if(measureIndex === this.gl_VfStaves.length - 1 &&
-         noteIndex === this.gl_VfStaveNotes[measureIndex].length - 1) {
-        this.addMeasure();
-        // select first note in added measure
-        measureIndex++;
-        this.selected.measure.id = 'm' + measureIndex;
-        this.selected.note.id = 'm' + measureIndex + 'n0';
-        this.drawScore();
-      }
+      
+
+
+
+      // if(measureIndex === this.gl_VfStaves.length - 1 &&
+      //    noteIndex === this.gl_VfStaveNotes[measureIndex].length - 1) {
+      //   this.addMeasure();
+      //   // select first note in added measure
+      //   measureIndex++;
+      //   this.selected.measure.id = 'm' + measureIndex;
+      //   this.selected.note.id = 'm' + measureIndex + 'n0';
+      //   this.drawScore();
+      // }
   
     },
     addClef: function(){

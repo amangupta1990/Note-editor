@@ -26,7 +26,7 @@ methods: {
         auto_stem: true
       });
       // set id for note DOM element in svg
-      newNote.setAttribute("id",'m' + measureIndex + 'n'+noteIndex )
+      newNote.setAttribute("id",this.formatNoteId(measureIndex,noteIndex))
       // set dots for a rest, however, currently supports only one dot(see parse.js line 140)
       if(vfStaveNote.isDotted()) {
         var dots = vfStaveNote.getDots().length;

@@ -206,7 +206,7 @@ const parserMixin = {
         auto_stem: true,
         
       });
-        vfStaveNote.setAttribute("id",("m" + measureIndex + "n" + noteIndex))
+        vfStaveNote.setAttribute("id",this.formatNoteId(measureIndex,noteIndex))
       // console.log(vfStaveNote.getKeys().toString()+' '+staveNoteDuration);
 
       // set id for note DOM element in svg

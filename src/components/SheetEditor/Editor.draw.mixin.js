@@ -195,7 +195,7 @@ editor.draw = {
 
     voice.setStrict(false); //TODO: let it be strict for check notes duration in measure
 
-    voice.addTickables(this.gl_VfStaveNotes[drawnMeasureIndex]);
+    voice.addTickables(this.gl_VfStaveNotes[drawnMeasureIndex].filter(t=> t.shouldIgnoreTicks ? true: false));
 
     //https://github.com/0xfe/vexflow/wiki/Automatic-Beaming:
     var beams =  this.Vex.Flow.Beam.generateBeams(
@@ -299,13 +299,21 @@ editor.draw = {
     this.ctx.closeGroup();
 
     // // adding event listeners to note objects
-    this.gl_VfStaveNotes.map(collection=>  collection.map((note)=>{
-
-      var item = this.$refs.svgcontainer.querySelector(`#vf-${note.attrs.id}`) ||  this.$refs.svgcontainer.querySelector(`#vf-auto1010`)      //this.gl_VfStaveNotes[drawnMeasureIndex][n].getElem();
+    //eslint-disable-next-line
+    this.gl_VfStaveNotes.map((measure,measureIndex,mArr)=> { 
+      
       //eslint-disable-next-line
-      console.log('note listeners->',item)
+      measure.map((note,noteIndex,noteArray)=>{
+
+      
+      
+      var item = this.$refs.svgcontainer.querySelector("#vf-"+note.attrs.id) ||  this.$refs.svgcontainer.querySelector(`#vf-auto1010`)      //this.gl_VfStaveNotes[drawnMeasureIndex][n].getElem();
+      //eslint-disable-next-line
+      console.log(note.attrs.id)
       this.attachListenersToNote(item);
-    }  ) )
+    } )
+  
+  } )
 
     
 

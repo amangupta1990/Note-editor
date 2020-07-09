@@ -1,5 +1,8 @@
 const utilsMixin = {
   methods: {
+    formatNoteId: function(measureIndex,noteIndex){
+      return `m${measureIndex}n${noteIndex}`
+    },
     // draws note, which is to be added, below mouse cursor when it is
     // moving in column of selected note(only rest currenly)
     redrawMeasureWithCursorNote: function(event) {

@@ -111,7 +111,7 @@ const events = {
               this.selected.note.id = mnId.split("-")[1]; // 'm13n10'
               // unhighlight previous selected note
               let elm = this.$refs.svgcontainer.querySelector(
-                "svg #vf-" + this.selected.note.previousId
+                this.selected.note.previousId
               );
               this.colourNote(elm, "black");
               // highlight properties on control panel accordingly
