@@ -230,70 +230,16 @@
 
 <script>
 import Vexflow from "vexflow";
-import parserMixin from "./Editor.parser.mixin";
-import tableMixin from "./Editor.table.mixin";
-import drawMixin from "./Editor.draw.mixin";
-import utilsMixin from "./Editor.utils.mixin";
-import noteToolMixin from "./Editor.noteTool.mixin";
-import addMixin from './Editor.add.mixin';
-import eventsMixin from './Editors.events.mixin';
-import editMixin from './Editor.edit.mixin';
-import VexflowExtensions from './VexflowExtensions';
-import deleteMixin from './Editor.delete.mixin'
 
 
-
-const scoreJson = {
-  "score-partwise": {
-    "@version": "3.0",
-    "part-list": {
-      "score-part": {
-        "@id": "P1",
-        "part-name": {}
-      }
-    },
-    part: [
-      {
-        "@id": "P1",
-        measure: [
-          {
-            "@number": 1,
-            attributes: {
-              divisions: 4,
-              key: {
-                fifths: 0,
-                mode: "major"
-              },
-              time: {
-                beats: 4,
-                "beat-type": 4
-              },
-              clef: {
-                sign: "G",
-                line: 2
-              }
-            },
-            note: [
-              {
-                rest: null,
-                duration: 16
-              }
-            ]
-          }
-        ]
-      }
-    ]
-  }
-};
 
 export default {
   name: "SheetEditor",
-  mixins: [utilsMixin, noteToolMixin, parserMixin, tableMixin, drawMixin,addMixin, eventsMixin, editMixin, deleteMixin],
+  mixins: [],
   props: {},
   data() {
     return {
       Vex: Object,
-      scoreJson: Object,
       renderer: Object,
       ctx: Object,
       this: Object,
@@ -312,7 +258,7 @@ export default {
       gl_StaveAttributes: Array, // array of attributes for each measure
       gl_VfStaveNotes: Array, // array of arrays with notes to corresponding stave in gl_VfStaves
       newLine: Boolean,
-            keySig: String,
+      keySig: String,
       timeSigTop: String,
       timeSigBottom:String,
       clef: String,
@@ -325,7 +271,7 @@ export default {
   },
   methods: {
     initEditor: function(){
-    this.Vex = VexflowExtensions(Vexflow);
+    this.Vex = Vexflow;
     this.scoreJson = scoreJson;
 
     this.keySig="C";
