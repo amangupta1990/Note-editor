@@ -229,8 +229,7 @@
 
 
 <script>
-import Vexflow from "vexflow";
-
+import Editor from './editor.js'
 
 
 export default {
@@ -239,116 +238,16 @@ export default {
   props: {},
   data() {
     return {
-      Vex: Object,
-      renderer: Object,
-      ctx: Object,
-      this: Object,
-      mode: String,
-      tab: String,
-      noteValue: String,
-      dotted: Boolean,
-      selected: Object,
-      measureColor: "lightblue",
-      mousePos: Object,
-      accidental: String,
-      staveWidth: Number,
-      staveHeight: Number,
-      noteWidth: Number,
-      gl_VfStaves: Array, // array with currently rendered vexflow measures(Vex.Flow.Stave)
-      gl_StaveAttributes: Array, // array of attributes for each measure
-      gl_VfStaveNotes: Array, // array of arrays with notes to corresponding stave in gl_VfStaves
-      newLine: Boolean,
-      keySig: String,
-      timeSigTop: String,
-      timeSigBottom:String,
-      clef: String,
-      timeSig: String
+      tab:String,
+      editor: Object
     };
   },
   mounted: function() {
    this.$nextTick()
-   .then(()=>this.initEditor())
+   .then(()=> this.editor = new Editor(this.$refs.svgcontainer))
   },
   methods: {
-    initEditor: function(){
-    this.Vex = Vexflow;
-    this.scoreJson = scoreJson;
-
-    this.keySig="C";
-    this.timeSigTop = 4;
-    this.timeSigBottom = 4;
-    this.clef="treble";
-
-
-
-    this.tab = "note";
-    this.mode = "measure";
-    this.noteValue = "w";
-    this.accidental = "bb";
-    this.staveWidth = 150;
-    this.staveHeight = 140;
-    this.noteWidth = 40;
-    this.gl_VfStaves = [];
-    this.gl_StaveAttributes = [];
-    this.gl_VfStaveNotes = [];
-    this.dotted = '';
-    this.renderer = new Vexflow.Flow.Renderer(
-      this.$refs.svgcontainer,
-      Vexflow.Flow.Renderer.Backends.SVG
-    );
-    this.ctx = this.renderer.getContext();
-
-    this.selected = {
-      cursorNoteKey: "b/4",
-      measure: {
-        id: "m0",
-        previousId: "m0"
-      },
-      note: {
-        id: "m0n0",
-        previousId: "m0n0"
-      }
-    };
-
-    this.mousePos = {
-      current: {
-        x: 0,
-        y: 0
-      },
-      previous: {
-        x: 0,
-        y: 0
-      }
-    };
-
-
-    this.parseAll();
-    this.switchToNoteMode();
-    },
-
-    switchToNoteMode: function() {
-      if (this.mode !== "note") {
-        this.mode = "note";
-        this.$refs.svgcontainer.addEventListener(
-          "mousemove",
-          this.redrawMeasureWithCursorNote,
-          false
-        );
-        this.drawScore();
-      }
-    },
-
-    switchToMeasureMode: function() {
-      if (this.mode !== "measure") {
-        this.mode = "measure";
-        this.$refs.svgcontainer.removeEventListener(
-          "mousemove",
-          this.redrawMeasureWithCursorNote,
-          false
-        );
-        this.drawScore();
-      }
-    }
-  }
+  },
+  
 };
 </script>
