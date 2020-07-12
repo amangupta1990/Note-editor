@@ -34,6 +34,7 @@ class Editor {
       staves:[],
       notes:[]
     };
+    this.mousePos= {};
 
     // event listerners
 
@@ -104,7 +105,9 @@ class Editor {
     });
     n.setAttribute("id", oldNote.attrs.id);
     stave.notes[noteIndex] = n;
+    //add event listener for 
     this.Draw();
+    this.addEventListeners(this.svgElem)
   }
 
   Draw() {
@@ -124,6 +127,9 @@ class Editor {
       new Vex.Flow.Formatter().format([stave.voice], this.staveWidth);
       stave.voice.draw(this.ctx, stave);
     });
+
+
+
   }
 
   addEventListeners(svgElem) {
@@ -214,99 +220,112 @@ class Editor {
 
 
     });
+
+
+    svgElem.addEventListener("mousemove",(e)=>this.DrawMeasureWithCursorNote(e) , false)
+
+
+
   }
 
-  //  getMousePos(canvas, evt) {
-  //   var rect = canvas.getBoundingClientRect();
-  //     return {
-  //       x: evt.clientX - rect.left,
-  //       y: evt.clientY - rect.top
-  //     };
-  //   }
+   // Methods for drawing cursor note 
 
-  //   isCursorInBoundingBox(bBox, cursorPos) {
-  //     return cursorPos.x > bBox.getX() && cursorPos.x < bBox.getX() + bBox.getW() &&
-  //            cursorPos.y > bBox.getY() && cursorPos.y < bBox.getY() + bBox.getH();
-  //   }
+   getMousePos(canvas, evt) {
+    var rect = canvas.getBoundingClientRect();
+      return {
+        x: evt.clientX - rect.left,
+        y: evt.clientY - rect.top
+      };
+    }
 
-  //   DrawMeasureWithCursorNote(event) {
-  //     // get mouse position
-  //     this.mousePos.current = getMousePos(this.svgElem, event);
+    isCursorInBoundingBox(bBox, cursorPos) {
+      return cursorPos.x > bBox.getX() && cursorPos.x < bBox.getX() + bBox.getW() &&
+             cursorPos.y > bBox.getY() && cursorPos.y < bBox.getY() + bBox.getH();
+    }
 
-  //     // get selected measure and note
-  //     var vfStaveNote = getSelectedNote();
-  //     var vfStave = getSelectedMeasure();
+    DrawMeasureWithCursorNote(event) {
 
-  //     // currently support only for replacing rest with a new note
-  //     // building chords feature will be added soon
-  //     if(!vfStaveNote.isRest()) return;
+      if(!this.selected.notes.length) return ;
 
-  //     // get column of selected note on stave
-  //     var bb = vfStave.getBoundingBox();
-  //     var begin = vfStaveNote.getNoteHeadBeginX() - 5;
-  //     bb.setX(begin);
-  //     bb.setW(vfStaveNote.getNoteHeadEndX() - begin + 5);
-  //     // bb.setW(20);
-  //     // bb.draw(this.ctx);
+      // get mouse position
+      this.mousePos.current = this.getMousePos(this.svgElem, event);
 
-  //     // mouse cursor is within note column
-  //     if(isCursorInBoundingBox(bb, this.mousePos.current) ) {
-  //       // save mouse position
-  //       this.mousePos.previous = this.mousePos.current;
-  //       // get new note below mouse cursor
-  //       this.selected.cursorNoteKey = getCursorNoteKey();
+      
+      // get selected measure and note
+      var vfStave = this.sheet.staves[ this.selected.notes[0].staveIndex ]
+      var vfStaveNote = vfStave.notes[ this.selected.notes[0].noteIndex ]
+      
 
-  //       this.svgElem.addEventListener('click', this.add.note, false);
+      // currently support only for replacing rest with a new note
+      // building chords feature will be added soon
+      
+      // get column of selected note on stave
+      var bb = vfStave.getBoundingBox();
+      var begin = vfStaveNote.getNoteHeadBeginX() - 5;
+      bb.setX(begin);
+      bb.setW(vfStaveNote.getNoteHeadEndX() - begin + 5);
+      // bb.setW(20);
+      // bb.draw(this.ctx);
 
-  //       // Draw only when cursor note changed pitch
-  //       // (mouse changed y position between staff lines/spaces)
-  //       if(this.lastCursorNote !== this.selected.cursorNoteKey) {
-  //         // console.log(this.selected.cursorNoteKey);
-  //         this.draw.selectedMeasure(true);
+      // mouse cursor is within note column
+      if(this.isCursorInBoundingBox(bb, this.mousePos.current) ) {
+        // save mouse position
+        this.mousePos.previous = this.mousePos.current;
+        // get new note below mouse cursor
+        this.selected.cursorNoteKey = this.getCursorNoteKey();
 
-  //       }
-  //       // save previous cursor note for latter comparison
-  //       this.lastCursorNote = this.selected.cursorNoteKey;
-  //     }
-  //     // mouse cursor is NOT within note column
-  //     else {
+        this.svgElem.addEventListener('click', this.add.note, false);
 
-  //       this.svgElem.removeEventListener('click', this.add.note, false);
+        // Draw only when cursor note changed pitch
+        // (mouse changed y position between staff lines/spaces)
+        if(this.lastCursorNote !== this.selected.cursorNoteKey) {
+          // console.log(this.selected.cursorNoteKey);
+          this.draw.selectedMeasure(true);
 
-  //       // mouse cursor just left note column(previous position was inside n.c.)
-  //       if(isCursorInBoundingBox(bb, this.mousePos.previous) ) {
-  //         // Draw measure to erase cursor note
-  //         this.draw.selectedMeasure(false);
-  //         this.mousePos.previous = this.mousePos.current;
-  //         this.lastCursorNote = '';
-  //       }
-  //     }
+        }
+        // save previous cursor note for latter comparison
+        this.lastCursorNote = this.selected.cursorNoteKey;
+      }
+      // mouse cursor is NOT within note column
+      else {
 
-  //   }
+        this.svgElem.removeEventListener('click', this.add.note, false);
 
-  //  getCursorNoteKey() {
-  //   // find the mouse position and return the correct note for that position.
-  //   var y = gl_VfStaves[this.selected.measure.id.split('m')[1]].y;
-  //   // var y = this.selected.measure.y;
-  //   var notesArray = ['c/','d/','e/','f/','g/','a/','b/'];
-  //   var count = 0;
+        // mouse cursor just left note column(previous position was inside n.c.)
+        if(this.isCursorInBoundingBox(bb, this.mousePos.previous) ) {
+          // Draw measure to erase cursor note
+          this.draw.selectedMeasure(false);
+          this.mousePos.previous = this.mousePos.current;
+          this.lastCursorNote = '';
+        }
+      }
 
-  //   for(var i = 5; i >= 0; i--){
-  //     for(var l = 0; l < notesArray.length; l++){
-  //       var noteOffset = (count * 35) - (l * 5 - 17);
-  //       if(this.mousePos.current.y >= y + noteOffset && this.mousePos.current.y <= 5 + y + noteOffset){
-  //         var cursorNoteKey = notesArray[l] + (i+1);
-  //         var found = true;
-  //         break;
-  //       }
-  //       if(found == true){
-  //         break;
-  //       }
-  //     }
-  //     count++;
-  //   }
-  //   return cursorNoteKey;
-  // }
+    }
+
+   getCursorNoteKey(staveIndex, noteIndex) {
+     if(!staveIndex && noteIndex) return;
+    // find the mouse position and return the correct note for that position.
+    var y = this.sheet.staves[staveIndex].notes[noteIndex].y;
+    // var y = this.selected.measure.y;
+    var notesArray = ['c/','d/','e/','f/','g/','a/','b/'];
+    var count = 0;
+
+    for(var i = 5; i >= 0; i--){
+      for(var l = 0; l < notesArray.length; l++){
+        var noteOffset = (count * 35) - (l * 5 - 17);
+        if(this.mousePos.current.y >= y + noteOffset && this.mousePos.current.y <= 5 + y + noteOffset){
+          var cursorNoteKey = notesArray[l] + (i+1);
+          var found = true;
+          break;
+        }
+        if(found == true){
+          break;
+        }
+      }
+      count++;
+    }
+    return cursorNoteKey;
+  }
 }
 
 export default Editor;
