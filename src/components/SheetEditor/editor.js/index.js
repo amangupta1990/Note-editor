@@ -30,7 +30,10 @@ class Editor {
     );
     this.ctx = this.renderer.getContext();
 
-    this.selected = [];
+    this.selected = {
+      staves:[],
+      notes:[]
+    };
 
     // event listerners
 
@@ -163,10 +166,12 @@ class Editor {
 
 
       switch(type){
-        case 'note':
+      case 'note':{
+
+      
       
       // unhighlight exsiting selection
-     if( this.selected.length ) this.selected.map(note=>{
+     if( this.selected.notes.length ) this.selected.notes.map(note=>{
         if(note) {
         let ele = this.svgElem.querySelector(`#vf-${note.staveIndex}__${note.noteIndex}`)
         _highlightNoteElement(ele);
@@ -176,19 +181,38 @@ class Editor {
       }) 
 
       // update current selection
-      this.selected = [{
+      this.selected.notes= [{
         staveIndex,
         noteIndex
       }]
 
-      this.selected.map(e=> _highlightNoteElement(this.svgElem.querySelector(`#vf-${e.staveIndex}__${e.noteIndex}`),"red"))
+      this.selected.notes.map(e=> _highlightNoteElement(this.svgElem.querySelector(`#vf-${e.staveIndex}__${e.noteIndex}`),"red"))
 
       break;
-      
+    }
+
+    case "stave": 
+      {
+       if(this.selected.staves.length) this.selected.staves.map(note=>{
+          if(note) {
+          let ele = this.svgElem.querySelector(`#vf-${note.staveIndex}`)
+          _highlightStaveElement(ele);
+          }
+        }) 
+
+        this.selected.staves = [{
+          staveIndex:staveIndex
+        }]
+
+        this.selected.staves.map(s=> _highlightStaveElement(this.svgElem.querySelector(`#vf-${s.staveIndex}`),"lightblue"))
+
+        break;
+
+      }
+    
     }
 
 
-      
     });
   }
 
