@@ -30,17 +30,7 @@ class Editor {
     );
     this.ctx = this.renderer.getContext();
 
-    this.selected = {
-      cursorNoteKey: "b/4",
-      measure: {
-        id: "m0",
-        previousId: "m0",
-      },
-      note: {
-        id: "m0n0",
-        previousId: "m0n0",
-      },
-    };
+    this.selected = [];
 
     // event listerners
 
@@ -75,7 +65,7 @@ class Editor {
         keys: [REST_POSITIONS[d]],
         duration: d + "r",
       });
-      n.setAttribute("id", `${index}|${noteIndex}`);
+      n.setAttribute("id", `${index}__${noteIndex}`);
 
       return n;
     });
@@ -95,7 +85,7 @@ class Editor {
       keys: [noteName],
       duration,
     });
-    n.setAttribute("id", `${staveIndex}|${noteIndex}`);
+    n.setAttribute("id", `${staveIndex}__${noteIndex}`);
 
     notes[noteIndex] = n;
     this.Draw();
@@ -109,7 +99,7 @@ class Editor {
       keys: [REST_POSITIONS[oldNote.duration]],
       duration: oldNote.duration + "r",
     });
-    n.setAttribute("id", oldNote.id);
+    n.setAttribute("id", oldNote.attrs.id);
     stave.notes[noteIndex] = n;
     this.Draw();
   }
@@ -134,18 +124,71 @@ class Editor {
   }
 
   addEventListeners(svgElem) {
-    svgElem.addEventListener("click", (event) => {
-      event.preventDefault();
-      let ele = event.target;
+    // helper function for finding the selected element:
 
+    const _getSelectedElement = (event)=>{
+      let ele = event.target;
       while (
-        ele.classList.value.indexOf("vf-stavenote") < 0 && ele.classList.value.indexOf("vf-measureRect") < 0
-        
+        ele.classList.value.indexOf("vf-stavenote") < 0 && ele.classList.value.indexOf("vf-measureRect") < 0  
       ){
         ele = ele.parentElement;
       }
-        //eslint-disable-next-line
-        console.log(ele);
+        
+        let id = ele.id.split("-")[1].split("__");
+
+        
+        return [ele, ele.classList.value.indexOf("vf-stavenote") > -1 ? "note" : "stave", ... id ]
+    }
+
+    const _highlightNoteElement = (ele,color = "black")=>{
+                ele.querySelectorAll("*")
+                .forEach(e=>{
+                  e.style.fill = color;
+                  e.style.stroke = color;
+                })
+    }
+
+    // eslint-disable-next-line no-unused-vars
+    const _highlightStaveElement = (ele,color = "transparent")=>{
+                ele.style.fill = color;
+                ele.style.opacity = "0.4"      
+
+    }
+
+
+    svgElem.addEventListener("click", (event) => {
+      event.preventDefault();
+      // eslint-disable-next-line no-unused-vars
+      let [ ele ,type, staveIndex, noteIndex ] = _getSelectedElement(event);
+
+
+      switch(type){
+        case 'note':
+      
+      // unhighlight exsiting selection
+     if( this.selected.length ) this.selected.map(note=>{
+        if(note) {
+        let ele = this.svgElem.querySelector(`#vf-${note.staveIndex}__${note.noteIndex}`)
+        _highlightNoteElement(ele);
+        }
+   
+
+      }) 
+
+      // update current selection
+      this.selected = [{
+        staveIndex,
+        noteIndex
+      }]
+
+      this.selected.map(e=> _highlightNoteElement(this.svgElem.querySelector(`#vf-${e.staveIndex}__${e.noteIndex}`),"red"))
+
+      break;
+      
+    }
+
+
+      
     });
   }
 
