@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import Vex from "vexflow";
 import * as lodash from "lodash";
 
@@ -70,6 +71,7 @@ class Editor {
         clef: this.clef,
         keys: [REST_POSITIONS[d]],
         duration: d + "r",
+        auto_stem: true
       });
       n.setAttribute("id", `${index}__${noteIndex}`);
 
@@ -86,10 +88,17 @@ class Editor {
     // modify the rest of the stave to join the notes
     let stave = this.sheet.staves[staveIndex];
     let notes = stave.notes;
+    let isRest = notes[noteIndex].isRest();
+    duration = duration || notes[noteIndex].duration;
+
+
+    debugger;
+    let keys = stave.notes[noteIndex].keys;
     let n = new Vex.Flow.StaveNote({
       clef: this.clef,
-      keys: [noteName],
+      keys: isRest ? [noteName] : lodash.uniq([...keys, noteName]),
       duration,
+      auto_stem: true
     });
     n.setAttribute("id", `${staveIndex}__${noteIndex}`);
 
@@ -104,6 +113,7 @@ class Editor {
       clef: this.clef,
       keys: [REST_POSITIONS[oldNote.duration]],
       duration: oldNote.duration + "r",
+      auto_stem: true
     });
     n.setAttribute("id", oldNote.attrs.id);
     stave.notes[noteIndex] = n;
@@ -141,8 +151,8 @@ class Editor {
     });
 
       // highlight the selected note 
-      if(this.selected.notes.length){
-      let selectedNote = this.svgElem.querySelector(`#vf-${this.selected.notes[0].staveIndex}__${this.selected.notes[0].noteIndex}`)
+      if(this.selected.cursor){
+      let selectedNote = this.svgElem.querySelector(`#vf-${this.selected.cursor.staveIndex}__${this.selected.cursor.noteIndex}`)
       this._highlightNoteElement(selectedNote,"red")
       }
 
@@ -157,18 +167,22 @@ class Editor {
       ele = ele.parentElement;
     }
 
-    // prevent the cursor note form getting selected
-     if(this.selected.cursorNoteKey  ){
-       return [];
-     }
-      
-      let id = ele.id.split("-")[1].split("__");
+    // prevent the cursor note form getting selected    
+      let id = ele.id;
+      if(id.indexOf("auto") > -1 ) 
+        return [];
+
+      id = id.split("-")[1].split("__");
 
       // return an element only if there is a valid id selected
       return [ele, ele.classList.value.indexOf("vf-stavenote") > -1 ? "note" : "stave", ... id ]
   }
 
   _highlightNoteElement(ele,color = "black"){
+    if(!ele){
+      console.warn('No element was passed')
+      return ;
+    }
     ele.querySelectorAll("*")
     .forEach(e=>{
       e.style.fill = color;
@@ -187,17 +201,22 @@ _highlightStaveElement(ele,color = "transparent"){
     // helper function for finding the selected element:
 
 
-
-
-
-
     svgElem.addEventListener("click", (event) => {
       event.preventDefault();
+      
+      
+
+      // if there is a cursor note .. add that to the stave
+      if(this.selected.cursor && this.selected.cursor.cursorNote){
+        this.addNote(this.selected.cursor.staveIndex, this.selected.cursor.noteIndex, this.selected.cursor.cursorNote)
+        this.sheet.staves[this.selected.cursor.staveIndex].tempNotes = null; 
+        this.removeCursorNote();
+        this.Draw();
+        return;
+      }
+      
       // eslint-disable-next-line no-unused-vars
       let [ ele ,type, staveIndex, noteIndex ] = this._getSelectedElement(event);
-
-
-      // if there is 
 
       switch(type){
       case 'note':{
@@ -205,40 +224,40 @@ _highlightStaveElement(ele,color = "transparent"){
       
       
       // unhighlight exsiting selection
-     if( this.selected.notes.length ) this.selected.notes.map(note=>{
-        if(note) {
-        let ele = this.svgElem.querySelector(`#vf-${note.staveIndex}__${note.noteIndex}`)
+     if( this.selected.cursor){ 
+        let ele = this.svgElem.querySelector(`#vf-${this.selected.cursor.staveIndex}__${this.selected.cursor.noteIndex}`)
         this._highlightNoteElement(ele);
-        }
+     }
+        
    
 
-      }) 
+      
 
       // update current selection
-      this.selected.notes= [{
+      this.selected.cursor= {
         staveIndex,
         noteIndex
-      }]
+      }
 
-      this.selected.notes.map(e=> this._highlightNoteElement(this.svgElem.querySelector(`#vf-${e.staveIndex}__${e.noteIndex}`),"red"))
+      this._highlightNoteElement(this.svgElem.querySelector(`#vf-${this.selected.cursor.staveIndex}__${this.selected.cursor.noteIndex}`),"red")
 
       break;
     }
 
     case "stave": 
       {
-       if(this.selected.staves.length) this.selected.staves.map(note=>{
-          if(note) {
-          let ele = this.svgElem.querySelector(`#vf-${note.staveIndex}`)
+       if(this.selected.cursor){
+          let ele = this.svgElem.querySelector(`#vf-${this.selected.cursor.staveIndex}`)
           this._highlightStaveElement(ele);
-          }
-        }) 
+       }
+        
 
-        this.selected.staves = [{
-          staveIndex:staveIndex
-        }]
+        this.selected.cursor = {
+          staveIndex:staveIndex,
+          noteIndex: 0
+        }
 
-        this.selected.staves.map(s=> this._highlightStaveElement(this.svgElem.querySelector(`#vf-${s.staveIndex}`),"lightblue"))
+        this._highlightStaveElement(this.svgElem.querySelector(`#vf-${this.selected.cursor.staveIndex}`),"lightblue")
 
         break;
 
@@ -273,15 +292,15 @@ _highlightStaveElement(ele,color = "transparent"){
 
     DrawMeasureWithCursorNote(event) {
 
-      if(!this.selected.notes.length) return ;
+      if(!this.selected.cursor) return ;
 
       // get mouse position
       this.mousePos.current = this.getMousePos(this.svgElem, event);
 
       
       // get selected measure and note
-      var vfStave = this.sheet.staves[ this.selected.notes[0].staveIndex ]
-      var vfStaveNote = vfStave.notes[ this.selected.notes[0].noteIndex ]
+      var vfStave = this.sheet.staves[ this.selected.cursor.staveIndex ]
+      var vfStaveNote = vfStave.notes[ this.selected.cursor.noteIndex ]
       
 
       // currently support only for replacing rest with a new note
@@ -297,56 +316,62 @@ _highlightStaveElement(ele,color = "transparent"){
 
       // mouse cursor is within note column
       if(this.isCursorInBoundingBox(bb, this.mousePos.current) ) {
-        // save mouse position
+
         this.mousePos.previous = this.mousePos.current;
-        // get new note below mouse cursor
-        this.selected.cursorNoteKey = this.getCursorNoteKey();
 
-        //this.vfSTave.addEventListener('click', this.addCursorNote , false);
+        let [cursorNote, staveIndex, noteIndex ] = this.getCursorNote();
+        this.selected.cursor = {cursorNote , staveIndex , noteIndex};
 
-        // Draw only when cursor note changed pitch
-        // (mouse changed y position between staff lines/spaces)
-        if(this.selected.lastCursorNoteKey !== this.selected.cursorNoteKey) {
-          // console.log(this.selected.cursorNoteKey);
+      
+        if(this.selected.prevCursor &&  this.selected.cursor.cursorNote !== this.selected.prevCursor.cursorNote) {
+
         
-          this.drawCursorNote(this.selected.notes[0].staveIndex, this.selected.notes[0].noteIndex);
+          this.drawCursorNote(staveIndex, noteIndex);
           this.Draw();
 
         }
         // save previous cursor note for latter comparison
-        this.selected.lastCursorNoteKey = this.selected.cursorNoteKey;
+        this.selected.prevCursor = this.selected.cursor;
       }
       // mouse cursor is NOT within note column
       else {
 
-        //this.svgElem.removeEventListener('click', this.addCursorNote, false);
-
-        // mouse cursor just left note column(previous position was inside n.c.)
         if(this.isCursorInBoundingBox(bb, this.mousePos.previous) ) {
           // Draw measure to erase cursor note
+          
+
+          // highlight the previous note 
+          if(this.selected &&  this.selected.prevCursor){
+          let previousNoteLe =  this.svgElem.querySelector(`#vf-${this.selected.prevCursor.staveIndex}__${this.selected.prevCursor.noteIndex}`) 
+          this._highlightNoteElement(previousNoteLe,"red");
+          let pCursor = lodash.clone( this.selected.prevCursor )
           this.removeCursorNote();
+          this.selected.cursor = pCursor;
           this.Draw();
           this.mousePos.previous = this.mousePos.current;
-          this.lastCursorNote = '';
         }
+      }
       }
 
     }
 
     
     removeCursorNote(){
-      this.selected.lastCursorNoteKey = null;
-      this.selected.cursorNoteKey = null;
-      this.sheet.staves[this.selected.notes[0].staveIndex].tempNotes = [];
+      if(this.selected.cursor)
+      this.sheet.staves[this.selected.cursor.staveIndex].tempNotes = [];
+      this.selected.cursor = null
+      this.selected.prevCursor = null;
+      
     }
 
     drawCursorNote(staveIndex, noteIndex){
-      if(!this.selected.cursorNoteKey) return ;
+      if(!this.selected.cursor) return ;
       let tempNotes =lodash.cloneDeep(this.sheet.staves[staveIndex].notes)
       let tempNote = new Vex.Flow.StaveNote({
         clef: this.clef,
-        keys: [this.selected.cursorNoteKey],
+        keys: [this.selected.cursor.cursorNote],
         duration: tempNotes[noteIndex].duration,
+        auto_stem: true
       });
       tempNotes[noteIndex]  =  tempNote
       
@@ -361,10 +386,10 @@ _highlightStaveElement(ele,color = "transparent"){
 
     }
 
-   getCursorNoteKey() {
-     let staveIndex = this.selected.notes[0].staveIndex; 
-     let noteIndex = this.selected.notes[0].noteIndex;
-     if(!staveIndex && noteIndex) return;
+   getCursorNote() {
+     let staveIndex = this.selected.cursor.staveIndex; 
+     let noteIndex = this.selected.cursor.noteIndex;
+     if(!staveIndex && noteIndex) return [];
     // find the mouse position and return the correct note for that position.
     var y = this.sheet.staves[staveIndex].y;
     // var y = this.selected.measure.y;
@@ -385,7 +410,7 @@ _highlightStaveElement(ele,color = "transparent"){
       }
       count++;
     }
-    return cursorNoteKey;
+    return [cursorNoteKey,staveIndex,noteIndex];
   }
 }
 
