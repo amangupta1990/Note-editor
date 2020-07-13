@@ -218,7 +218,7 @@
               <!-- height of 3 stave heights(overriden by javascript anyway) -->
               <!-- use rather div, but before that resolve NaNs in viewbox problem -->
               <!-- <div id="svg-container" width="800" height="420"></div> -->
-              <svg id="svg-container" class="w-full h-full" ref="svgcontainer"></svg>
+              <svg id="svg-container" class="w-full h-full outline-none" ref="svgcontainer"></svg>
             </div>
           </div>
         </div>

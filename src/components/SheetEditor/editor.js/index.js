@@ -269,6 +269,8 @@ _highlightStaveElement(ele,color = "transparent"){
     });
 
 
+    svgElem.addEventListener("blur", ()=> { this.removeCursorNote(); this.Draw()}) 
+
     svgElem.addEventListener("mousemove",(e)=>this.DrawMeasureWithCursorNote(e) , false)
 
 
@@ -300,7 +302,7 @@ _highlightStaveElement(ele,color = "transparent"){
       
       // get selected measure and note
       var vfStave = this.sheet.staves[ this.selected.cursor.staveIndex ]
-      var vfStaveNote = vfStave.notes[ this.selected.cursor.noteIndex ]
+      // var vfStaveNote = vfStave.notes[ this.selected.cursor.noteIndex ]
       
 
       // currently support only for replacing rest with a new note
@@ -308,9 +310,9 @@ _highlightStaveElement(ele,color = "transparent"){
       
       // get column of selected note on stave
       var bb = vfStave.getBoundingBox();
-      var begin = vfStaveNote.getNoteHeadBeginX() - 5;
-      bb.setX(begin);
-      bb.setW(vfStaveNote.getNoteHeadEndX() - begin + 5);
+      // var begin = vfStaveNote.getNoteHeadBeginX() - 5;
+      // bb.setX(begin);
+      // bb.setW(vfStaveNote.getNoteHeadEndX() - begin + 5);
       // bb.setW(20);
       // bb.draw(this.ctx);
 
