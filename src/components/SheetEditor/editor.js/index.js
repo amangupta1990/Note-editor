@@ -158,7 +158,7 @@ class Editor {
     }
 
     // prevent the cursor note form getting selected
-     if(ele.id.indexOf('auto') > -1   ){
+     if(this.selected.cursorNoteKey  ){
        return [];
      }
       
