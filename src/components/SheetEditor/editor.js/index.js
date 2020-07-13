@@ -92,7 +92,7 @@ class Editor {
     duration = duration || notes[noteIndex].duration;
 
 
-    debugger;
+
     let keys = stave.notes[noteIndex].keys;
     let n = new Vex.Flow.StaveNote({
       clef: this.clef,
