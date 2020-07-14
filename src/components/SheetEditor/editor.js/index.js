@@ -295,15 +295,9 @@ class Editor {
     });
 
     svgElem.addEventListener("blur", () => {
-      this.removeCursorNote();
       this.Draw();
     });
 
-    // svgElem.addEventListener(
-    //   "mousemove",
-    //   (e) => this.DrawMeasureWithCursorNote(e),
-    //   false
-    // );
   }
 
   // Methods for drawing cursor note
@@ -316,100 +310,10 @@ class Editor {
     };
   }
 
-  isCursorInBoundingBox(bBox, cursorPos) {
-    return (
-      cursorPos.x > bBox.getX() &&
-      cursorPos.x < bBox.getX() + bBox.getW() &&
-      cursorPos.y > bBox.getY() &&
-      cursorPos.y < bBox.getY() + bBox.getH()
-    );
-  }
 
-  DrawMeasureWithCursorNote(event) {
-    if (!this.selected.cursor) return;
 
-    // get mouse position
-    this.mousePos.current = this.getMousePos(this.svgElem, event);
 
-    // get selected measure and note
-    var vfStave = this.sheet.staves[this.selected.cursor.staveIndex];
-    // var vfStaveNote = vfStave.notes[ this.selected.cursor.noteIndex ]
 
-    // currently support only for replacing rest with a new note
-    // building chords feature will be added soon
-
-    // get column of selected note on stave
-    var bb = vfStave.getBoundingBox();
-    // var begin = vfStaveNote.getNoteHeadBeginX() - 5;
-    // bb.setX(begin);
-    // bb.setW(vfStaveNote.getNoteHeadEndX() - begin + 5);
-    // bb.setW(20);
-    // bb.draw(this.ctx);
-
-    // mouse cursor is within note column
-    if (this.isCursorInBoundingBox(bb, this.mousePos.current)) {
-      this.mousePos.previous = this.mousePos.current;
-
-      let [cursorNote, staveIndex, noteIndex] = this.getCursorNote();
-      this.selected.cursor = { cursorNote, staveIndex, noteIndex };
-
-      if (
-        this.selected.prevCursor &&
-        this.selected.cursor.cursorNote !== this.selected.prevCursor.cursorNote
-      ) {
-        this.drawCursorNote();
-        this.Draw();
-      }
-      // save previous cursor note for latter comparison
-      this.selected.prevCursor = this.selected.cursor;
-    }
-    // mouse cursor is NOT within note column
-    else {
-      if (this.isCursorInBoundingBox(bb, this.mousePos.previous)) {
-        // Draw measure to erase cursor note
-
-        // highlight the previous note
-        if (this.selected && this.selected.prevCursor) {
-          let previousNoteLe = this.svgElem.querySelector(
-            `#vf-${this.selected.prevCursor.staveIndex}__${
-              this.selected.prevCursor.noteIndex
-            }`
-          );
-          this._highlightNoteElement(previousNoteLe, "red");
-          let pCursor = lodash.clone(this.selected.prevCursor);
-          this.removeCursorNote();
-          this.selected.cursor = pCursor;
-          this.Draw();
-          this.mousePos.previous = this.mousePos.current;
-        }
-      }
-    }
-  }
-
-  removeCursorNote() {
-    if (this.selected.cursor)
-      this.sheet.staves[this.selected.cursor.staveIndex].tempNotes = [];
-  }
-
-  drawCursorNote() {
-    if (!this.selected.cursor) return;
-
-    let staveIndex = this.selected.cursor.staveIndex;
-    let noteIndex = this.selected.cursor.noteIndex;
-    let tempNotes = lodash.cloneDeep(this.sheet.staves[staveIndex].notes);
-    let tempNote = new Vex.Flow.StaveNote({
-      clef: this.clef,
-      keys: [this.selected.cursor.cursorNote],
-      duration: tempNotes[noteIndex].duration,
-      auto_stem: true,
-    });
-    tempNotes[noteIndex] = tempNote;
-
-    this.sheet.staves[staveIndex].tempNotes = tempNotes;
-    this.Draw();
-
-    // first remove the existing cursor note
-  }
 
   _splitSelectedNote(){
     let stave = this.sheet.staves[this.selected.cursor.staveIndex];
@@ -439,7 +343,7 @@ class Editor {
     // remap ids 
 
     stave.notes.map((n,i) => n.setAttribute("id", `${this.selected.cursor.staveIndex}__${i}`) )
-    this._setCursor(this.selected.cursor.staveIndex,this.selected.cursor.noteIndex+1);
+    this._setCursor(this.selected.cursor.staveIndex,this.selected.cursor.noteIndex);
 
     
   }
