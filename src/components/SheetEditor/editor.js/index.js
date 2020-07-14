@@ -7,7 +7,8 @@ const REST_POSITIONS = {
   h: "b/4",
   w: "e/5",
   8: "b/4",
-  16: "b/4"
+  16: "b/4",
+  32: "b/4"
 };
 
 
@@ -410,6 +411,46 @@ class Editor {
     // first remove the existing cursor note
   }
 
+  _splitSelectedNote(){
+    let stave = this.sheet.staves[this.selected.cursor.staveIndex];
+    let notes = stave.notes;
+    let selectedNote = stave.notes[this.selected.cursor.noteIndex];
+    let duration = selectedNote.duration ;
+    let keys = selectedNote.keys;
+    let clef = selectedNote.clef;
+    let newNotes = new Array(2).fill(null)
+    // create a new duration
+
+    switch(duration){
+      case "q":  duration ="8"; break;
+      case "8": duration = "16"; break;
+      case "16": duration = "32"; break;
+      default: return ;
+    }
+
+    newNotes = newNotes.map( () => { return new Vex.Flow.StaveNote({
+      clef,
+      keys,
+      duration,
+      auto_stem:true
+    }) })
+
+    notes.splice(this.selected.cursor.noteIndex,1,...newNotes);
+    // remap ids 
+
+    stave.notes.map((n,i) => n.setAttribute("id", `${this.selected.cursor.staveIndex}__${i}`) )
+    this._setCursor(this.selected.cursor.staveIndex,this.selected.cursor.noteIndex+1);
+
+    
+  }
+
+  _setCursor(staveIndex,noteIndex){
+    this.selected.cursor ={
+      staveIndex: staveIndex,
+      noteIndex: noteIndex
+    }
+  }
+
   getCursorNote() {
     let staveIndex = this.selected.cursor.staveIndex;
     let noteIndex = this.selected.cursor.noteIndex;
@@ -514,7 +555,12 @@ class Editor {
           break;
         }
 
-        // for alpha 
+        case event.code === "KeyS": {
+          this._splitSelectedNote();
+          break
+        }
+
+        // for adding note s 
         case keyMatch && keyMatch.length === 1: {
           this.addNote(this.selected.cursor.staveIndex, this.selected.cursor.noteIndex, `${event.code.split("Key")[1].toLowerCase()}/4` )
         } 
