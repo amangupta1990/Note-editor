@@ -243,6 +243,7 @@ export default {
     };
   },
   mounted: function() {
+   this.tab = "note"
    this.$nextTick()
    .then(()=> this.editor = new Editor(this.$refs.svgcontainer))
   },
