@@ -2,12 +2,13 @@
 import Vex from "vexflow";
 import * as lodash from "lodash";
 
-
 const REST_POSITIONS = {
   q: "b/4",
   h: "b/4",
   w: "e/5",
 };
+
+
 
 class Editor {
   //eslint-disable-next-line
@@ -26,6 +27,7 @@ class Editor {
     this.staveHeight = 140;
     this.noteWidth = 40;
     this.dotted = "";
+    this.eventsAdded = false;
     (this.formatter = Vex.Flow.Formatter), (this.svgElem = svgcontainer);
     this.renderer = new Vex.Flow.Renderer(
       svgcontainer,
@@ -34,10 +36,23 @@ class Editor {
     this.ctx = this.renderer.getContext();
 
     this.selected = {
-      staves:[],
-      notes:[]
+      staves: [],
+      notes: [],
+      cursor:{
+        staveIndex: 0,
+        noteIndex:0
+      }
     };
-    this.mousePos= {};
+    this.mousePos = {
+      previous:{
+        x:0,
+        y:0,
+      },
+      current:{
+        x:0,
+        y:0
+      }
+    };
 
     // event listerners
 
@@ -47,6 +62,12 @@ class Editor {
     this.addNote(0, 0, "c/4", "q");
     this.addNote(0, 1, "c/4", "q");
     this.deleteNote(0, 0);
+    this.Draw();
+    if (!this.eventsAdded) {
+      this.addEventListeners(this.svgElem);
+      this.addKeyboardListeners();
+      this.eventsAdded = true;
+    }
     // this.addNote(this.sheet.staves[0],"c/4","q")
     //this.editNote(this.sheet.staves[0],1,"c/4","w")
   }
@@ -71,7 +92,7 @@ class Editor {
         clef: this.clef,
         keys: [REST_POSITIONS[d]],
         duration: d + "r",
-        auto_stem: true
+        auto_stem: true,
       });
       n.setAttribute("id", `${index}__${noteIndex}`);
 
@@ -79,9 +100,6 @@ class Editor {
     });
 
     this.sheet.staves.splice(index, 0, stave);
-    this.Draw();
-    this.addEventListeners(this.svgElem)
-    // draw the notes;
   }
 
   addNote(staveIndex, noteIndex, noteName, duration) {
@@ -91,19 +109,17 @@ class Editor {
     let isRest = notes[noteIndex].isRest();
     duration = duration || notes[noteIndex].duration;
 
-
-
     let keys = stave.notes[noteIndex].keys;
     let n = new Vex.Flow.StaveNote({
       clef: this.clef,
       keys: isRest ? [noteName] : lodash.uniq([...keys, noteName]),
       duration,
-      auto_stem: true
+      auto_stem: true,
     });
     n.setAttribute("id", `${staveIndex}__${noteIndex}`);
 
     notes[noteIndex] = n;
-    this.Draw();
+    
   }
   deleteNote(staveIndex, noteIndex) {
     // convert the note into a rest
@@ -113,13 +129,13 @@ class Editor {
       clef: this.clef,
       keys: [REST_POSITIONS[oldNote.duration]],
       duration: oldNote.duration + "r",
-      auto_stem: true
+      auto_stem: true,
     });
     n.setAttribute("id", oldNote.attrs.id);
     stave.notes[noteIndex] = n;
-    //add event listener for 
-    this.Draw();
-    this.addEventListeners(this.svgElem)
+
+
+    
   }
 
   Draw() {
@@ -139,280 +155,367 @@ class Editor {
       new Vex.Flow.Formatter().format([stave.voice], this.staveWidth);
       stave.voice.draw(this.ctx, stave);
 
-      // if there are temp notes .. draw them too 
-      if(stave.tempNotes && stave.tempNotes.length){
+      // if there are temp notes .. draw them too
+      if (stave.tempNotes && stave.tempNotes.length) {
         let tempVoice = new Vex.Flow.Voice({ num_beats: 4, beat_value: 4 });
         tempVoice.addTickables(stave.tempNotes);
         new Vex.Flow.Formatter().format([tempVoice], this.staveWidth);
-        tempVoice.draw(this.ctx,stave)
+        tempVoice.draw(this.ctx, stave);
       }
-
-
     });
 
-      // highlight the selected note 
-      if(this.selected.cursor){
-      let selectedNote = this.svgElem.querySelector(`#vf-${this.selected.cursor.staveIndex}__${this.selected.cursor.noteIndex}`)
-      this._highlightNoteElement(selectedNote,"red")
-      }
-
-
+    // highlight the selected note
+    if (this.selected.cursor) {
+      let selectedNote = this.svgElem.querySelector(
+        `#vf-${this.selected.cursor.staveIndex}__${
+          this.selected.cursor.noteIndex
+        }`
+      );
+      this._highlightNoteElement(selectedNote, "red");
+    }
   }
 
-  _getSelectedElement(event){
+  _getSelectedElement(event) {
     let ele = event.target;
     while (
-      ele.classList.value.indexOf("vf-stavenote") < 0 && ele.classList.value.indexOf("vf-measureRect") < 0  
-    ){
+      ele.classList.value.indexOf("vf-stavenote") < 0 &&
+      ele.classList.value.indexOf("vf-measureRect") < 0
+    ) {
       ele = ele.parentElement;
     }
 
-    // prevent the cursor note form getting selected    
-      let id = ele.id;
-      if(id.indexOf("auto") > -1 ) 
-        return [];
+    // prevent the cursor note form getting selected
+    let id = ele.id;
+    if (id.indexOf("auto") > -1) return [];
 
-      id = id.split("-")[1].split("__");
+    id = id.split("-")[1].split("__");
 
-      // return an element only if there is a valid id selected
-      return [ele, ele.classList.value.indexOf("vf-stavenote") > -1 ? "note" : "stave", ... id ]
+    // return an element only if there is a valid id selected
+    return [
+      ele,
+      ele.classList.value.indexOf("vf-stavenote") > -1 ? "note" : "stave",
+      ...id,
+    ];
   }
 
-  _highlightNoteElement(ele,color = "black"){
-    if(!ele){
-      console.warn('No element was passed')
-      return ;
+  _highlightNoteElement(ele, color = "black") {
+    if (!ele) {
+      console.warn("No element was passed");
+      return;
     }
-    ele.querySelectorAll("*")
-    .forEach(e=>{
+    ele.querySelectorAll("*").forEach((e) => {
       e.style.fill = color;
       e.style.stroke = color;
-    })
-}
+    });
+  }
 
-// eslint-disable-next-line no-unused-vars
-_highlightStaveElement(ele,color = "transparent"){
+  // eslint-disable-next-line no-unused-vars
+  _highlightStaveElement(ele, color = "transparent") {
     ele.style.fill = color;
-    ele.style.opacity = "0.4"      
-
-}
+    ele.style.opacity = "0.4";
+  }
 
   addEventListeners(svgElem) {
     // helper function for finding the selected element:
 
-
     svgElem.addEventListener("click", (event) => {
       event.preventDefault();
-      
-      
 
       // if there is a cursor note .. add that to the stave
-      if(this.selected.cursor && this.selected.cursor.cursorNote){
-        this.addNote(this.selected.cursor.staveIndex, this.selected.cursor.noteIndex, this.selected.cursor.cursorNote)
-        this.sheet.staves[this.selected.cursor.staveIndex].tempNotes = null; 
-        this.removeCursorNote();
+      if (this.selected.cursor && this.selected.cursor.cursorNote) {
+        this.addNote(
+          this.selected.cursor.staveIndex,
+          this.selected.cursor.noteIndex,
+          this.selected.cursor.cursorNote
+        );
+        this.sheet.staves[this.selected.cursor.staveIndex].tempNotes = null;
         this.Draw();
         return;
       }
-      
+
       // eslint-disable-next-line no-unused-vars
-      let [ ele ,type, staveIndex, noteIndex ] = this._getSelectedElement(event);
+      let [ele, type, staveIndex, noteIndex] = this._getSelectedElement(event);
 
-      switch(type){
-      case 'note':{
+      switch (type) {
+        case "note": {
+          // unhighlight exsiting selection
+          if (this.selected.cursor) {
+            let ele = this.svgElem.querySelector(
+              `#vf-${this.selected.cursor.staveIndex}__${
+                this.selected.cursor.noteIndex
+              }`
+            );
+            this._highlightNoteElement(ele);
+          }
 
-      
-      
-      // unhighlight exsiting selection
-     if( this.selected.cursor){ 
-        let ele = this.svgElem.querySelector(`#vf-${this.selected.cursor.staveIndex}__${this.selected.cursor.noteIndex}`)
-        this._highlightNoteElement(ele);
-     }
-        
-   
+          // update current selection
+          this.selected.cursor = {
+            staveIndex,
+            noteIndex,
+          };
 
-      
+          this._highlightNoteElement(
+            this.svgElem.querySelector(
+              `#vf-${this.selected.cursor.staveIndex}__${
+                this.selected.cursor.noteIndex
+              }`
+            ),
+            "red"
+          );
 
-      // update current selection
-      this.selected.cursor= {
-        staveIndex,
-        noteIndex
-      }
-
-      this._highlightNoteElement(this.svgElem.querySelector(`#vf-${this.selected.cursor.staveIndex}__${this.selected.cursor.noteIndex}`),"red")
-
-      break;
-    }
-
-    case "stave": 
-      {
-       if(this.selected.cursor){
-          let ele = this.svgElem.querySelector(`#vf-${this.selected.cursor.staveIndex}`)
-          this._highlightStaveElement(ele);
-       }
-        
-
-        this.selected.cursor = {
-          staveIndex:staveIndex,
-          noteIndex: 0
+          break;
         }
 
-        this._highlightStaveElement(this.svgElem.querySelector(`#vf-${this.selected.cursor.staveIndex}`),"lightblue")
+        case "stave": {
+          if (this.selected.cursor) {
+            let ele = this.svgElem.querySelector(
+              `#vf-${this.selected.cursor.staveIndex}`
+            );
+            this._highlightStaveElement(ele);
+          }
 
-        break;
+          this.selected.cursor = {
+            staveIndex: staveIndex,
+            noteIndex: 0,
+          };
 
+          this._highlightStaveElement(
+            this.svgElem.querySelector(
+              `#vf-${this.selected.cursor.staveIndex}`
+            ),
+            "lightblue"
+          );
+
+          break;
+        }
       }
-    
-    }
-
-
     });
 
+    svgElem.addEventListener("blur", () => {
+      this.removeCursorNote();
+      this.Draw();
+    });
 
-    svgElem.addEventListener("blur", ()=> { this.removeCursorNote(); this.Draw()}) 
-
-    svgElem.addEventListener("mousemove",(e)=>this.DrawMeasureWithCursorNote(e) , false)
-
-
-
+    // svgElem.addEventListener(
+    //   "mousemove",
+    //   (e) => this.DrawMeasureWithCursorNote(e),
+    //   false
+    // );
   }
 
-   // Methods for drawing cursor note 
+  // Methods for drawing cursor note
 
-   getMousePos(canvas, evt) {
+  getMousePos(canvas, evt) {
     var rect = canvas.getBoundingClientRect();
-      return {
-        x: evt.clientX - rect.left,
-        y: evt.clientY - rect.top
-      };
-    }
+    return {
+      x: evt.clientX - rect.left,
+      y: evt.clientY - rect.top,
+    };
+  }
 
-    isCursorInBoundingBox(bBox, cursorPos) {
-      return cursorPos.x > bBox.getX() && cursorPos.x < bBox.getX() + bBox.getW() &&
-             cursorPos.y > bBox.getY() && cursorPos.y < bBox.getY() + bBox.getH();
-    }
+  isCursorInBoundingBox(bBox, cursorPos) {
+    return (
+      cursorPos.x > bBox.getX() &&
+      cursorPos.x < bBox.getX() + bBox.getW() &&
+      cursorPos.y > bBox.getY() &&
+      cursorPos.y < bBox.getY() + bBox.getH()
+    );
+  }
 
-    DrawMeasureWithCursorNote(event) {
+  DrawMeasureWithCursorNote(event) {
+    if (!this.selected.cursor) return;
 
-      if(!this.selected.cursor) return ;
+    // get mouse position
+    this.mousePos.current = this.getMousePos(this.svgElem, event);
 
-      // get mouse position
-      this.mousePos.current = this.getMousePos(this.svgElem, event);
+    // get selected measure and note
+    var vfStave = this.sheet.staves[this.selected.cursor.staveIndex];
+    // var vfStaveNote = vfStave.notes[ this.selected.cursor.noteIndex ]
 
-      
-      // get selected measure and note
-      var vfStave = this.sheet.staves[ this.selected.cursor.staveIndex ]
-      // var vfStaveNote = vfStave.notes[ this.selected.cursor.noteIndex ]
-      
+    // currently support only for replacing rest with a new note
+    // building chords feature will be added soon
 
-      // currently support only for replacing rest with a new note
-      // building chords feature will be added soon
-      
-      // get column of selected note on stave
-      var bb = vfStave.getBoundingBox();
-      // var begin = vfStaveNote.getNoteHeadBeginX() - 5;
-      // bb.setX(begin);
-      // bb.setW(vfStaveNote.getNoteHeadEndX() - begin + 5);
-      // bb.setW(20);
-      // bb.draw(this.ctx);
+    // get column of selected note on stave
+    var bb = vfStave.getBoundingBox();
+    // var begin = vfStaveNote.getNoteHeadBeginX() - 5;
+    // bb.setX(begin);
+    // bb.setW(vfStaveNote.getNoteHeadEndX() - begin + 5);
+    // bb.setW(20);
+    // bb.draw(this.ctx);
 
-      // mouse cursor is within note column
-      if(this.isCursorInBoundingBox(bb, this.mousePos.current) ) {
+    // mouse cursor is within note column
+    if (this.isCursorInBoundingBox(bb, this.mousePos.current)) {
+      this.mousePos.previous = this.mousePos.current;
 
-        this.mousePos.previous = this.mousePos.current;
+      let [cursorNote, staveIndex, noteIndex] = this.getCursorNote();
+      this.selected.cursor = { cursorNote, staveIndex, noteIndex };
 
-        let [cursorNote, staveIndex, noteIndex ] = this.getCursorNote();
-        this.selected.cursor = {cursorNote , staveIndex , noteIndex};
-
-      
-        if(this.selected.prevCursor &&  this.selected.cursor.cursorNote !== this.selected.prevCursor.cursorNote) {
-
-        
-          this.drawCursorNote(staveIndex, noteIndex);
-          this.Draw();
-
-        }
-        // save previous cursor note for latter comparison
-        this.selected.prevCursor = this.selected.cursor;
+      if (
+        this.selected.prevCursor &&
+        this.selected.cursor.cursorNote !== this.selected.prevCursor.cursorNote
+      ) {
+        this.drawCursorNote();
+        this.Draw();
       }
-      // mouse cursor is NOT within note column
-      else {
+      // save previous cursor note for latter comparison
+      this.selected.prevCursor = this.selected.cursor;
+    }
+    // mouse cursor is NOT within note column
+    else {
+      if (this.isCursorInBoundingBox(bb, this.mousePos.previous)) {
+        // Draw measure to erase cursor note
 
-        if(this.isCursorInBoundingBox(bb, this.mousePos.previous) ) {
-          // Draw measure to erase cursor note
-          
-
-          // highlight the previous note 
-          if(this.selected &&  this.selected.prevCursor){
-          let previousNoteLe =  this.svgElem.querySelector(`#vf-${this.selected.prevCursor.staveIndex}__${this.selected.prevCursor.noteIndex}`) 
-          this._highlightNoteElement(previousNoteLe,"red");
-          let pCursor = lodash.clone( this.selected.prevCursor )
+        // highlight the previous note
+        if (this.selected && this.selected.prevCursor) {
+          let previousNoteLe = this.svgElem.querySelector(
+            `#vf-${this.selected.prevCursor.staveIndex}__${
+              this.selected.prevCursor.noteIndex
+            }`
+          );
+          this._highlightNoteElement(previousNoteLe, "red");
+          let pCursor = lodash.clone(this.selected.prevCursor);
           this.removeCursorNote();
           this.selected.cursor = pCursor;
           this.Draw();
           this.mousePos.previous = this.mousePos.current;
         }
       }
-      }
-
     }
+  }
 
-    
-    removeCursorNote(){
-      if(this.selected.cursor)
+  removeCursorNote() {
+    if (this.selected.cursor)
       this.sheet.staves[this.selected.cursor.staveIndex].tempNotes = [];
-      this.selected.cursor = null
-      this.selected.prevCursor = null;
-      
-    }
+  }
 
-    drawCursorNote(staveIndex, noteIndex){
-      if(!this.selected.cursor) return ;
-      let tempNotes =lodash.cloneDeep(this.sheet.staves[staveIndex].notes)
-      let tempNote = new Vex.Flow.StaveNote({
-        clef: this.clef,
-        keys: [this.selected.cursor.cursorNote],
-        duration: tempNotes[noteIndex].duration,
-        auto_stem: true
-      });
-      tempNotes[noteIndex]  =  tempNote
-      
+  drawCursorNote() {
+    if (!this.selected.cursor) return;
 
+    let staveIndex = this.selected.cursor.staveIndex;
+    let noteIndex = this.selected.cursor.noteIndex;
+    let tempNotes = lodash.cloneDeep(this.sheet.staves[staveIndex].notes);
+    let tempNote = new Vex.Flow.StaveNote({
+      clef: this.clef,
+      keys: [this.selected.cursor.cursorNote],
+      duration: tempNotes[noteIndex].duration,
+      auto_stem: true,
+    });
+    tempNotes[noteIndex] = tempNote;
 
-      this.sheet.staves[staveIndex].tempNotes = tempNotes
-      this.Draw()
+    this.sheet.staves[staveIndex].tempNotes = tempNotes;
+    this.Draw();
 
-      // first remove the existing cursor note 
-      
+    // first remove the existing cursor note
+  }
 
-
-    }
-
-   getCursorNote() {
-     let staveIndex = this.selected.cursor.staveIndex; 
-     let noteIndex = this.selected.cursor.noteIndex;
-     if(!staveIndex && noteIndex) return [];
+  getCursorNote() {
+    let staveIndex = this.selected.cursor.staveIndex;
+    let noteIndex = this.selected.cursor.noteIndex;
+    if (!staveIndex && noteIndex) return [];
     // find the mouse position and return the correct note for that position.
     var y = this.sheet.staves[staveIndex].y;
     // var y = this.selected.measure.y;
-    var notesArray = ['c/','d/','e/','f/','g/','a/','b/'];
+    var notesArray = ["c/", "d/", "e/", "f/", "g/", "a/", "b/"];
     var count = 0;
 
-    for(var i = 5; i >= 0; i--){
-      for(var l = 0; l < notesArray.length; l++){
-        var noteOffset = (count * 35) - (l * 5 - 17);
-        if(this.mousePos.current.y >= y + noteOffset && this.mousePos.current.y <= 5 + y + noteOffset){
-          var cursorNoteKey = notesArray[l] + (i+1);
+    for (var i = 5; i >= 0; i--) {
+      for (var l = 0; l < notesArray.length; l++) {
+        var noteOffset = count * 35 - (l * 5 - 17);
+        if (
+          this.mousePos.current.y >= y + noteOffset &&
+          this.mousePos.current.y <= 5 + y + noteOffset
+        ) {
+          var cursorNoteKey = notesArray[l] + (i + 1);
           var found = true;
           break;
         }
-        if(found == true){
+        if (found == true) {
           break;
         }
       }
       count++;
     }
-    return [cursorNoteKey,staveIndex,noteIndex];
+    return [cursorNoteKey, staveIndex, noteIndex];
+  }
+
+  // cursor manipulation methods
+  _cursorForward() {
+    let sIndex = this.selected.cursor.staveIndex;
+    let nIndex = this.selected.cursor.noteIndex;
+
+    switch (true) {
+      case nIndex < this.sheet.staves[sIndex].notes.length - 1: {
+        nIndex = nIndex + 1;
+        break;
+      }
+      case nIndex === this.sheet.staves[sIndex].notes.length - 1: {
+        if (sIndex < this.sheet.staves.length - 1) {
+          sIndex = sIndex + 1;
+          nIndex = 0;
+        }
+        break;
+      }
+    }
+
+    this.selected.cursor = {
+      staveIndex: sIndex,
+      noteIndex: nIndex,
+    };
+  }
+
+  _cursorBack() {
+    let sIndex = this.selected.cursor.staveIndex;
+    let nIndex = this.selected.cursor.noteIndex;
+
+    switch (true) {
+      case nIndex > 0: {
+        nIndex = nIndex - 1;
+        break;
+      }
+      case nIndex === 0 && sIndex > 0: {
+        
+          sIndex = sIndex - 1;
+          nIndex = this.sheet.staves[sIndex].notes.length - 1;
+        
+        break;
+      }
+    }
+    this.selected.cursor = {
+      staveIndex: sIndex,
+      noteIndex: nIndex,
+    };
+  }
+
+  // add keyboard controls
+  addKeyboardListeners() {
+    document.addEventListener("keyup", (event) => {
+      switch (true) {
+        case event.code === "ArrowRight": {
+          this._cursorForward();
+          
+          break;
+        }
+
+        case event.code === "ArrowLeft": {
+          this._cursorBack();
+          
+          break;
+        }
+
+        case event.code === "Backspace": {
+          this.deleteNote(this.selected.cursor.staveIndex, this.selected.cursor.noteIndex);
+          break;
+        }
+
+        // for alpha 
+        case event.code.match(/[Key][a-zA-z]+/g).length === 1: {
+          this.addNote(this.selected.cursor.staveIndex, this.selected.cursor.noteIndex, `${event.code.split("Key")[1].toLowerCase()}/4` )
+        } 
+
+      }
+
+      this.Draw();
+    });
   }
 }
 
