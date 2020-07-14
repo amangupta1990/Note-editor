@@ -6,6 +6,8 @@ const REST_POSITIONS = {
   q: "b/4",
   h: "b/4",
   w: "e/5",
+  8: "b/4",
+  16: "b/4"
 };
 
 
@@ -28,7 +30,7 @@ class Editor {
     this.noteWidth = 40;
     this.dotted = "";
     this.eventsAdded = false;
-    (this.formatter = Vex.Flow.Formatter), (this.svgElem = svgcontainer);
+    this.svgElem = svgcontainer
     this.renderer = new Vex.Flow.Renderer(
       svgcontainer,
       Vex.Flow.Renderer.Backends.SVG
@@ -488,7 +490,12 @@ class Editor {
 
   // add keyboard controls
   addKeyboardListeners() {
+
+  
     document.addEventListener("keyup", (event) => {
+
+      let keyMatch = event.code.match(/[Key][abcdefg]+/g);
+
       switch (true) {
         case event.code === "ArrowRight": {
           this._cursorForward();
@@ -508,7 +515,7 @@ class Editor {
         }
 
         // for alpha 
-        case event.code.match(/[Key][a-zA-z]+/g).length === 1: {
+        case keyMatch && keyMatch.length === 1: {
           this.addNote(this.selected.cursor.staveIndex, this.selected.cursor.noteIndex, `${event.code.split("Key")[1].toLowerCase()}/4` )
         } 
 
