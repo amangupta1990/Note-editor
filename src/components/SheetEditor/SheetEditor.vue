@@ -1,16 +1,16 @@
 <template>
   <div class="text-gray-900">
-    <nav class="border shadow-md p-4 w-full" id="fixed-header">
+    <nav class="menu-bar" id="fixed-header">
       <div class="container">
         <ul class="flex p4 mb-4" id="this-tabs">
           <li class="mr-6">
             <a v-on:click="tab='file'" data-toggle="tab">File</a>
           </li>
           <li class="mr-6">
-            <a v-on:click=" tab = 'measure'; switchToMeasureMode();" data-toggle="tab">Measure</a>
+            <a v-on:click=" tab = 'measure'; editor.switchToMeasureMode();" data-toggle="tab">Measure</a>
           </li>
           <li class="mr-6">
-            <a href="#note" v-on:click=" tab='note'; switchToNoteMode();" data-toggle="tab">Note</a>
+            <a href="#note" v-on:click=" tab='note'; editor.switchToNoteMode();" data-toggle="tab">Note</a>
           </li>
           <div id="play-bar">
             <button
@@ -218,7 +218,7 @@
               <!-- height of 3 stave heights(overriden by javascript anyway) -->
               <!-- use rather div, but before that resolve NaNs in viewbox problem -->
               <!-- <div id="svg-container" width="800" height="420"></div> -->
-              <svg id="svg-container" class="w-full h-full outline-none" ref="svgcontainer"></svg>
+              <svg id="svg-container" class="svg-contatainer" ref="svgcontainer"></svg>
             </div>
           </div>
         </div>
@@ -251,3 +251,15 @@ export default {
   
 };
 </script>
+
+<style lang='postcss' scoped> 
+
+.svg-contatainer {
+  @apply w-full h-full outline-none;
+}
+
+.menu-bar{
+  @apply border shadow-md p-4 w-full bg-gray-100;
+}
+
+</style>
