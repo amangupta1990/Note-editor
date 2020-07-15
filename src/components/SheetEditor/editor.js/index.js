@@ -31,7 +31,11 @@ class Editor {
     this.noteWidth = 40;
     this.dotted = "";
     this.eventsAdded = false;
-    this.svgElem = svgcontainer
+    this.svgElem = svgcontainer;
+
+    this.shiftActive = false;
+    this.ctrlActive = false;
+
     this.renderer = new Vex.Flow.Renderer(
       svgcontainer,
       Vex.Flow.Renderer.Backends.SVG
@@ -40,11 +44,18 @@ class Editor {
 
     this.selected = {
       staves: [],
-      notes: [],
       cursor:{
-        staveIndex: 0,
-        noteIndex:0
-      }
+        _staveIndex: 0,
+        _noteIndex:0,
+
+        set noteIndex(value){ this._noteIndex = parseInt(value)},
+        get noteIndex(){ return parseInt(this._noteIndex)},
+        set staveIndex(value){ this._staveIndex = parseInt(value)},
+        get staveIndex(){ return parseInt(this._staveIndex)}
+
+      },
+      notes:[]
+
     };
     this.mousePos = {
       previous:{
@@ -124,6 +135,16 @@ class Editor {
     notes[noteIndex] = n;
     
   }
+
+  //TODO: implement 
+  changeDuration(){
+    
+  
+  }
+
+
+
+
   deleteNote(staveIndex, noteIndex) {
     // convert the note into a rest
     let stave = this.sheet.staves[staveIndex];
@@ -224,48 +245,22 @@ class Editor {
     svgElem.addEventListener("click", (event) => {
       event.preventDefault();
 
-      // if there is a cursor note .. add that to the stave
-      if (this.selected.cursor && this.selected.cursor.cursorNote) {
-        this.addNote(
-          this.selected.cursor.staveIndex,
-          this.selected.cursor.noteIndex,
-          this.selected.cursor.cursorNote
-        );
-        this.sheet.staves[this.selected.cursor.staveIndex].tempNotes = null;
-        this.Draw();
-        return;
-      }
 
       // eslint-disable-next-line no-unused-vars
       let [ele, type, staveIndex, noteIndex] = this._getSelectedElement(event);
 
       switch (type) {
         case "note": {
-          // unhighlight exsiting selection
-          if (this.selected.cursor) {
-            let ele = this.svgElem.querySelector(
-              `#vf-${this.selected.cursor.staveIndex}__${
-                this.selected.cursor.noteIndex
-              }`
-            );
-            this._highlightNoteElement(ele);
-          }
+
+
 
           // update current selection
-          this.selected.cursor = {
-            staveIndex,
-            noteIndex,
-          };
+          this.selected.cursor.staveIndex = staveIndex;
+          this.selected.cursor.noteIndex = noteIndex;
+          
 
-          this._highlightNoteElement(
-            this.svgElem.querySelector(
-              `#vf-${this.selected.cursor.staveIndex}__${
-                this.selected.cursor.noteIndex
-              }`
-            ),
-            "red"
-          );
 
+          this.Draw();
           break;
         }
 
@@ -277,10 +272,8 @@ class Editor {
             this._highlightStaveElement(ele);
           }
 
-          this.selected.cursor = {
-            staveIndex: staveIndex,
-            noteIndex: 0,
-          };
+          this.selected.cursor.staveIndex = staveIndex;
+          this.selected.cursor.noteIndex = this.selected.cursor.noteIndex || 0;
 
           this._highlightStaveElement(
             this.svgElem.querySelector(
@@ -315,7 +308,7 @@ class Editor {
 
 
 
-  _splitSelectedNote(){
+  splitSelectedNote(){
     let stave = this.sheet.staves[this.selected.cursor.staveIndex];
     let notes = stave.notes;
     let selectedNote = stave.notes[this.selected.cursor.noteIndex];
@@ -343,12 +336,15 @@ class Editor {
     // remap ids 
 
     stave.notes.map((n,i) => n.setAttribute("id", `${this.selected.cursor.staveIndex}__${i}`) )
-    this._setCursor(this.selected.cursor.staveIndex,this.selected.cursor.noteIndex);
+    this.setCursor(this.selected.cursor.staveIndex,this.selected.cursor.noteIndex);
 
     
   }
 
-  _setCursor(staveIndex,noteIndex){
+  // TODO: 
+  mergeNotes(){}
+
+  setCursor(staveIndex,noteIndex){
     this.selected.cursor ={
       staveIndex: staveIndex,
       noteIndex: noteIndex
@@ -404,10 +400,8 @@ class Editor {
       }
     }
 
-    this.selected.cursor = {
-      staveIndex: sIndex,
-      noteIndex: nIndex,
-    };
+    this.selected.cursor.staveIndex = sIndex;
+    this.selected.cursor.noteIndex = nIndex;
   }
 
   _cursorBack() {
@@ -427,10 +421,9 @@ class Editor {
         break;
       }
     }
-    this.selected.cursor = {
-      staveIndex: sIndex,
-      noteIndex: nIndex,
-    };
+    
+    this.selected.cursor.staveIndex = sIndex;
+    this.selected.cursor.noteIndex = nIndex;
   }
 
   // add keyboard controls
@@ -460,7 +453,7 @@ class Editor {
         }
 
         case event.code === "KeyS": {
-          this._splitSelectedNote();
+          this.splitSelectedNote();
           break
         }
 
