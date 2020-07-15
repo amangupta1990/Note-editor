@@ -432,6 +432,8 @@ class Editor {
   
     document.addEventListener("keyup", (event) => {
 
+      console.log(event);
+
       let keyMatch = event.code.match(/[Key][abcdefg]+/g);
 
       switch (true) {
