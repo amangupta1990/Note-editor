@@ -9,6 +9,7 @@
   },
   "dependencies": {
     "lodash": "^4.17.19",
+    "on-change": "^2.0.1",
     "underscore": "1.10.2",
     "vexflow": "3.0.9",
     "vue": "^2.5.22"

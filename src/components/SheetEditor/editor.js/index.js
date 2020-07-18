@@ -1,7 +1,7 @@
 /* eslint-disable no-console */
 import Vex from "vexflow";
 import * as lodash from "lodash";
-
+import onChange from 'on-change';
 
 const REST_POSITIONS = {
   q: "b/4",
@@ -18,7 +18,7 @@ class Editor {
   //eslint-disable-next-line
 
   constructor(svgcontainer) {
-    this.sheet = {};
+    this.lodash= lodash;
     this.keySig = "C";
     this.timeSigTop = 4;
     this.timeSigBottom = 4;
@@ -29,23 +29,33 @@ class Editor {
     this.accidental = "bb";
     this.staveWidth = 400;
     this.staveHeight = 140;
-    this.noteWidth = 40;
+    this.noteWidth = 100;
     this.dotted = "";
     this.eventsAdded = false;
     this.svgElem = svgcontainer;
 
     this.shiftActive = false;
     this.ctrlActive = false;
-
+    this.undo = [];
     this.renderer = new Vex.Flow.Renderer(
       svgcontainer,
       Vex.Flow.Renderer.Backends.SVG
     );
     this.ctx = this.renderer.getContext();
 
+    const _sheet ={
+      staves: []
+    }
+
+    this.sheet = onChange(_sheet,()=>{
+      this.undo.push(this.sheet)
+      console.log(this.sheet)
+    })
+
+
     this.selected = {
-      staves: [],
-      _notes:[{staveIndex: 0 , noteIndex: 0}],
+      _staves: [],
+      _notes:[{staveIndex: 0 , noteIndex: 0, keys:[REST_POSITIONS["q"]], isRest: true, duration: "q"  }],
       cursor:{
         _staveIndex: 0,
         _noteIndex:0,
@@ -58,12 +68,21 @@ class Editor {
       },
 
       get notes(){
-          return this._notes.map(n=> {return {staveIndex: parseInt(n.staveIndex), noteIndex: parseInt(n.noteIndex) } })
+          return this._notes.map(n=> {
+            return {...n, staveIndex: parseInt(n.staveIndex), noteIndex: parseInt(n.noteIndex) } })
       },
 
       set notes(value){
         if(!lodash.isArray(value)) this._notes = this._notes;
         else this._notes = value;
+      },
+
+      get staves(){
+        return this._staves.map(s=> parseInt(s))
+      },
+
+      set staves(value){
+          this._staves = value;
       }
 
     };
@@ -83,9 +102,6 @@ class Editor {
     // add first stave by default
     this.addStave();
     this.addStave();
-    this.addNote( "c/4");
-    this.addNote( "c/4");
-    this.deleteNotes();
     this.Draw();
     if (!this.eventsAdded) {
       this.addEventListeners(this.svgElem);
@@ -98,57 +114,32 @@ class Editor {
 
   addStave(index = this.sheet.staves ? this.sheet.staves.length : 0) {
     this.sheet.staves = this.sheet.staves || [];
-    let stave = new Vex.Flow.Stave(
-      10 + this.staveWidth * index,
-      40,
-      this.staveWidth
-    );
-    stave.setAttribute("id", "vf-" + index);
-    stave.addClef(this.clef).addTimeSignature("4/4");
-
-    //add selectable overlay
-
+    
     // fill bar with rests
 
-    stave.notes = new Array(4).fill("q");
-    stave.notes = stave.notes.map((d, noteIndex) => {
-      let n = new Vex.Flow.StaveNote({
-        clef: this.clef,
-        keys: [REST_POSITIONS[d]],
-        duration: d + "r",
-        auto_stem: true,
-      });
-      n.setAttribute("id", `${index}__${noteIndex}`);
-
-      return n;
-    });
-
-    this.sheet.staves.splice(index, 0, stave);
+    let notes = new Array(4).fill({keys:[REST_POSITIONS["q"]] ,duration:"q",isRest:true})
+                            .map((n,i)=> { return  {...n,staveIndex:index, noteIndex:i} })
+    this.sheet.staves.splice(index, 0, {notes});
   }
 
   addNote(noteName) {
     // modify the rest of the stave to join the notes
 
-
-    this.selected.notes.map((note)=>{
+    let notes = this.selected.notes;
+    notes = notes.map((note)=>{
     let stave = this.sheet.staves[note.staveIndex];
-    let notes = stave.notes;
-    let isRest = notes[note.noteIndex].isRest();
-    let duration =  notes[note.noteIndex].duration;
+    let isRest = note.isRest;
+    let duration =  note.duration.replace('r','');
+    let keys = isRest ? [noteName] : this.lodash.uniq([...note.keys, noteName])
+   
 
-    let keys = stave.notes[note.noteIndex].keys;
-    let n = new Vex.Flow.StaveNote({
-      clef: this.clef,
-      keys: isRest ? [noteName] : lodash.uniq([...keys, noteName]),
-      duration,
-      auto_stem: true,
-    });
-    n.setAttribute("id", `${note.staveIndex}__${note.noteIndex}`);
-
-    notes[note.noteIndex] = n;
+    let newNote = {keys,duration,isRest:false,staveIndex:  note.staveIndex,noteIndex: note.noteIndex};
+    stave.notes[note.noteIndex] = newNote;
+    this.sheet.staves[note.staveIndex] = stave;
+    return newNote;
 
   })
-    
+  this.selected.notes = notes;
   }
 
   //TODO: implement 
@@ -158,33 +149,54 @@ class Editor {
   }
 
 
-
-
   deleteNotes() {
     // convert the note into a rest
-
-    this.selected.notes.map(note=>{
+    let notes = this.selected.notes;
+    notes = notes.map(note=>{
 
     let stave = this.sheet.staves[note.staveIndex];
     let oldNote = stave.notes[note.noteIndex];
-    let n = new Vex.Flow.StaveNote({
-      clef: this.clef,
+    let newNote = {
       keys: [REST_POSITIONS[oldNote.duration]],
-      duration: oldNote.duration + "r",
-      auto_stem: true,
-    });
-    n.setAttribute("id", oldNote.attrs.id);
-    stave.notes[note.noteIndex] = n;
-
+      duration: oldNote.duration,
+      isRest:true,
+      staveIndex:oldNote.staveIndex,
+      noteIndex: oldNote.noteIndex
+    }
+    stave.notes[note.noteIndex] = newNote;
+    this.sheet.staves[note.staveIndex] = stave;
+    return newNote;
   })
+
+  this.selected.notes = notes;
 
     
   }
 
   Draw() {
     this.ctx.clear();
-    this.sheet.staves.map((stave, staveIndex) => {
-      stave.setContext(this.ctx).draw();
+    let staveXpos = 10;
+    let staveWidth = 0;
+    this.sheet.staves.map((s, staveIndex) => {
+
+      
+      staveXpos += staveWidth;
+      staveWidth = this.noteWidth*s.notes.length;
+      // drave the stave first , add timesignature
+      let stave = new Vex.Flow.Stave(
+        staveXpos,
+        40,
+        staveWidth 
+      );
+      stave.setAttribute("id", "vf-" + staveIndex);
+    
+
+      if(staveIndex === 0){
+          stave.addTimeSignature("4/4")
+          .addClef(this.clef);
+      }
+
+      stave.setContext(this.ctx).draw(); 
 
       //add selectable overlay
       this.ctx.rect(stave.getX(), stave.y, stave.getWidth(), this.staveHeight, {
@@ -193,18 +205,28 @@ class Editor {
         fill: "transparent",
       });
 
-      stave.voice = new Vex.Flow.Voice({ num_beats: 4, beat_value: 4 });
-      stave.voice.addTickables(stave.notes);
-      new Vex.Flow.Formatter().format([stave.voice], this.staveWidth);
-      stave.voice.draw(this.ctx, stave);
+      // draw the notes 
 
-      // if there are temp notes .. draw them too
-      if (stave.tempNotes && stave.tempNotes.length) {
-        let tempVoice = new Vex.Flow.Voice({ num_beats: 4, beat_value: 4 });
-        tempVoice.addTickables(stave.tempNotes);
-        new Vex.Flow.Formatter().format([tempVoice], this.staveWidth);
-        tempVoice.draw(this.ctx, stave);
-      }
+      let staveNotes =  s.notes.map(n=>{
+
+       let  staveNote = new Vex.Flow.StaveNote({
+          clef: this.clef,
+          keys: n.keys,
+          duration: !n.isRest? n.duration : n.duration+"r",
+          auto_stem: true,
+        });
+        staveNote.setAttribute("id", `${n.staveIndex}__${n.noteIndex}`);
+        return staveNote
+       })
+    
+      
+    
+      let voice = new Vex.Flow.Voice({ num_beats: staveNotes.length, beat_value: staveNotes.length });
+      voice.addTickables(staveNotes);
+      
+      new Vex.Flow.Formatter().format([voice], staveWidth);
+      voice.draw(this.ctx, stave);
+
     });
 
     // highlight the selected notes
@@ -218,10 +240,10 @@ class Editor {
     })
 
 
-    this.selected.staves.map((ss)=>{
+    this.selected.staves.map((staveIndex)=>{
       this._highlightStaveElement(
         this.svgElem.querySelector(
-          `#vf-${ss.staveIndex}`
+          `#vf-${staveIndex}`
         ),
         "lightblue"
       );
@@ -291,8 +313,8 @@ class Editor {
           //  
           this.selected.cursor.staveIndex = staveIndex;
           this.selected.cursor.noteIndex = noteIndex;
-
-          this._addtoSelectedNotes(staveIndex,noteIndex)
+          
+          this._addtoSelectedNotes(  this.sheet.staves[staveIndex].notes[noteIndex])
           break;
         }
 
@@ -315,27 +337,27 @@ class Editor {
 
   // Methods for drawing cursor note
 
-  _addtoSelectedNotes(staveIndex, noteIndex){
+  _addtoSelectedNotes(note){
     if(this.shiftActive){
       let notes = lodash.clone(this.selected.notes);
-      notes.push({staveIndex,noteIndex})
+      notes.push(note)
       notes = lodash.uniq( notes  );
       this.selected.notes = notes;
     }
     else{
-      this.selected.notes = [{staveIndex,noteIndex}];
+      this.selected.notes = [note];
     }
   }
 
-  _addtoSelectedStaves(staveIndex){
+  _addtoSelectedStaves(stave){
     if(this.shiftActive){
       let staves = lodash.clone(this.selected.staves);
-      staves.push({staveIndex})
+      staves.push(stave)
       staves = lodash.uniq(  );
-      this.selected.notes = staves;
+      this.selected.staves = staves;
     }
     else{
-      this.selected.staves = [{staveIndex}];
+      this.selected.staves = [stave];
     }
   }
 
@@ -356,8 +378,9 @@ class Editor {
     let stave = this.sheet.staves[this.selected.cursor.staveIndex];
     let notes = stave.notes;
     let selectedNote = stave.notes[this.selected.cursor.noteIndex];
-    let duration = selectedNote.duration ;
+    let duration = selectedNote.duration.replace('r','') ;
     let keys = selectedNote.keys;
+    let isRest = selectedNote.isRest;
     let clef = selectedNote.clef;
     let newNotes = new Array(2).fill(null)
     // create a new duration
@@ -369,18 +392,26 @@ class Editor {
       default: return ;
     }
 
-    newNotes = newNotes.map( () => { return new Vex.Flow.StaveNote({
+    newNotes = newNotes.map( () => { return {
       clef,
       keys,
       duration,
-      auto_stem:true
-    }) })
+      isRest
+
+    }
+    })
 
     notes.splice(this.selected.cursor.noteIndex,1,...newNotes);
     // remap ids 
 
-    stave.notes.map((n,i) => n.setAttribute("id", `${this.selected.cursor.staveIndex}__${i}`) )
-    this.setCursor(this.selected.cursor.staveIndex,this.selected.cursor.noteIndex);
+    notes = notes.map((n,i) => {
+    n.staveIndex = this.selected.cursor.staveIndex;
+    n.noteIndex= i;
+    return n 
+    
+  } )
+  stave.notes = notes;
+  this.setCursor(this.selected.cursor.staveIndex,this.selected.cursor.noteIndex+1);
 
     
   }
@@ -395,6 +426,8 @@ class Editor {
       staveIndex: staveIndex,
       noteIndex: noteIndex
     }
+    let selectedNote = this.sheet.staves[staveIndex].notes[noteIndex]
+    this._addtoSelectedNotes(selectedNote)
   }
 
   getCursorNote() {
@@ -449,8 +482,9 @@ class Editor {
 
     this.selected.cursor.staveIndex = sIndex;
     this.selected.cursor.noteIndex = nIndex;
+    let selectedNote = this.sheet.staves[sIndex].notes[nIndex]
 
-    this._addtoSelectedNotes(sIndex,nIndex)
+    this._addtoSelectedNotes(selectedNote)
 
 
 
@@ -477,8 +511,8 @@ class Editor {
     
     this.selected.cursor.staveIndex = sIndex;
     this.selected.cursor.noteIndex = nIndex;
-
-    this._addtoSelectedNotes(sIndex,nIndex)
+    let selectedNote = this.sheet.staves[sIndex].notes[nIndex]
+    this._addtoSelectedNotes(selectedNote)
   }
 
   // add keyboard controls
