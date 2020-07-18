@@ -1,16 +1,16 @@
 <template>
   <div class="text-gray-900">
-    <nav class="border shadow-md p-4 w-full" id="fixed-header">
+    <nav class="menu-bar" id="fixed-header">
       <div class="container">
         <ul class="flex p4 mb-4" id="this-tabs">
           <li class="mr-6">
             <a v-on:click="tab='file'" data-toggle="tab">File</a>
           </li>
           <li class="mr-6">
-            <a v-on:click=" tab = 'measure'; switchToMeasureMode();" data-toggle="tab">Measure</a>
+            <a v-on:click=" tab = 'measure'; editor.switchToMeasureMode();" data-toggle="tab">Measure</a>
           </li>
           <li class="mr-6">
-            <a href="#note" v-on:click=" tab='note'; switchToNoteMode();" data-toggle="tab">Note</a>
+            <a href="#note" v-on:click=" tab='note'; editor.switchToNoteMode();" data-toggle="tab">Note</a>
           </li>
           <div id="play-bar">
             <button
@@ -218,7 +218,7 @@
               <!-- height of 3 stave heights(overriden by javascript anyway) -->
               <!-- use rather div, but before that resolve NaNs in viewbox problem -->
               <!-- <div id="svg-container" width="800" height="420"></div> -->
-              <svg id="svg-container" class="w-full h-full" ref="svgcontainer"></svg>
+              <svg id="svg-container" class="svg-contatainer" ref="svgcontainer"></svg>
             </div>
           </div>
         </div>
@@ -229,180 +229,38 @@
 
 
 <script>
-import Vexflow from "vexflow";
-import parserMixin from "./Editor.parser.mixin";
-import tableMixin from "./Editor.table.mixin";
-import drawMixin from "./Editor.draw.mixin";
-import utilsMixin from "./Editor.utils.mixin";
-import noteToolMixin from "./Editor.noteTool.mixin";
-import addMixin from './Editor.add.mixin';
-import eventsMixin from './Editors.events.mixin';
-import editMixin from './Editor.edit.mixin';
-import VexflowExtensions from './VexflowExtensions';
-import deleteMixin from './Editor.delete.mixin'
+import Editor from './editor.js'
 
-
-
-const scoreJson = {
-  "score-partwise": {
-    "@version": "3.0",
-    "part-list": {
-      "score-part": {
-        "@id": "P1",
-        "part-name": {}
-      }
-    },
-    part: [
-      {
-        "@id": "P1",
-        measure: [
-          {
-            "@number": 1,
-            attributes: {
-              divisions: 4,
-              key: {
-                fifths: 0,
-                mode: "major"
-              },
-              time: {
-                beats: 4,
-                "beat-type": 4
-              },
-              clef: {
-                sign: "G",
-                line: 2
-              }
-            },
-            note: [
-              {
-                rest: null,
-                duration: 16
-              }
-            ]
-          }
-        ]
-      }
-    ]
-  }
-};
 
 export default {
   name: "SheetEditor",
-  mixins: [utilsMixin, noteToolMixin, parserMixin, tableMixin, drawMixin,addMixin, eventsMixin, editMixin, deleteMixin],
+  mixins: [],
   props: {},
   data() {
     return {
-      Vex: Object,
-      scoreJson: Object,
-      renderer: Object,
-      ctx: Object,
-      this: Object,
-      mode: String,
-      tab: String,
-      noteValue: String,
-      dotted: Boolean,
-      selected: Object,
-      measureColor: "lightblue",
-      mousePos: Object,
-      accidental: String,
-      staveWidth: Number,
-      staveHeight: Number,
-      noteWidth: Number,
-      gl_VfStaves: Array, // array with currently rendered vexflow measures(Vex.Flow.Stave)
-      gl_StaveAttributes: Array, // array of attributes for each measure
-      gl_VfStaveNotes: Array, // array of arrays with notes to corresponding stave in gl_VfStaves
-      newLine: Boolean,
-            keySig: String,
-      timeSigTop: String,
-      timeSigBottom:String,
-      clef: String,
-      timeSig: String
+      tab:String,
+      editor: Object
     };
   },
   mounted: function() {
+   this.tab = "note"
    this.$nextTick()
-   .then(()=>this.initEditor())
+   .then(()=> this.editor = new Editor(this.$refs.svgcontainer))
   },
   methods: {
-    initEditor: function(){
-    this.Vex = VexflowExtensions(Vexflow);
-    this.scoreJson = scoreJson;
-
-    this.keySig="C";
-    this.timeSigTop = 4;
-    this.timeSigBottom = 4;
-    this.clef="treble";
-
-
-
-    this.tab = "note";
-    this.mode = "measure";
-    this.noteValue = "w";
-    this.accidental = "bb";
-    this.staveWidth = 150;
-    this.staveHeight = 140;
-    this.noteWidth = 40;
-    this.gl_VfStaves = [];
-    this.gl_StaveAttributes = [];
-    this.gl_VfStaveNotes = [];
-    this.dotted = '';
-    this.renderer = new Vexflow.Flow.Renderer(
-      this.$refs.svgcontainer,
-      Vexflow.Flow.Renderer.Backends.SVG
-    );
-    this.ctx = this.renderer.getContext();
-
-    this.selected = {
-      cursorNoteKey: "b/4",
-      measure: {
-        id: "m0",
-        previousId: "m0"
-      },
-      note: {
-        id: "m0n0",
-        previousId: "m0n0"
-      }
-    };
-
-    this.mousePos = {
-      current: {
-        x: 0,
-        y: 0
-      },
-      previous: {
-        x: 0,
-        y: 0
-      }
-    };
-
-
-    this.parseAll();
-    this.switchToNoteMode();
-    },
-
-    switchToNoteMode: function() {
-      if (this.mode !== "note") {
-        this.mode = "note";
-        this.$refs.svgcontainer.addEventListener(
-          "mousemove",
-          this.redrawMeasureWithCursorNote,
-          false
-        );
-        this.drawScore();
-      }
-    },
-
-    switchToMeasureMode: function() {
-      if (this.mode !== "measure") {
-        this.mode = "measure";
-        this.$refs.svgcontainer.removeEventListener(
-          "mousemove",
-          this.redrawMeasureWithCursorNote,
-          false
-        );
-        this.drawScore();
-      }
-    }
-  }
+  },
+  
 };
 </script>
+
+<style lang='postcss' scoped> 
+
+.svg-contatainer {
+  @apply w-full h-full outline-none;
+}
+
+.menu-bar{
+  @apply border shadow-md p-4 w-full bg-gray-100;
+}
+
+</style>
