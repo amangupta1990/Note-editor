@@ -45,6 +45,7 @@ class Editor {
 
     this.selected = {
       staves: [],
+      _notes:[{staveIndex: 0 , noteIndex: 0}],
       cursor:{
         _staveIndex: 0,
         _noteIndex:0,
@@ -55,7 +56,15 @@ class Editor {
         get staveIndex(){ return parseInt(this._staveIndex)}
 
       },
-      notes:[{staveIndex: 0 , noteIndex: 0}]
+
+      get notes(){
+          return this._notes.map(n=> {return {staveIndex: parseInt(n.staveIndex), noteIndex: parseInt(n.noteIndex) } })
+      },
+
+      set notes(value){
+        if(!lodash.isArray(value)) this._notes = this._notes;
+        else this._notes = value;
+      }
 
     };
     this.mousePos = {
