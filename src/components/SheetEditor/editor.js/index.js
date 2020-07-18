@@ -2,6 +2,7 @@
 import Vex from "vexflow";
 import * as lodash from "lodash";
 
+
 const REST_POSITIONS = {
   q: "b/4",
   h: "b/4",
@@ -54,7 +55,7 @@ class Editor {
         get staveIndex(){ return parseInt(this._staveIndex)}
 
       },
-      notes:[]
+      notes:[{staveIndex: 0 , noteIndex: 0}]
 
     };
     this.mousePos = {
@@ -73,9 +74,9 @@ class Editor {
     // add first stave by default
     this.addStave();
     this.addStave();
-    this.addNote(0, 0, "c/4", "q");
-    this.addNote(0, 1, "c/4", "q");
-    this.deleteNote(0, 0);
+    this.addNote( "c/4");
+    this.addNote( "c/4");
+    this.deleteNotes();
     this.Draw();
     if (!this.eventsAdded) {
       this.addEventListeners(this.svgElem);
@@ -116,23 +117,28 @@ class Editor {
     this.sheet.staves.splice(index, 0, stave);
   }
 
-  addNote(staveIndex, noteIndex, noteName, duration) {
+  addNote(noteName) {
     // modify the rest of the stave to join the notes
-    let stave = this.sheet.staves[staveIndex];
-    let notes = stave.notes;
-    let isRest = notes[noteIndex].isRest();
-    duration = duration || notes[noteIndex].duration;
 
-    let keys = stave.notes[noteIndex].keys;
+
+    this.selected.notes.map((note)=>{
+    let stave = this.sheet.staves[note.staveIndex];
+    let notes = stave.notes;
+    let isRest = notes[note.noteIndex].isRest();
+    let duration =  notes[note.noteIndex].duration;
+
+    let keys = stave.notes[note.noteIndex].keys;
     let n = new Vex.Flow.StaveNote({
       clef: this.clef,
       keys: isRest ? [noteName] : lodash.uniq([...keys, noteName]),
       duration,
       auto_stem: true,
     });
-    n.setAttribute("id", `${staveIndex}__${noteIndex}`);
+    n.setAttribute("id", `${note.staveIndex}__${note.noteIndex}`);
 
-    notes[noteIndex] = n;
+    notes[note.noteIndex] = n;
+
+  })
     
   }
 
@@ -145,10 +151,13 @@ class Editor {
 
 
 
-  deleteNote(staveIndex, noteIndex) {
+  deleteNotes() {
     // convert the note into a rest
-    let stave = this.sheet.staves[staveIndex];
-    let oldNote = stave.notes[noteIndex];
+
+    this.selected.notes.map(note=>{
+
+    let stave = this.sheet.staves[note.staveIndex];
+    let oldNote = stave.notes[note.noteIndex];
     let n = new Vex.Flow.StaveNote({
       clef: this.clef,
       keys: [REST_POSITIONS[oldNote.duration]],
@@ -156,8 +165,9 @@ class Editor {
       auto_stem: true,
     });
     n.setAttribute("id", oldNote.attrs.id);
-    stave.notes[noteIndex] = n;
+    stave.notes[note.noteIndex] = n;
 
+  })
 
     
   }
@@ -188,15 +198,30 @@ class Editor {
       }
     });
 
-    // highlight the selected note
-    if (this.selected.cursor) {
+    // highlight the selected notes
+    this.selected.notes.map((sn)=>{
       let selectedNote = this.svgElem.querySelector(
-        `#vf-${this.selected.cursor.staveIndex}__${
-          this.selected.cursor.noteIndex
+        `#vf-${sn.staveIndex}__${
+          sn.noteIndex
         }`
       );
       this._highlightNoteElement(selectedNote, "red");
-    }
+    })
+
+
+    this.selected.staves.map((ss)=>{
+      this._highlightStaveElement(
+        this.svgElem.querySelector(
+          `#vf-${ss.staveIndex}`
+        ),
+        "lightblue"
+      );
+    })
+
+    
+
+
+
   }
 
   _getSelectedElement(event) {
@@ -254,37 +279,23 @@ class Editor {
 
 
 
-          // update current selection
+          //  
           this.selected.cursor.staveIndex = staveIndex;
           this.selected.cursor.noteIndex = noteIndex;
-          
 
-
-          this.Draw();
+          this._addtoSelectedNotes(staveIndex,noteIndex)
           break;
         }
 
         case "stave": {
-          if (this.selected.cursor) {
-            let ele = this.svgElem.querySelector(
-              `#vf-${this.selected.cursor.staveIndex}`
-            );
-            this._highlightStaveElement(ele);
-          }
+     
 
-          this.selected.cursor.staveIndex = staveIndex;
-          this.selected.cursor.noteIndex = this.selected.cursor.noteIndex || 0;
-
-          this._highlightStaveElement(
-            this.svgElem.querySelector(
-              `#vf-${this.selected.cursor.staveIndex}`
-            ),
-            "lightblue"
-          );
-
+          this._addtoSelectedStaves(staveIndex);
           break;
         }
       }
+      this.Draw();
+
     });
 
     svgElem.addEventListener("blur", () => {
@@ -294,6 +305,30 @@ class Editor {
   }
 
   // Methods for drawing cursor note
+
+  _addtoSelectedNotes(staveIndex, noteIndex){
+    if(this.shiftActive){
+      let notes = lodash.clone(this.selected.notes);
+      notes.push({staveIndex,noteIndex})
+      notes = lodash.uniq( notes  );
+      this.selected.notes = notes;
+    }
+    else{
+      this.selected.notes = [{staveIndex,noteIndex}];
+    }
+  }
+
+  _addtoSelectedStaves(staveIndex){
+    if(this.shiftActive){
+      let staves = lodash.clone(this.selected.staves);
+      staves.push({staveIndex})
+      staves = lodash.uniq(  );
+      this.selected.notes = staves;
+    }
+    else{
+      this.selected.staves = [{staveIndex}];
+    }
+  }
 
   getMousePos(canvas, evt) {
     var rect = canvas.getBoundingClientRect();
@@ -342,7 +377,9 @@ class Editor {
   }
 
   // TODO: 
-  mergeNotes(){}
+  mergeNotes(){
+
+  }
 
   setCursor(staveIndex,noteIndex){
     this.selected.cursor ={
@@ -385,6 +422,7 @@ class Editor {
   _cursorForward() {
     let sIndex = this.selected.cursor.staveIndex;
     let nIndex = this.selected.cursor.noteIndex;
+    
 
     switch (true) {
       case nIndex < this.sheet.staves[sIndex].notes.length - 1: {
@@ -402,6 +440,12 @@ class Editor {
 
     this.selected.cursor.staveIndex = sIndex;
     this.selected.cursor.noteIndex = nIndex;
+
+    this._addtoSelectedNotes(sIndex,nIndex)
+
+
+
+
   }
 
   _cursorBack() {
@@ -424,6 +468,8 @@ class Editor {
     
     this.selected.cursor.staveIndex = sIndex;
     this.selected.cursor.noteIndex = nIndex;
+
+    this._addtoSelectedNotes(sIndex,nIndex)
   }
 
   // add keyboard controls
@@ -432,42 +478,61 @@ class Editor {
   
     document.addEventListener("keyup", (event) => {
 
-      console.log(event);
+      console.log("keyup",event);
 
-      let keyMatch = event.code.match(/[Key][abcdefg]+/g);
+      let noteMatch = event.key.length === 1 ? event.key.match(/[abcdefg]/) : null;
 
       switch (true) {
-        case event.code === "ArrowRight": {
+        case event.key === "ArrowRight": {
           this._cursorForward();
-          
+          this.Draw();
           break;
         }
 
-        case event.code === "ArrowLeft": {
+        case event.key === "ArrowLeft": {
           this._cursorBack();
-          
+          this.Draw();
           break;
         }
 
-        case event.code === "Backspace": {
-          this.deleteNote(this.selected.cursor.staveIndex, this.selected.cursor.noteIndex);
+        case event.key === "Backspace": {
+          this.deleteNotes();
+          this.Draw();
           break;
         }
 
-        case event.code === "KeyS": {
+        case event.key === "s": {
           this.splitSelectedNote();
+          this.Draw();
           break
         }
 
         // for adding note s 
-        case keyMatch && keyMatch.length === 1: {
-          this.addNote(this.selected.cursor.staveIndex, this.selected.cursor.noteIndex, `${event.code.split("Key")[1].toLowerCase()}/4` )
+        case noteMatch && noteMatch.length === 1: {
+          this.addNote(`${event.key.toLowerCase()}/4` )
+          this.Draw();
+          break;
         } 
+
+        case event.key === "Control": this.ctrlActive = false; break;
+        case event.key === "Shift": this.shiftActive = false; break;
+        case event.key === "Meta": this.MetaActive = false; break;
 
       }
 
-      this.Draw();
+      
     });
+
+
+    document.addEventListener('keydown', (event)=>{
+      console.log("keydown",event);
+        switch(true){
+          case event.key === "Control": this.ctrlActive = true; break;
+          case event.key === "Shift": this.shiftActive = true; break;
+          case event.key === "Meta": this.MetaActive = true; break;
+        }
+    })
+
   }
 }
 
