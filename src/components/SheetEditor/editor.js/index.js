@@ -159,14 +159,19 @@ class Editor {
 
     let notes = this.selected.notes;
     notes = notes.map((note)=>{
+
+    // if key arledy exists then don't add it again;
+    let exists = note.keys.find(k=> k === noteName);
+    if(exists) return note;
+
     let stave = this.sheet.staves[note.staveIndex];
     let isRest = note.isRest;
     let duration =  note.duration.replace('r','');
     let keys = isRest ? [noteName] :   lodash.sortBy( this.lodash.uniq([...note.keys, noteName]))
-    let accidental = note.accidental || null;
+    let accidentals =  note.accidentals ? [...note.accidentals, this.accidental]: this.accidental? [this.accidental] : [null];
    
 
-    let newNote = {keys,duration,isRest:false,staveIndex:  note.staveIndex,noteIndex: note.noteIndex, accidental};
+    let newNote = {keys,duration,isRest:false,staveIndex:  note.staveIndex,noteIndex: note.noteIndex, accidentals};
     stave.notes[note.noteIndex] = newNote;
     this.sheet.staves[note.staveIndex] = stave;
     return newNote;
@@ -195,7 +200,7 @@ class Editor {
       isRest:true,
       staveIndex:oldNote.staveIndex,
       noteIndex: oldNote.noteIndex,
-      accidental: null
+      accidentals: []
     }
     stave.notes[note.noteIndex] = newNote;
     this.sheet.staves[note.staveIndex] = stave;
@@ -249,6 +254,13 @@ class Editor {
           duration: !n.isRest? n.duration : n.duration+"r",
           auto_stem: true,
         });
+
+        // add accidental 
+        !n.isRest && n.accidentals.length && n.accidentals.map((accidental,index)=>{
+          if(accidental)
+          staveNote.addAccidental(index, new Vex.Flow.Accidental(accidental))
+        })
+
         staveNote.setAttribute("id", `${n.staveIndex}__${n.noteIndex}`);
         return staveNote
        })
