@@ -426,6 +426,7 @@ class Editor {
     let selectedNote = stave.notes[this.selected.cursor.noteIndex];
     let duration = selectedNote.duration.replace('r','') ;
     let keys = selectedNote.keys;
+    let accidentals = selectedNote.accidentals;
     let isRest = selectedNote.isRest;
     let clef = selectedNote.clef;
     let newNotes = new Array(2).fill(null)
@@ -442,7 +443,8 @@ class Editor {
       clef,
       keys,
       duration,
-      isRest
+      isRest,
+      accidentals
 
     }
     })
