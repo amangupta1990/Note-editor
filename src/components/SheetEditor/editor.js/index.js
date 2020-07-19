@@ -1,7 +1,7 @@
 /* eslint-disable no-console */
 import Vex from "vexflow";
 import * as lodash from "lodash";
-import onChange from 'on-change';
+
 
 const REST_POSITIONS = {
   q: "b/4",
@@ -43,14 +43,12 @@ class Editor {
     );
     this.ctx = this.renderer.getContext();
 
-    const _sheet ={
+    this.sheet ={
       staves: []
     }
 
-    this.sheet = onChange(_sheet,()=>{
-      this.undo.push(this.sheet)
-      console.log(this.sheet)
-    })
+    this.states = [];
+
 
 
     this.selected = {
@@ -103,6 +101,7 @@ class Editor {
     this.addStave();
     this.addStave();
     this.Draw();
+    this.saveState();
     if (!this.eventsAdded) {
       this.addEventListeners(this.svgElem);
       this.addKeyboardListeners();
@@ -110,6 +109,20 @@ class Editor {
     }
     // this.addNote(this.sheet.staves[0],"c/4","q")
     //this.editNote(this.sheet.staves[0],1,"c/4","w")
+  }
+
+  saveState(){
+    switch(true){
+      case this.states.length === 0 : this.states.push(JSON.stringify(this.sheet)) ; console.log("state saved"); break;
+      case this.states.length > 0: {
+        const lastState = this.states[this.states.length -1];
+        const currState = JSON.stringify(this.sheet);
+        if(lastState !== currState){
+          this.states.push(currState);
+          console.log("state saved")
+        }
+      }
+    }
   }
 
   addStave(index = this.sheet.staves ? this.sheet.staves.length : 0) {
@@ -539,13 +552,17 @@ class Editor {
         }
 
         case event.key === "Backspace": {
+          if(!event.ctrlKey) return;
           this.deleteNotes();
+          this.saveState()
           this.Draw();
           break;
         }
 
         case event.key === "s": {
+          if(!event.ctrlKey) return;
           this.splitSelectedNote();
+          this.saveState()
           this.Draw();
           break
         }
@@ -553,6 +570,7 @@ class Editor {
         // for adding note s 
         case noteMatch && noteMatch.length === 1: {
           this.addNote(`${event.key.toLowerCase()}/4` )
+          this.saveState();
           this.Draw();
           break;
         } 
@@ -566,15 +584,6 @@ class Editor {
       
     });
 
-
-    document.addEventListener('keydown', (event)=>{
-      console.log("keydown",event);
-        switch(true){
-          case event.key === "Control": this.ctrlActive = true; break;
-          case event.key === "Shift": this.shiftActive = true; break;
-          case event.key === "Meta": this.MetaActive = true; break;
-        }
-    })
 
   }
 }
