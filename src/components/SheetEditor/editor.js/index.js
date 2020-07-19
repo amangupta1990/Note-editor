@@ -119,12 +119,28 @@ class Editor {
 
   undo(){
     if(!this.states.length) return;
+    const currState ={
+      sheet: JSON.stringify(this.sheet),
+      selected: JSON.stringify(this.selected)
+    }
+
+    this.undoStates.push(currState)
+
     const previousState = this.states.pop()
     if(previousState){
     this.sheet = JSON.parse(previousState.sheet)
     this.selected = JSON.parse(previousState.selected)
     this.Draw();
     }
+  }
+
+  redo(){
+    if(!this.undoStates.length) return;
+    this.saveState();
+    const undoSate = this.undoStates.pop();
+    this.sheet = JSON.parse(undoSate.sheet);
+    this.selected = JSON.parse(undoSate.selected);
+
   }
 
   addStave(index = this.sheet.staves ? this.sheet.staves.length : 0) {
@@ -554,7 +570,6 @@ class Editor {
         }
 
         case event.key === "Backspace": {
-          if(!event.ctrlKey) return;
           this.saveState()
           this.deleteNotes();
           this.Draw();
@@ -572,6 +587,13 @@ class Editor {
         case event.key === "z": {
           if(!event.ctrlKey && !event.metaKey ) return;
           this.undo();
+          this.Draw();
+          break
+        }
+
+        case event.key === "r": {
+          if(!event.ctrlKey && !event.metaKey ) return;
+          this.redo();
           this.Draw();
           break
         }
