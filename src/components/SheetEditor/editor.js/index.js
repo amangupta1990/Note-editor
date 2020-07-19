@@ -60,9 +60,13 @@ class Editor {
         _noteIndex:0,
 
         set noteIndex(value){ this._noteIndex = parseInt(value)},
-        get noteIndex(){ return parseInt(this._noteIndex)},
+        get noteIndex(){
+          
+          return parseInt(this._noteIndex)},
         set staveIndex(value){ this._staveIndex = parseInt(value)},
-        get staveIndex(){ return parseInt(this._staveIndex)}
+        get staveIndex(){ 
+          return parseInt(this._staveIndex)
+        }
 
       },
 
