@@ -36,7 +36,6 @@ class Editor {
 
     this.shiftActive = false;
     this.ctrlActive = false;
-    this.undo = [];
     this.renderer = new Vex.Flow.Renderer(
       svgcontainer,
       Vex.Flow.Renderer.Backends.SVG
@@ -48,6 +47,7 @@ class Editor {
     }
 
     this.states = [];
+    this.undoStates = []
 
 
 
@@ -101,7 +101,6 @@ class Editor {
     this.addStave();
     this.addStave();
     this.Draw();
-    this.saveState();
     if (!this.eventsAdded) {
       this.addEventListeners(this.svgElem);
       this.addKeyboardListeners();
@@ -112,16 +111,19 @@ class Editor {
   }
 
   saveState(){
-    switch(true){
-      case this.states.length === 0 : this.states.push(JSON.stringify(this.sheet)) ; console.log("state saved"); break;
-      case this.states.length > 0: {
-        const lastState = this.states[this.states.length -1];
-        const currState = JSON.stringify(this.sheet);
-        if(lastState !== currState){
-          this.states.push(currState);
-          console.log("state saved")
-        }
-      }
+    const sheet = JSON.stringify(this.sheet);
+    const selected = JSON.stringify(this.selected);
+    this.states.push({sheet,selected}) ; console.log("state saved",this.states);
+  }
+  
+
+  undo(){
+    if(!this.states.length) return;
+    const previousState = this.states.pop()
+    if(previousState){
+    this.sheet = JSON.parse(previousState.sheet)
+    this.selected = JSON.parse(previousState.selected)
+    this.Draw();
     }
   }
 
@@ -534,7 +536,7 @@ class Editor {
   
     document.addEventListener("keyup", (event) => {
 
-      console.log("keyup",event);
+      
 
       let noteMatch = event.key.length === 1 ? event.key.match(/[abcdefg]/) : null;
 
@@ -553,24 +555,31 @@ class Editor {
 
         case event.key === "Backspace": {
           if(!event.ctrlKey) return;
-          this.deleteNotes();
           this.saveState()
+          this.deleteNotes();
           this.Draw();
           break;
         }
 
         case event.key === "s": {
           if(!event.ctrlKey) return;
-          this.splitSelectedNote();
           this.saveState()
+          this.splitSelectedNote();
+          this.Draw();
+          break
+        }
+
+        case event.key === "z": {
+          if(!event.ctrlKey && !event.metaKey ) return;
+          this.undo();
           this.Draw();
           break
         }
 
         // for adding note s 
         case noteMatch && noteMatch.length === 1: {
-          this.addNote(`${event.key.toLowerCase()}/4` )
           this.saveState();
+          this.addNote(`${event.key.toLowerCase()}/4` )
           this.Draw();
           break;
         } 
@@ -580,6 +589,14 @@ class Editor {
         case event.key === "Meta": this.MetaActive = false; break;
 
       }
+
+      document.addEventListener("keydown",(event)=>{
+        switch(true){
+        case event.key === "Control": this.ctrlActive = true; break;
+        case event.key === "Shift": this.shiftActive = true; break;
+        case event.key === "Meta": this.MetaActive = true; break;
+        }
+      })
 
       
     });
