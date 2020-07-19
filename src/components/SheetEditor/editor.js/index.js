@@ -36,6 +36,7 @@ class Editor {
 
     this.shiftActive = false;
     this.ctrlActive = false;
+    this.accidental = null;
     this.renderer = new Vex.Flow.Renderer(
       svgcontainer,
       Vex.Flow.Renderer.Backends.SVG
@@ -161,10 +162,11 @@ class Editor {
     let stave = this.sheet.staves[note.staveIndex];
     let isRest = note.isRest;
     let duration =  note.duration.replace('r','');
-    let keys = isRest ? [noteName] : this.lodash.uniq([...note.keys, noteName])
+    let keys = isRest ? [noteName] :   lodash.sortBy( this.lodash.uniq([...note.keys, noteName]))
+    let accidental = note.accidental || null;
    
 
-    let newNote = {keys,duration,isRest:false,staveIndex:  note.staveIndex,noteIndex: note.noteIndex};
+    let newNote = {keys,duration,isRest:false,staveIndex:  note.staveIndex,noteIndex: note.noteIndex, accidental};
     stave.notes[note.noteIndex] = newNote;
     this.sheet.staves[note.staveIndex] = stave;
     return newNote;
@@ -192,7 +194,8 @@ class Editor {
       duration: oldNote.duration,
       isRest:true,
       staveIndex:oldNote.staveIndex,
-      noteIndex: oldNote.noteIndex
+      noteIndex: oldNote.noteIndex,
+      accidental: null
     }
     stave.notes[note.noteIndex] = newNote;
     this.sheet.staves[note.staveIndex] = stave;
@@ -372,7 +375,7 @@ class Editor {
     if(this.shiftActive){
       let notes = lodash.clone(this.selected.notes);
       notes.push(note)
-      notes = lodash.uniq( notes  );
+      notes = lodash.uniq(notes);
       this.selected.notes = notes;
     }
     else{
@@ -584,6 +587,8 @@ class Editor {
           break
         }
 
+        // undo and redo
+
         case event.key === "z": {
           if(!event.ctrlKey && !event.metaKey ) return;
           this.undo();
@@ -596,6 +601,29 @@ class Editor {
           this.redo();
           this.Draw();
           break
+        }
+
+        // enable accidentals accordingly 
+
+        case event.key === "B"  || event.key === "#"  || event.key === "N" : {
+          if(!event.shiftKey ) return;
+          
+          let key = event.key.toLowerCase();
+
+          switch(true){
+            case this.accidental === null : this.accidental = key ; break;
+            case this.accidental  && this.accidental.indexOf(key) < 0 : this.accidental = key; break;
+            case key === "b":
+                this.accidental = this.accidental === "b" && this.accidental === key ? this.accidental = "bb" :  null  ; break;
+            case key === "#":
+                this.accidental = this.accidental === "#" && this.accidental === key? this.accidental = "##" :  null; break;
+            case key === "n":
+                  this.accidental = this.accidental ==="n" ? this.accidental = null : this.accidental = "n" ; break;
+            
+          }
+          console.log(this.accidental)
+
+          break;
         }
 
         // for adding note s 
