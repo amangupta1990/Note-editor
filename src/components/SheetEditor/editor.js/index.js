@@ -3,6 +3,7 @@ import Vex from "vexflow";
 import * as lodash from "lodash";
 
 
+
 const REST_POSITIONS = {
   q: "b/4",
   h: "b/4",
@@ -11,6 +12,16 @@ const REST_POSITIONS = {
   16: "b/4",
   32: "b/4"
 };
+
+const NOTE_VAlUES ={
+  c:1,
+  d:2,
+  e:3,
+  f:4,
+  g:5,
+  a:6,
+  b:7
+}
 
 
 
@@ -36,6 +47,7 @@ class Editor {
 
     this.shiftActive = false;
     this.ctrlActive = false;
+    this.accidental = null;
     this.renderer = new Vex.Flow.Renderer(
       svgcontainer,
       Vex.Flow.Renderer.Backends.SVG
@@ -59,9 +71,13 @@ class Editor {
         _noteIndex:0,
 
         set noteIndex(value){ this._noteIndex = parseInt(value)},
-        get noteIndex(){ return parseInt(this._noteIndex)},
+        get noteIndex(){
+          
+          return parseInt(this._noteIndex)},
         set staveIndex(value){ this._staveIndex = parseInt(value)},
-        get staveIndex(){ return parseInt(this._staveIndex)}
+        get staveIndex(){ 
+          return parseInt(this._staveIndex)
+        }
 
       },
 
@@ -158,13 +174,18 @@ class Editor {
 
     let notes = this.selected.notes;
     notes = notes.map((note)=>{
+
+    // if key arledy exists then don't add it again;
+
+
     let stave = this.sheet.staves[note.staveIndex];
     let isRest = note.isRest;
     let duration =  note.duration.replace('r','');
-    let keys = isRest ? [noteName] : this.lodash.uniq([...note.keys, noteName])
+    let keys = isRest ? [noteName] :   lodash.uniq([...note.keys, noteName]);
+    let accidentals =  note.accidentals ? [...note.accidentals, this.accidental]: this.accidental? [this.accidental] : [null];
    
 
-    let newNote = {keys,duration,isRest:false,staveIndex:  note.staveIndex,noteIndex: note.noteIndex};
+    let newNote = {keys,duration,isRest:false,staveIndex:  note.staveIndex,noteIndex: note.noteIndex, accidentals};
     stave.notes[note.noteIndex] = newNote;
     this.sheet.staves[note.staveIndex] = stave;
     return newNote;
@@ -192,7 +213,8 @@ class Editor {
       duration: oldNote.duration,
       isRest:true,
       staveIndex:oldNote.staveIndex,
-      noteIndex: oldNote.noteIndex
+      noteIndex: oldNote.noteIndex,
+      accidentals: []
     }
     stave.notes[note.noteIndex] = newNote;
     this.sheet.staves[note.staveIndex] = stave;
@@ -202,6 +224,30 @@ class Editor {
   this.selected.notes = notes;
 
     
+  }
+
+  // note sorting fuction 
+
+   compareNotes (noteA, noteB) {
+    const toneA = noteA.charAt(0);
+    const toneB = noteB.charAt(0);
+    const octaveA = parseInt(noteA.charAt(1));
+    const octaveB = parseInt(noteB.charAt(1));
+  
+    if (octaveA === octaveB) {
+      // console.log('same octave');
+      if ( NOTE_VAlUES[toneA] > NOTE_VAlUES[toneB]) {
+        return 1;
+      } else if ( toneA == toneB) {
+        return 0;
+      } else {
+        return -1;
+      }
+    } else if (octaveA > octaveB) {
+      return 1;
+    } else {
+      return -1;
+    }
   }
 
   Draw() {
@@ -240,12 +286,34 @@ class Editor {
 
       let staveNotes =  s.notes.map(n=>{
 
+
+       // sort notes according to keys
+       n.accidentals = n.accidentals || [null];
+       let keys = n.keys.map((k,i)=> {return { index:i, key: k, accidental: n.accidentals[i]  }})
+       keys = keys.sort((a,b)=> this.compareNotes( a.key.split("/").join('') , b.key.split("/").join('') ) );
+
+       let sortedKeys = keys.map(k=>k.key);
+       let sortedAccidentals = keys.map(k=>k.accidental)
+
+       console.log("unsorted",n.keys)
+       console.log("sorted",sortedKeys)
+
+     
+       
+
        let  staveNote = new Vex.Flow.StaveNote({
           clef: this.clef,
-          keys: n.keys,
+          keys: sortedKeys,
           duration: !n.isRest? n.duration : n.duration+"r",
           auto_stem: true,
         });
+
+        // add accidental 
+        !n.isRest && sortedAccidentals.length && sortedAccidentals.map((accidental,index)=>{
+          if(accidental)
+          staveNote.addAccidental(index, new Vex.Flow.Accidental(accidental))
+        })
+
         staveNote.setAttribute("id", `${n.staveIndex}__${n.noteIndex}`);
         return staveNote
        })
@@ -372,7 +440,7 @@ class Editor {
     if(this.shiftActive){
       let notes = lodash.clone(this.selected.notes);
       notes.push(note)
-      notes = lodash.uniq( notes  );
+      notes = lodash.uniq(notes);
       this.selected.notes = notes;
     }
     else{
@@ -411,6 +479,7 @@ class Editor {
     let selectedNote = stave.notes[this.selected.cursor.noteIndex];
     let duration = selectedNote.duration.replace('r','') ;
     let keys = selectedNote.keys;
+    let accidentals = selectedNote.accidentals;
     let isRest = selectedNote.isRest;
     let clef = selectedNote.clef;
     let newNotes = new Array(2).fill(null)
@@ -427,7 +496,8 @@ class Editor {
       clef,
       keys,
       duration,
-      isRest
+      isRest,
+      accidentals
 
     }
     })
@@ -584,6 +654,8 @@ class Editor {
           break
         }
 
+        // undo and redo
+
         case event.key === "z": {
           if(!event.ctrlKey && !event.metaKey ) return;
           this.undo();
@@ -596,6 +668,29 @@ class Editor {
           this.redo();
           this.Draw();
           break
+        }
+
+        // enable accidentals accordingly 
+
+        case event.key === "B"  || event.key === "#"  || event.key === "N" : {
+          if(!event.shiftKey ) return;
+          
+          let key = event.key.toLowerCase();
+
+          switch(true){
+            case this.accidental === null : this.accidental = key ; break;
+            case this.accidental  && this.accidental.indexOf(key) < 0 : this.accidental = key; break;
+            case key === "b":
+                this.accidental = this.accidental === "b" && this.accidental === key ? this.accidental = "bb" :  null  ; break;
+            case key === "#":
+                this.accidental = this.accidental === "#" && this.accidental === key? this.accidental = "##" :  null; break;
+            case key === "n":
+                  this.accidental = this.accidental ==="n" ? this.accidental = null : this.accidental = "n" ; break;
+            
+          }
+          console.log(this.accidental)
+
+          break;
         }
 
         // for adding note s 
