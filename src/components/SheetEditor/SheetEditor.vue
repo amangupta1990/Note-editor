@@ -229,7 +229,7 @@
 
 
 <script>
-import Editor from './editor.js'
+import Editor from '../../../editor/dist/'
 
 
 export default {
