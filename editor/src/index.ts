@@ -283,7 +283,7 @@ class Editor {
 
   // note sorting fuction 
 
-   compareNotes (noteA:string, noteB:String) {
+ private   compareNotes (noteA:string, noteB:String) {
     const toneA = noteA.charAt(0);
     const toneB = noteB.charAt(0);
     const octaveA = parseInt(noteA.charAt(1));
@@ -409,7 +409,7 @@ class Editor {
 
   }
 
-  _getSelectedElement(event:any) {
+ private  _getSelectedElement(event:any) {
     let ele = event.target;
     while (
       ele.classList.value.indexOf("vf-stavenote") < 0 &&
@@ -432,7 +432,7 @@ class Editor {
     ];
   }
 
-  _highlightNoteElement(ele:(HTMLElement | null), color:string = "black") {
+ private  _highlightNoteElement(ele:(HTMLElement | null), color:string = "black") {
     if (!ele) {
       console.warn("No element was passed");
       return;
@@ -444,7 +444,7 @@ class Editor {
   }
 
   // eslint-disable-next-line no-unused-vars
-  _highlightStaveElement(ele:any, color = "transparent") {
+ private _highlightStaveElement(ele:any, color = "transparent") {
     ele.style.fill = color;
     ele.style.opacity = "0.4";
   }
@@ -491,7 +491,7 @@ class Editor {
 
   // Methods for drawing cursor note
 
-  _addtoSelectedNotes(note:ed_note){
+  private _addtoSelectedNotes(note:ed_note){
     if(this.shiftActive){
       let notes = lodash.clone(this.selected.notes);
       notes.push(note)
@@ -503,7 +503,7 @@ class Editor {
     }
   }
 
-  _addtoSelectedStaves(stave:number){
+  private _addtoSelectedStaves(stave:number){
     if(this.shiftActive){
       let staves = lodash.clone(this.selected.staves);
       staves.push(stave)
