@@ -3,6 +3,7 @@ import Vex from "vexflow";
 import * as lodash from "lodash";
 
 
+
 const REST_POSITIONS = {
   q: "b/4",
   h: "b/4",
@@ -11,6 +12,16 @@ const REST_POSITIONS = {
   16: "b/4",
   32: "b/4"
 };
+
+const NOTE_VAlUES ={
+  c:1,
+  d:2,
+  e:3,
+  f:4,
+  g:5,
+  a:6,
+  b:7
+}
 
 
 
@@ -165,13 +176,12 @@ class Editor {
     notes = notes.map((note)=>{
 
     // if key arledy exists then don't add it again;
-    let exists = note.keys.find(k=> k === noteName);
-    if(exists) return note;
+
 
     let stave = this.sheet.staves[note.staveIndex];
     let isRest = note.isRest;
     let duration =  note.duration.replace('r','');
-    let keys = isRest ? [noteName] :   lodash.sortBy( this.lodash.uniq([...note.keys, noteName]))
+    let keys = isRest ? [noteName] :   lodash.uniq([...note.keys, noteName]);
     let accidentals =  note.accidentals ? [...note.accidentals, this.accidental]: this.accidental? [this.accidental] : [null];
    
 
@@ -216,6 +226,30 @@ class Editor {
     
   }
 
+  // note sorting fuction 
+
+   compareNotes (noteA, noteB) {
+    const toneA = noteA.charAt(0);
+    const toneB = noteB.charAt(0);
+    const octaveA = parseInt(noteA.charAt(1));
+    const octaveB = parseInt(noteB.charAt(1));
+  
+    if (octaveA === octaveB) {
+      // console.log('same octave');
+      if ( NOTE_VAlUES[toneA] > NOTE_VAlUES[toneB]) {
+        return 1;
+      } else if ( toneA == toneB) {
+        return 0;
+      } else {
+        return -1;
+      }
+    } else if (octaveA > octaveB) {
+      return 1;
+    } else {
+      return -1;
+    }
+  }
+
   Draw() {
     this.ctx.clear();
     let staveXpos = 10;
@@ -252,15 +286,30 @@ class Editor {
 
       let staveNotes =  s.notes.map(n=>{
 
+
+       // sort notes according to keys
+       n.accidentals = n.accidentals || [null];
+       let keys = n.keys.map((k,i)=> {return { index:i, key: k, accidental: n.accidentals[i]  }})
+       keys = keys.sort((a,b)=> this.compareNotes( a.key.split("/").join('') , b.key.split("/").join('') ) );
+
+       let sortedKeys = keys.map(k=>k.key);
+       let sortedAccidentals = keys.map(k=>k.accidental)
+
+       console.log("unsorted",n.keys)
+       console.log("sorted",sortedKeys)
+
+     
+       
+
        let  staveNote = new Vex.Flow.StaveNote({
           clef: this.clef,
-          keys: n.keys,
+          keys: sortedKeys,
           duration: !n.isRest? n.duration : n.duration+"r",
           auto_stem: true,
         });
 
         // add accidental 
-        !n.isRest && n.accidentals.length && n.accidentals.map((accidental,index)=>{
+        !n.isRest && sortedAccidentals.length && sortedAccidentals.map((accidental,index)=>{
           if(accidental)
           staveNote.addAccidental(index, new Vex.Flow.Accidental(accidental))
         })
