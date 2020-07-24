@@ -63,7 +63,18 @@ var NOTE_VAlUES = function (key) {
         case "g": return 5;
         case "a": return 6;
         case "b": return 7;
-        default: return "";
+        default: return 0;
+    }
+};
+var DURATION_VALUES = function (key) {
+    switch (key) {
+        case "w": return 32;
+        case "h": return 16;
+        case "q": return 8;
+        case "8": return 4;
+        case "16": return 2;
+        case "32": return 1;
+        default: return 0;
     }
 };
 var Editor = /** @class */ (function () {
@@ -448,6 +459,30 @@ var Editor = /** @class */ (function () {
     };
     // TODO: 
     Editor.prototype.mergeNotes = function () {
+        var newNote = this.selected.notes.reduce(function (a, b) {
+            var mergedDuration = DURATION_VALUES(a.duration) + DURATION_VALUES(b.duration);
+            switch (mergedDuration) {
+                case 2:
+                    mergedDuration = "16";
+                    break;
+                case 4:
+                    mergedDuration = "8";
+                    break;
+                case 8:
+                    mergedDuration = "q";
+                    break;
+                case 16:
+                    mergedDuration = "h";
+                    break;
+                case 32:
+                    mergedDuration = "w";
+                    break;
+            }
+            return __assign(__assign({}, a), { keys: __spreadArrays(a.keys, b.keys), duration: mergedDuration });
+        });
+        newNote.staveIndex = this.selected.notes[0].staveIndex;
+        newNote.noteIndex = this.selected.notes[1].noteIndex;
+        this.sheet.staves[this.selected.notes[0].staveIndex].notes.splice(this.selected.notes[0].noteIndex, this.selected.notes.length, newNote);
     };
     Editor.prototype.setCursor = function (staveIndex, noteIndex) {
         this.selected.cursor = {
@@ -555,6 +590,14 @@ var Editor = /** @class */ (function () {
                         return;
                     _this.saveState();
                     _this.splitSelectedNote();
+                    _this.Draw();
+                    break;
+                }
+                case event.key === "j": {
+                    if (!event.ctrlKey)
+                        return;
+                    _this.saveState();
+                    _this.mergeNotes();
                     _this.Draw();
                     break;
                 }

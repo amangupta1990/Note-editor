@@ -31,8 +31,20 @@ const NOTE_VAlUES =  (key:string)=>{
   case "g": return 5;
   case "a": return 6;
   case "b": return 7;
-  default: return "";
+  default: return 0;
     }
+}
+
+const DURATION_VALUES =  (key:string)=>{
+  switch(key){ 
+case "w": return 32;
+case "h": return 16;
+case "q": return 8;
+case "8": return 4;
+case "16": return 2;
+case "32": return 1;
+default: return 0;
+  }
 }
 
 // types  
@@ -524,10 +536,6 @@ class Editor {
   }
 
 
-
-
-
-
   splitSelectedNote(){
     let stave = this.sheet.staves[this.selected.cursor.staveIndex];
     let notes = stave.notes;
@@ -572,8 +580,40 @@ class Editor {
     
   }
 
+
+
   // TODO: 
   mergeNotes(){
+
+      const newNote:ed_note = this.selected.notes.reduce((a:any,b:any)=>{
+
+     
+          let mergedDuration: (string | number) =
+            DURATION_VALUES(a.duration) + DURATION_VALUES(b.duration)
+
+          switch(mergedDuration){
+            case 2 : mergedDuration = "16"; break;
+            case 4 : mergedDuration =  "8"; break;
+            case 8 : mergedDuration = "q"; break;
+            case 16: mergedDuration = "h"; break;
+            case 32: mergedDuration = "w"; break;
+          }
+
+          return {
+            ...a,
+            keys: [...a.keys,...b.keys],
+            duration:mergedDuration
+        }
+          
+      })
+
+
+      newNote.staveIndex =  this.selected.notes[0].staveIndex;
+      newNote.noteIndex = this.selected.notes[1].noteIndex;
+
+      this.sheet.staves[this.selected.notes[0].staveIndex].notes.splice(this.selected.notes[0].noteIndex,this.selected.notes.length,newNote)
+
+
 
   }
 
@@ -708,6 +748,14 @@ class Editor {
           if(!event.ctrlKey) return;
           this.saveState()
           this.splitSelectedNote();
+          this.Draw();
+          break
+        }
+
+        case event.key === "j": {
+          if(!event.ctrlKey) return;
+          this.saveState()
+          this.mergeNotes();
           this.Draw();
           break
         }
