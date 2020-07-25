@@ -427,6 +427,12 @@ var Editor = /** @class */ (function () {
         var newNotes = new Array(2).fill(null);
         // create a new duration
         switch (duration) {
+            case "w":
+                duration = "2";
+                break;
+            case "h":
+                duration = "4";
+                break;
             case "q":
                 duration = "8";
                 break;
@@ -460,8 +466,11 @@ var Editor = /** @class */ (function () {
     // TODO:  handle case for merge which creates dotted notes 
     Editor.prototype.mergeNotes = function () {
         var newNote = this.selected.notes.reduce(function (a, b) {
-            var mergedDuration = DURATION_VALUES(a.duration) + DURATION_VALUES(b.duration);
-            switch (mergedDuration) {
+            var mergedDuration = '';
+            var mergedDurationValue = DURATION_VALUES(a.duration) + DURATION_VALUES(b.duration);
+            var dotted = false;
+            switch (mergedDurationValue) {
+                // cases for regular notes 
                 case 2:
                     mergedDuration = "16";
                     break;
@@ -477,11 +486,27 @@ var Editor = /** @class */ (function () {
                 case 32:
                     mergedDuration = "w";
                     break;
+                // handle cases for dotted notes 
+                //dotted 16th note
+                case 3:
+                    mergedDuration = "16";
+                    dotted = true;
+                    break;
+                //dotted 8th note
+                case 6:
+                    mergedDuration = "8";
+                    dotted = true;
+                    break;
+                // dotted quater ntoe 
+                case 12:
+                    mergedDuration = "1";
+                    dotted = true;
+                    break;
             }
-            return __assign(__assign({}, a), { keys: __spreadArrays(a.keys, b.keys), duration: mergedDuration });
+            return __assign(__assign({}, a), { isRest: a.isREst || b.isRest, keys: !(a.isRest || b.isRest) ? [REST_POSITIONS(mergedDuration)] : lodash.uniq(__spreadArrays(a.keys, b.keys)), duration: mergedDuration, dotted: dotted });
         });
         newNote.staveIndex = this.selected.notes[0].staveIndex;
-        newNote.noteIndex = this.selected.notes[1].noteIndex;
+        newNote.noteIndex = this.selected.notes[0].noteIndex;
         this.sheet.staves[this.selected.notes[0].staveIndex].notes.splice(this.selected.notes[0].noteIndex, this.selected.notes.length, newNote);
     };
     Editor.prototype.setCursor = function (staveIndex, noteIndex) {

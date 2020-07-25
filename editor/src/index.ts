@@ -53,6 +53,7 @@ interface ed_note{
     duration : string,
     keys: string[],
     accidentals: ( string | null )[],
+    dotted?: boolean;
     isRest: boolean,
     staveIndex: number,
     noteIndex: number
@@ -549,6 +550,8 @@ class Editor {
     // create a new duration
 
     switch(duration){
+      case "w": duration = "2"; break;
+      case "h": duration= "4"; break;
       case "q":  duration ="8"; break;
       case "8": duration = "16"; break;
       case "16": duration = "32"; break;
@@ -587,29 +590,46 @@ class Editor {
 
       const newNote:ed_note = this.selected.notes.reduce((a:any,b:any)=>{
 
-     
-          let mergedDuration: (string | number) =
+          let mergedDuration:string='';
+          let mergedDurationValue: number =
             DURATION_VALUES(a.duration) + DURATION_VALUES(b.duration)
+            let dotted = false;
 
-          switch(mergedDuration){
+          switch(mergedDurationValue){
+
+          // cases for regular notes 
+
             case 2 : mergedDuration = "16"; break;
             case 4 : mergedDuration =  "8"; break;
             case 8 : mergedDuration = "q"; break;
             case 16: mergedDuration = "h"; break;
             case 32: mergedDuration = "w"; break;
+
+          // handle cases for dotted notes 
+
+          //dotted 16th note
+          case 3: mergedDuration = "16" ; dotted = true; break;
+          //dotted 8th note
+          case 6: mergedDuration = "8"; dotted = true; break;
+          // dotted quater ntoe 
+          case 12: mergedDuration = "1"; dotted = true; break;
+          
+
           }
 
           return {
             ...a,
-            keys: [...a.keys,...b.keys],
-            duration:mergedDuration
+            isRest: a.isREst || b.isRest,
+            keys: !(a.isRest || b.isRest) ? [REST_POSITIONS(mergedDuration)] : lodash.uniq([...a.keys,...b.keys]),
+            duration:mergedDuration,
+            dotted,
         }
           
       })
 
 
       newNote.staveIndex =  this.selected.notes[0].staveIndex;
-      newNote.noteIndex = this.selected.notes[1].noteIndex;
+      newNote.noteIndex = this.selected.notes[0].noteIndex;
 
       this.sheet.staves[this.selected.notes[0].staveIndex].notes.splice(this.selected.notes[0].noteIndex,this.selected.notes.length,newNote)
 
