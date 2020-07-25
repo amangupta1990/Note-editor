@@ -325,7 +325,7 @@ class Editor {
 
       
       staveXpos += staveWidth;
-      staveWidth = this.noteWidth*s.notes.length;
+      staveWidth = this.noteWidth*(s.notes.length  < 4 ? 4 :  s.notes.length   );
       // drave the stave first , add timesignature
       let stave = new Vex.Flow.Stave(
         staveXpos,
@@ -582,7 +582,7 @@ class Editor {
 
 
 
-  // TODO: 
+  // TODO:  handle case for merge which creates dotted notes 
   mergeNotes(){
 
       const newNote:ed_note = this.selected.notes.reduce((a:any,b:any)=>{

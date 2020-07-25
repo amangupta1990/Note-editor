@@ -271,7 +271,7 @@ var Editor = /** @class */ (function () {
         var staveWidth = 0;
         this.sheet.staves.map(function (s, staveIndex) {
             staveXpos += staveWidth;
-            staveWidth = _this.noteWidth * s.notes.length;
+            staveWidth = _this.noteWidth * (s.notes.length < 4 ? 4 : s.notes.length);
             // drave the stave first , add timesignature
             var stave = new vexflow_1.default.Flow.Stave(staveXpos, 40, staveWidth);
             stave.setAttribute("id", "vf-" + staveIndex);
@@ -457,7 +457,7 @@ var Editor = /** @class */ (function () {
         stave.notes = notes;
         this.setCursor(this.selected.cursor.staveIndex, this.selected.cursor.noteIndex + 1);
     };
-    // TODO: 
+    // TODO:  handle case for merge which creates dotted notes 
     Editor.prototype.mergeNotes = function () {
         var newNote = this.selected.notes.reduce(function (a, b) {
             var mergedDuration = DURATION_VALUES(a.duration) + DURATION_VALUES(b.duration);
