@@ -117,7 +117,7 @@ var Editor = /** @class */ (function () {
                 var _a;
                 return (_a = this._notes) === null || _a === void 0 ? void 0 : _a.map(function (n) {
                     return __assign(__assign({}, n), { staveIndex: n.staveIndex, noteIndex: n.noteIndex });
-                });
+                }).sort(function (a, b) { return a.noteIndex - b.noteIndex; });
             },
             set notes(value) {
                 if (!lodash.isArray(value))
@@ -307,10 +307,14 @@ var Editor = /** @class */ (function () {
                     if (accidental)
                         staveNote.addAccidental(index, new vexflow_1.default.Flow.Accidental(accidental));
                 });
+                // add dot if dotted
+                if (n.dotted) {
+                    staveNote.addDotToAll();
+                }
                 staveNote.setAttribute("id", n.staveIndex + "__" + n.noteIndex);
                 return staveNote;
             });
-            var voice = new vexflow_1.default.Flow.Voice({ num_beats: staveNotes.length, beat_value: staveNotes.length });
+            var voice = new vexflow_1.default.Flow.Voice({ num_beats: 4, beat_value: 4 });
             voice.addTickables(staveNotes);
             new vexflow_1.default.Flow.Formatter().format([voice], staveWidth);
             voice.draw(_this.ctx, stave);
@@ -499,7 +503,12 @@ var Editor = /** @class */ (function () {
                     break;
                 // dotted quater ntoe 
                 case 12:
-                    mergedDuration = "1";
+                    mergedDuration = "q";
+                    dotted = true;
+                    break;
+                // dotted half note  
+                case 24:
+                    mergedDuration = "h";
                     dotted = true;
                     break;
             }
@@ -508,6 +517,7 @@ var Editor = /** @class */ (function () {
         newNote.staveIndex = this.selected.notes[0].staveIndex;
         newNote.noteIndex = this.selected.notes[0].noteIndex;
         this.sheet.staves[this.selected.notes[0].staveIndex].notes.splice(this.selected.notes[0].noteIndex, this.selected.notes.length, newNote);
+        this.selected.notes = [newNote];
     };
     Editor.prototype.setCursor = function (staveIndex, noteIndex) {
         this.selected.cursor = {

@@ -138,7 +138,8 @@ class Editor {
 
     get notes(){
         return this._notes?.map(n=> {
-          return {...n, staveIndex: n.staveIndex, noteIndex: n.noteIndex } }) as  ed_note[]
+          return {...n, staveIndex: n.staveIndex, noteIndex: n.noteIndex } })
+          .sort((a,b)=> a.noteIndex - b.noteIndex) as  ed_note[]
     },
 
     set notes(value){
@@ -382,13 +383,19 @@ class Editor {
           staveNote.addAccidental(index, new Vex.Flow.Accidental(accidental))
         })
 
+        // add dot if dotted
+        
+        if (n.dotted){
+            (staveNote as Vex.Flow.StaveNote).addDotToAll();
+        }
+
         staveNote.setAttribute("id", `${n.staveIndex}__${n.noteIndex}`);
         return staveNote
        })
     
       
     
-      let voice = new Vex.Flow.Voice({ num_beats: staveNotes.length, beat_value: staveNotes.length });
+      let voice = new Vex.Flow.Voice({ num_beats: 4, beat_value: 4 });
       voice.addTickables(staveNotes);
       
       new Vex.Flow.Formatter().format([voice], staveWidth);
@@ -612,10 +619,14 @@ class Editor {
           //dotted 8th note
           case 6: mergedDuration = "8"; dotted = true; break;
           // dotted quater ntoe 
-          case 12: mergedDuration = "1"; dotted = true; break;
+          case 12: mergedDuration = "q"; dotted = true; break;
+          // dotted half note  
+          case 24: mergedDuration = "h"; dotted = true; break;
           
 
           }
+
+         
 
           return {
             ...a,
@@ -632,7 +643,7 @@ class Editor {
       newNote.noteIndex = this.selected.notes[0].noteIndex;
 
       this.sheet.staves[this.selected.notes[0].staveIndex].notes.splice(this.selected.notes[0].noteIndex,this.selected.notes.length,newNote)
-
+      this.selected.notes = [newNote]
 
 
   }
