@@ -117,13 +117,15 @@ var Editor = /** @class */ (function () {
                 var _a;
                 return (_a = this._notes) === null || _a === void 0 ? void 0 : _a.map(function (n) {
                     return __assign(__assign({}, n), { staveIndex: n.staveIndex, noteIndex: n.noteIndex });
-                }).sort(function (a, b) { return a.noteIndex - b.noteIndex; });
+                });
             },
             set notes(value) {
                 if (!lodash.isArray(value))
                     this._notes = this._notes;
-                else
-                    this._notes = value;
+                else {
+                    var sortedNotes = value.sort(function (a, b) { return a.noteIndex - b.noteIndex; });
+                    this._notes = sortedNotes;
+                }
             },
             get staves() {
                 var _a;
@@ -314,10 +316,11 @@ var Editor = /** @class */ (function () {
                 staveNote.setAttribute("id", n.staveIndex + "__" + n.noteIndex);
                 return staveNote;
             });
-            var voice = new vexflow_1.default.Flow.Voice({ num_beats: 4, beat_value: 4 });
+            console.log("numb", staveNotes.length);
+            console.log("bval", _this.timeSigBottom);
+            var voice = new vexflow_1.default.Flow.Voice({ num_beats: _this.timeSigTop, beat_value: _this.timeSigBottom });
             voice.addTickables(staveNotes);
-            new vexflow_1.default.Flow.Formatter().format([voice], staveWidth);
-            voice.draw(_this.ctx, stave);
+            vexflow_1.default.Flow.Formatter.FormatAndDraw(_this.ctx, stave, staveNotes);
         });
         // highlight the selected notes
         this.selected.notes.map(function (sn) {
@@ -432,10 +435,10 @@ var Editor = /** @class */ (function () {
         // create a new duration
         switch (duration) {
             case "w":
-                duration = "2";
+                duration = "h";
                 break;
             case "h":
-                duration = "4";
+                duration = "q";
                 break;
             case "q":
                 duration = "8";
@@ -473,6 +476,7 @@ var Editor = /** @class */ (function () {
             var mergedDuration = '';
             var mergedDurationValue = DURATION_VALUES(a.duration) + DURATION_VALUES(b.duration);
             var dotted = false;
+            debugger;
             switch (mergedDurationValue) {
                 // cases for regular notes 
                 case 2:
@@ -512,7 +516,11 @@ var Editor = /** @class */ (function () {
                     dotted = true;
                     break;
             }
-            return __assign(__assign({}, a), { isRest: a.isREst || b.isRest, keys: !(a.isRest || b.isRest) ? [REST_POSITIONS(mergedDuration)] : lodash.uniq(__spreadArrays(a.keys, b.keys)), duration: mergedDuration, dotted: dotted });
+            var keys1 = a.isRest ? [] : a.keys;
+            var keys2 = b.isRest ? [] : b.keys;
+            var keys = __spreadArrays(keys1, keys2);
+            keys = keys.length ? lodash.uniq(keys) : [REST_POSITIONS(mergedDuration)];
+            return __assign(__assign({}, a), { isRest: a.isRest && b.isRest, keys: keys, duration: mergedDuration, dotted: dotted });
         });
         newNote.staveIndex = this.selected.notes[0].staveIndex;
         newNote.noteIndex = this.selected.notes[0].noteIndex;
@@ -711,3 +719,4 @@ var Editor = /** @class */ (function () {
     return Editor;
 }());
 exports.default = Editor;
+//# sourceMappingURL=index.js.map

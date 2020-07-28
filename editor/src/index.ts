@@ -138,13 +138,15 @@ class Editor {
 
     get notes(){
         return this._notes?.map(n=> {
-          return {...n, staveIndex: n.staveIndex, noteIndex: n.noteIndex } })
-          .sort((a,b)=> a.noteIndex - b.noteIndex) as  ed_note[]
+          return {...n, staveIndex: n.staveIndex, noteIndex: n.noteIndex } }) as  ed_note[]
     },
 
     set notes(value){
       if(!lodash.isArray(value)) this._notes = this._notes;
-      else this._notes = value;
+      else {
+        
+        const sortedNotes = value.sort((a,b)=> a.noteIndex - b.noteIndex);
+        this._notes = sortedNotes; }
     },
 
     get staves(){
@@ -394,12 +396,13 @@ class Editor {
        })
     
       
-    
-      let voice = new Vex.Flow.Voice({ num_beats: 4, beat_value: 4 });
+      console.log("numb",staveNotes.length);
+      console.log("bval",this.timeSigBottom)
+      let voice = new Vex.Flow.Voice({ num_beats: this.timeSigTop, beat_value: this.timeSigBottom });
       voice.addTickables(staveNotes);
       
-      new Vex.Flow.Formatter().format([voice], staveWidth);
-      voice.draw(this.ctx, stave);
+       Vex.Flow.Formatter.FormatAndDraw(this.ctx,stave,staveNotes)
+      
 
     });
 
@@ -557,8 +560,8 @@ class Editor {
     // create a new duration
 
     switch(duration){
-      case "w": duration = "2"; break;
-      case "h": duration= "4"; break;
+      case "w": duration = "h"; break;
+      case "h": duration= "q"; break;
       case "q":  duration ="8"; break;
       case "8": duration = "16"; break;
       case "16": duration = "32"; break;
@@ -602,10 +605,11 @@ class Editor {
             DURATION_VALUES(a.duration) + DURATION_VALUES(b.duration)
             let dotted = false;
 
+            debugger;
           switch(mergedDurationValue){
 
           // cases for regular notes 
-
+            
             case 2 : mergedDuration = "16"; break;
             case 4 : mergedDuration =  "8"; break;
             case 8 : mergedDuration = "q"; break;
@@ -615,6 +619,7 @@ class Editor {
           // handle cases for dotted notes 
 
           //dotted 16th note
+
           case 3: mergedDuration = "16" ; dotted = true; break;
           //dotted 8th note
           case 6: mergedDuration = "8"; dotted = true; break;
@@ -626,12 +631,15 @@ class Editor {
 
           }
 
-         
+         let keys1 = a.isRest?  [] : a.keys;
+         let keys2 = b.isRest? [] : b.keys;
+         let  keys  = [...keys1, ...keys2];
+          keys = keys.length ? lodash.uniq(keys) : [REST_POSITIONS(mergedDuration)] ;
 
           return {
             ...a,
-            isRest: a.isREst || b.isRest,
-            keys: !(a.isRest || b.isRest) ? [REST_POSITIONS(mergedDuration)] : lodash.uniq([...a.keys,...b.keys]),
+            isRest: a.isRest && b.isRest,
+            keys,
             duration:mergedDuration,
             dotted,
         }
