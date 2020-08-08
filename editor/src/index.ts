@@ -212,8 +212,10 @@ class Editor {
       this.addNote("c/4")
       this.addNote("e/4")
       this.addNote("g/4")
-      this.editOctave(1,"c/4")
-      this.editOctave(-1,"g/4")
+      this.replaceNote("c/4","g/5")
+      this.changeOctave(1,"c/4")
+      this.changeOctave(-1,"g/4")
+      
     }
 
     // run test 
@@ -301,7 +303,7 @@ class Editor {
 
  // note editing functions 
 
-  editOctave(octave:number,keyNote:string){
+  changeOctave(octave:number,keyNote:string){
 
 
    this.selected.notes.map(selectedNote=>{
@@ -324,6 +326,67 @@ class Editor {
       // replace the note 
 
     this.sheet.staves[staveIndex].notes[noteIndex].keys[keyIndex] = newNote;
+  
+          
+    })
+
+  }
+
+  replaceNote(currentNote:string, newNote: string){ 
+
+    this.selected.notes.map(selectedNote=>{
+
+      const staveIndex = selectedNote.staveIndex;
+      const noteIndex = selectedNote.noteIndex;
+      const keyIndex = this.sheet.staves[staveIndex].notes[noteIndex].keys.indexOf(currentNote);
+      const note = this.sheet.staves[staveIndex].notes[noteIndex].keys[keyIndex]
+
+      if(!note){
+        console.error("note not found");
+        return;
+      }
+
+      // replace the note 
+
+    this.sheet.staves[staveIndex].notes[noteIndex].keys[keyIndex] = newNote;
+  
+          
+    })
+
+  }
+
+  changeaccidental(key:string, accidental: string){ 
+
+    // check if accidental type is invalid
+
+    switch(true){
+      case accidental === "n":
+      case accidental === "b":
+      case accidental === "bb":
+      case accidental === "#":
+      case accidental === "##":
+      case accidental === null : break;
+      default : {
+        console.error("incorrect accidnetal value");
+        return ;
+      }
+    }    
+
+    this.selected.notes.map(selectedNote=>{
+
+      const staveIndex = selectedNote.staveIndex;
+      const noteIndex = selectedNote.noteIndex;
+      const keyIndex = this.sheet.staves[staveIndex].notes[noteIndex].keys.indexOf(key);
+      const accidentalIndex = keyIndex;
+      const note = this.sheet.staves[staveIndex].notes[noteIndex].keys[keyIndex]
+
+      if(!note){
+        console.error("note not found");
+        return;
+      }
+
+      // replace the note 
+    this.sheet.staves[staveIndex].notes[noteIndex].accidentals[accidentalIndex] = accidental;
   
           
     })

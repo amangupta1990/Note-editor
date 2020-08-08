@@ -169,8 +169,9 @@ var Editor = /** @class */ (function () {
             _this.addNote("c/4");
             _this.addNote("e/4");
             _this.addNote("g/4");
-            _this.editOctave(1, "c/4");
-            _this.editOctave(-1, "g/4");
+            _this.replaceNote("c/4", "g/5");
+            _this.changeOctave(1, "c/4");
+            _this.changeOctave(-1, "g/4");
         };
         // run test 
         test();
@@ -238,7 +239,7 @@ var Editor = /** @class */ (function () {
     Editor.prototype.changeDuration = function () {
     };
     // note editing functions 
-    Editor.prototype.editOctave = function (octave, keyNote) {
+    Editor.prototype.changeOctave = function (octave, keyNote) {
         var _this = this;
         this.selected.notes.map(function (selectedNote) {
             var staveIndex = selectedNote.staveIndex;
@@ -253,6 +254,50 @@ var Editor = /** @class */ (function () {
             var newNote = upper + "/" + (parseInt(lower) + octave);
             // replace the note 
             _this.sheet.staves[staveIndex].notes[noteIndex].keys[keyIndex] = newNote;
+        });
+    };
+    Editor.prototype.replaceNote = function (currentNote, newNote) {
+        var _this = this;
+        this.selected.notes.map(function (selectedNote) {
+            var staveIndex = selectedNote.staveIndex;
+            var noteIndex = selectedNote.noteIndex;
+            var keyIndex = _this.sheet.staves[staveIndex].notes[noteIndex].keys.indexOf(currentNote);
+            var note = _this.sheet.staves[staveIndex].notes[noteIndex].keys[keyIndex];
+            if (!note) {
+                console.error("note not found");
+                return;
+            }
+            // replace the note 
+            _this.sheet.staves[staveIndex].notes[noteIndex].keys[keyIndex] = newNote;
+        });
+    };
+    Editor.prototype.changeaccidental = function (key, accidental) {
+        // check if accidental type is invalid
+        var _this = this;
+        switch (true) {
+            case accidental === "n":
+            case accidental === "b":
+            case accidental === "bb":
+            case accidental === "#":
+            case accidental === "##":
+            case accidental === null: break;
+            default: {
+                console.error("incorrect accidnetal value");
+                return;
+            }
+        }
+        this.selected.notes.map(function (selectedNote) {
+            var staveIndex = selectedNote.staveIndex;
+            var noteIndex = selectedNote.noteIndex;
+            var keyIndex = _this.sheet.staves[staveIndex].notes[noteIndex].keys.indexOf(key);
+            var accidentalIndex = keyIndex;
+            var note = _this.sheet.staves[staveIndex].notes[noteIndex].keys[keyIndex];
+            if (!note) {
+                console.error("note not found");
+                return;
+            }
+            // replace the note 
+            _this.sheet.staves[staveIndex].notes[noteIndex].accidentals[accidentalIndex] = accidental;
         });
     };
     Editor.prototype.deleteNotes = function () {
