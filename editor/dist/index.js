@@ -94,7 +94,8 @@ var Editor = /** @class */ (function () {
         this.ctrlActive = false;
         this.metaActive = false;
         this.sheet = {
-            staves: []
+            staves: [],
+            ties: []
         };
         this.states = [];
         this.undoStates = [];
@@ -515,6 +516,9 @@ var Editor = /** @class */ (function () {
                     mergedDuration = "h";
                     dotted = true;
                     break;
+            }
+            if (!mergedDuration) {
+                console.warn("cannot merge");
             }
             var keys1 = a.isRest ? [] : a.keys;
             var keys2 = b.isRest ? [] : b.keys;

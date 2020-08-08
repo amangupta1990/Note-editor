@@ -59,12 +59,20 @@ interface ed_note{
     noteIndex: number
  }
 
+ interface ed_tie{
+   first_note: string,
+   last_note: string,
+   first_indices: string,
+   last_indices: string
+ }
+
  interface ed_stave{
      notes:ed_note[]
  }
 
  interface ed_sheet{
-     staves: ed_stave[]
+     staves: ed_stave[],
+     ties: ed_tie[]
  }
 
  interface cursor{
@@ -109,7 +117,8 @@ class Editor {
   private renderer:any;
   private ctx:Vex.Flow.CanvasContext;
   private  sheet: ed_sheet= { 
-    staves: [] 
+    staves: [],
+    ties: [] 
   }
 
 
@@ -629,6 +638,10 @@ class Editor {
           case 24: mergedDuration = "h"; dotted = true; break;
           
 
+          }
+
+          if(!mergedDuration){
+            console.warn("cannot merge");
           }
 
          let keys1 = a.isRest?  [] : a.keys;
