@@ -198,8 +198,28 @@ class Editor {
       this.eventsAdded = true;
     }
 
+        
 
-    
+    // test case:
+
+    const test = ()=>{
+
+      this.selected.notes= [{
+        staveIndex:0,
+        noteIndex:0
+      }]
+
+      this.addNote("c/4")
+      this.addNote("e/4")
+      this.addNote("g/4")
+      this.editOctave(1,"c/4")
+      this.editOctave(-1,"g/4")
+    }
+
+    // run test 
+
+    test();
+    this.Draw()
   }
 
   saveState(){
@@ -282,10 +302,7 @@ class Editor {
  // note editing functions 
 
   editOctave(octave:number,keyNote:string){
-    if(octave ! == 1 || octave !== -1){
-      console.error("supplied value for octave should be either 1 or -1");
-      return ;
-    }
+
 
    this.selected.notes.map(selectedNote=>{
 
@@ -302,7 +319,7 @@ class Editor {
       const [upper , lower ] = note.split("/");
 
 
-      const newNote = `${upper}/${lower+octave}`;
+      const newNote = `${upper}/${parseInt(lower)+octave}`;
 
       // replace the note 
 

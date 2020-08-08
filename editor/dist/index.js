@@ -80,6 +80,7 @@ var DURATION_VALUES = function (key) {
 ;
 var Editor = /** @class */ (function () {
     function Editor(svgcontainer) {
+        var _this = this;
         //eslint-disable-next-line
         this.keySig = "C";
         this.timeSigTop = 4;
@@ -159,6 +160,21 @@ var Editor = /** @class */ (function () {
             this.addKeyboardListeners();
             this.eventsAdded = true;
         }
+        // test case:
+        var test = function () {
+            _this.selected.notes = [{
+                    staveIndex: 0,
+                    noteIndex: 0
+                }];
+            _this.addNote("c/4");
+            _this.addNote("e/4");
+            _this.addNote("g/4");
+            _this.editOctave(1, "c/4");
+            _this.editOctave(-1, "g/4");
+        };
+        // run test 
+        test();
+        this.Draw();
     }
     Editor.prototype.saveState = function () {
         var sheet = JSON.stringify(this.sheet);
@@ -224,10 +240,6 @@ var Editor = /** @class */ (function () {
     // note editing functions 
     Editor.prototype.editOctave = function (octave, keyNote) {
         var _this = this;
-        if (octave == 1 || octave !== -1) {
-            console.error("supplied value for octave should be either 1 or -1");
-            return;
-        }
         this.selected.notes.map(function (selectedNote) {
             var staveIndex = selectedNote.staveIndex;
             var noteIndex = selectedNote.noteIndex;
@@ -238,7 +250,7 @@ var Editor = /** @class */ (function () {
                 return;
             }
             var _a = note.split("/"), upper = _a[0], lower = _a[1];
-            var newNote = upper + "/" + (lower + octave);
+            var newNote = upper + "/" + (parseInt(lower) + octave);
             // replace the note 
             _this.sheet.staves[staveIndex].notes[noteIndex].keys[keyIndex] = newNote;
         });
