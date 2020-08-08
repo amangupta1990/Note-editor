@@ -31,8 +31,20 @@ const NOTE_VAlUES =  (key:string)=>{
   case "g": return 5;
   case "a": return 6;
   case "b": return 7;
-  default: return "";
+  default: return 0;
     }
+}
+
+const DURATION_VALUES =  (key:string)=>{
+  switch(key){ 
+case "w": return 32;
+case "h": return 16;
+case "q": return 8;
+case "8": return 4;
+case "16": return 2;
+case "32": return 1;
+default: return 0;
+  }
 }
 
 // types  
@@ -41,10 +53,16 @@ interface ed_note{
     duration : string,
     keys: string[],
     accidentals: ( string | null )[],
+    dotted?: boolean;
     isRest: boolean,
     staveIndex: number,
     noteIndex: number
  }
+
+
+interface ed_selected_note {staveIndex:number, noteIndex:number};
+  
+
 
  interface ed_stave{
      notes:ed_note[]
@@ -63,9 +81,9 @@ interface ed_note{
 
 interface ed_selected {
     _staves?: any[]
-    _notes?: ed_note[],
+    _notes?: {staveIndex:number, noteIndex:number}[],
     cursor: cursor,
-    notes: ed_note[],
+    notes: {staveIndex:number, noteIndex:number}[],
     staves: number[],
 }
 
@@ -108,7 +126,7 @@ class Editor {
 
   private  selected: ed_selected = {
     _staves: [] as ed_stave[],
-    _notes:[{staveIndex: 0 , noteIndex: 0, keys:[REST_POSITIONS("q")], isRest: true, duration: "q" , accidentals:[] , clef: this.clef }] as ed_note[],
+    _notes:[{staveIndex: 0 , noteIndex: 0}],
     cursor:{
       _staveIndex: 0,
       _noteIndex:0,
@@ -130,7 +148,10 @@ class Editor {
 
     set notes(value){
       if(!lodash.isArray(value)) this._notes = this._notes;
-      else this._notes = value;
+      else {
+        
+        const sortedNotes = value.sort((a,b)=> a.noteIndex - b.noteIndex);
+        this._notes = sortedNotes; }
     },
 
     get staves(){
@@ -176,8 +197,31 @@ class Editor {
       this.addKeyboardListeners();
       this.eventsAdded = true;
     }
-    // this.addNote(this.sheet.staves[0],"c/4","q")
-    //this.editNote(this.sheet.staves[0],1,"c/4","w")
+
+        
+
+    // test case:
+
+    const test = ()=>{
+
+      this.selected.notes= [{
+        staveIndex:0,
+        noteIndex:0
+      }]
+
+      this.addNote("c/4")
+      this.addNote("e/4")
+      this.addNote("g/4")
+      this.replaceNote("c/4","g/5")
+      this.changeOctave(1,"c/4")
+      this.changeOctave(-1,"g/4")
+      
+    }
+
+    // run test 
+
+    test();
+    this.Draw()
   }
 
   saveState(){
@@ -227,10 +271,13 @@ class Editor {
     // modify the rest of the stave to join the notes
 
     let notes = this.selected.notes;
-    notes = notes.map((note:ed_note)=>{
+    notes = notes.map((selectedNote:ed_selected_note)=>{
 
+    const  staveIndex = selectedNote.staveIndex;
+    const noteIndex = selectedNote.noteIndex;
+    const note = this.sheet.staves[staveIndex].notes[noteIndex];
     // if key arledy exists then don't add it again;
-
+    
 
     let stave = this.sheet.staves[note.staveIndex];
     let isRest = note.isRest;
@@ -254,11 +301,103 @@ class Editor {
   
   }
 
+ // note editing functions 
+
+  changeOctave(octave:number,keyNote:string){
+
+
+   this.selected.notes.map(selectedNote=>{
+
+      const staveIndex = selectedNote.staveIndex;
+      const noteIndex = selectedNote.noteIndex;
+      const keyIndex = this.sheet.staves[staveIndex].notes[noteIndex].keys.indexOf(keyNote);
+      const note = this.sheet.staves[staveIndex].notes[noteIndex].keys[keyIndex]
+
+      if(!note){
+        console.error("note not found");
+        return;
+      }
+
+      const [upper , lower ] = note.split("/");
+
+
+      const newNote = `${upper}/${parseInt(lower)+octave}`;
+
+      // replace the note 
+
+    this.sheet.staves[staveIndex].notes[noteIndex].keys[keyIndex] = newNote;
+  
+          
+    })
+
+  }
+
+  replaceNote(currentNote:string, newNote: string){ 
+
+    this.selected.notes.map(selectedNote=>{
+
+      const staveIndex = selectedNote.staveIndex;
+      const noteIndex = selectedNote.noteIndex;
+      const keyIndex = this.sheet.staves[staveIndex].notes[noteIndex].keys.indexOf(currentNote);
+      const note = this.sheet.staves[staveIndex].notes[noteIndex].keys[keyIndex]
+
+      if(!note){
+        console.error("note not found");
+        return;
+      }
+
+      // replace the note 
+
+    this.sheet.staves[staveIndex].notes[noteIndex].keys[keyIndex] = newNote;
+  
+          
+    })
+
+  }
+
+  changeaccidental(key:string, accidental: string){ 
+
+    // check if accidental type is invalid
+
+    switch(true){
+      case accidental === "n":
+      case accidental === "b":
+      case accidental === "bb":
+      case accidental === "#":
+      case accidental === "##":
+      case accidental === null : break;
+      default : {
+        console.error("incorrect accidnetal value");
+        return ;
+      }
+    }    
+
+    this.selected.notes.map(selectedNote=>{
+
+      const staveIndex = selectedNote.staveIndex;
+      const noteIndex = selectedNote.noteIndex;
+      const keyIndex = this.sheet.staves[staveIndex].notes[noteIndex].keys.indexOf(key);
+      const accidentalIndex = keyIndex;
+      const note = this.sheet.staves[staveIndex].notes[noteIndex].keys[keyIndex]
+
+      if(!note){
+        console.error("note not found");
+        return;
+      }
+
+      // replace the note 
+    this.sheet.staves[staveIndex].notes[noteIndex].accidentals[accidentalIndex] = accidental;
+  
+          
+    })
+
+  }
+
 
   deleteNotes() {
     // convert the note into a rest
     let notes = this.selected.notes;
-    notes = notes.map((note:ed_note)=>{
+    notes = notes.map((note:ed_selected_note)=>{
 
     let stave = this.sheet.staves[note.staveIndex];
     let oldNote = stave.notes[note.noteIndex];
@@ -313,7 +452,7 @@ class Editor {
 
       
       staveXpos += staveWidth;
-      staveWidth = this.noteWidth*s.notes.length;
+      staveWidth = this.noteWidth*(s.notes.length  < 4 ? 4 :  s.notes.length   );
       // drave the stave first , add timesignature
       let stave = new Vex.Flow.Stave(
         staveXpos,
@@ -369,22 +508,29 @@ class Editor {
           staveNote.addAccidental(index, new Vex.Flow.Accidental(accidental))
         })
 
+        // add dot if dotted
+        
+        if (n.dotted){
+            (staveNote as Vex.Flow.StaveNote).addDotToAll();
+        }
+
         staveNote.setAttribute("id", `${n.staveIndex}__${n.noteIndex}`);
         return staveNote
        })
     
       
-    
-      let voice = new Vex.Flow.Voice({ num_beats: staveNotes.length, beat_value: staveNotes.length });
+      console.log("numb",staveNotes.length);
+      console.log("bval",this.timeSigBottom)
+      let voice = new Vex.Flow.Voice({ num_beats: this.timeSigTop, beat_value: this.timeSigBottom });
       voice.addTickables(staveNotes);
       
-      new Vex.Flow.Formatter().format([voice], staveWidth);
-      voice.draw(this.ctx, stave);
+       Vex.Flow.Formatter.FormatAndDraw(this.ctx,stave,staveNotes)
+      
 
     });
 
     // highlight the selected notes
-    this.selected.notes.map((sn:ed_note)=>{
+    this.selected.notes.map((sn:ed_selected_note)=>{
       let selectedNote:any = this.svgElm.querySelector(
         `#vf-${sn.staveIndex}__${
           sn.noteIndex
@@ -524,10 +670,6 @@ class Editor {
   }
 
 
-
-
-
-
   splitSelectedNote(){
     let stave = this.sheet.staves[this.selected.cursor.staveIndex];
     let notes = stave.notes;
@@ -541,6 +683,8 @@ class Editor {
     // create a new duration
 
     switch(duration){
+      case "w": duration = "h"; break;
+      case "h": duration= "q"; break;
       case "q":  duration ="8"; break;
       case "8": duration = "16"; break;
       case "16": duration = "32"; break;
@@ -572,8 +716,74 @@ class Editor {
     
   }
 
-  // TODO: 
+
+
+  // TODO:  handle case for merge which creates dotted notes 
   mergeNotes(){
+
+      const selectedNotes: ed_note[] = this.selected.notes.map(sn=> {
+
+        const  staveIndex = sn.staveIndex;
+        const noteIndex = sn.noteIndex;
+        const note = this.sheet.staves[staveIndex].notes[noteIndex];
+        return note ;
+      })
+
+      const newNote:ed_note = selectedNotes.reduce((a:any,b:any)=>{
+
+          let mergedDuration:string='';
+          let mergedDurationValue: number =
+            DURATION_VALUES(a.duration) + DURATION_VALUES(b.duration)
+            let dotted = false;
+
+            debugger;
+          switch(mergedDurationValue){
+
+          // cases for regular notes 
+            
+            case 2 : mergedDuration = "16"; break;
+            case 4 : mergedDuration =  "8"; break;
+            case 8 : mergedDuration = "q"; break;
+            case 16: mergedDuration = "h"; break;
+            case 32: mergedDuration = "w"; break;
+
+          // handle cases for dotted notes 
+
+          //dotted 16th note
+
+          case 3: mergedDuration = "16" ; dotted = true; break;
+          //dotted 8th note
+          case 6: mergedDuration = "8"; dotted = true; break;
+          // dotted quater ntoe 
+          case 12: mergedDuration = "q"; dotted = true; break;
+          // dotted half note  
+          case 24: mergedDuration = "h"; dotted = true; break;
+          
+
+          }
+
+         let keys1 = a.isRest?  [] : a.keys;
+         let keys2 = b.isRest? [] : b.keys;
+         let  keys  = [...keys1, ...keys2];
+          keys = keys.length ? lodash.uniq(keys) : [REST_POSITIONS(mergedDuration)] ;
+
+          return {
+            ...a,
+            isRest: a.isRest && b.isRest,
+            keys,
+            duration:mergedDuration,
+            dotted,
+        }
+          
+      })
+
+
+      newNote.staveIndex =  this.selected.notes[0].staveIndex;
+      newNote.noteIndex = this.selected.notes[0].noteIndex;
+
+      this.sheet.staves[this.selected.notes[0].staveIndex].notes.splice(this.selected.notes[0].noteIndex,this.selected.notes.length,newNote)
+      this.selected.notes = [newNote]
+
 
   }
 
@@ -708,6 +918,14 @@ class Editor {
           if(!event.ctrlKey) return;
           this.saveState()
           this.splitSelectedNote();
+          this.Draw();
+          break
+        }
+
+        case event.key === "j": {
+          if(!event.ctrlKey) return;
+          this.saveState()
+          this.mergeNotes();
           this.Draw();
           break
         }
