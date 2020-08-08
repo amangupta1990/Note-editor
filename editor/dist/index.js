@@ -97,7 +97,8 @@ var Editor = /** @class */ (function () {
         this.metaActive = false;
         this.sheet = {
             staves: [],
-            ties: []
+            ties: [],
+            beams: []
         };
         this.states = [];
         this.undoStates = [];
@@ -168,11 +169,22 @@ var Editor = /** @class */ (function () {
                     noteIndex: 0
                 }];
             _this.addNote("c/4");
-            _this.addNote("e/4");
-            _this.addNote("g/4");
-            _this.replaceNote("c/4", "g/5");
-            _this.changeOctave(1, "c/4");
-            _this.changeOctave(-1, "g/4");
+            _this.selected.notes = [{
+                    staveIndex: 0,
+                    noteIndex: 1
+                }];
+            _this.addNote("c/4");
+            _this.selected.notes = [
+                {
+                    staveIndex: 0,
+                    noteIndex: 0
+                },
+                {
+                    staveIndex: 0,
+                    noteIndex: 1
+                }
+            ];
+            _this.tieNotes();
         };
         // run test 
         test();
@@ -236,8 +248,17 @@ var Editor = /** @class */ (function () {
         });
         this.selected.notes = notes;
     };
-    //TODO: implement 
-    Editor.prototype.changeDuration = function () {
+    Editor.prototype.tieNotes = function () {
+        if (this.selected.notes.length !== 2) {
+            console.error("a tie must be between two notes");
+            return;
+        }
+        this.sheet.ties.push({
+            first_note: this.selected.notes[0],
+            last_note: this.selected.notes[1],
+            first_indices: [0],
+            last_indices: [0]
+        });
     };
     // note editing functions 
     Editor.prototype.changeOctave = function (octave, keyNote) {
@@ -353,7 +374,7 @@ var Editor = /** @class */ (function () {
         this.ctx.clear();
         var staveXpos = 10;
         var staveWidth = 0;
-        this.sheet.staves.map(function (s, staveIndex) {
+        var renderedStaves = this.sheet.staves.map(function (s, staveIndex) {
             staveXpos += staveWidth;
             staveWidth = _this.noteWidth * (s.notes.length < 4 ? 4 : s.notes.length);
             // drave the stave first , add timesignature
@@ -371,7 +392,7 @@ var Editor = /** @class */ (function () {
                 fill: "transparent",
             });
             // draw the notes 
-            var staveNotes = s.notes.map(function (n) {
+            var renderedNotes = s.notes.map(function (n) {
                 // sort notes according to keys
                 n.accidentals = n.accidentals || [null];
                 var keys = n.keys.map(function (k, i) { return { index: i, key: k, accidental: n.accidentals[i] }; });
@@ -398,12 +419,21 @@ var Editor = /** @class */ (function () {
                 staveNote.setAttribute("id", n.staveIndex + "__" + n.noteIndex);
                 return staveNote;
             });
-            console.log("numb", staveNotes.length);
-            console.log("bval", _this.timeSigBottom);
-            var voice = new vexflow_1.default.Flow.Voice({ num_beats: _this.timeSigTop, beat_value: _this.timeSigBottom });
-            voice.addTickables(staveNotes);
-            vexflow_1.default.Flow.Formatter.FormatAndDraw(_this.ctx, stave, staveNotes);
+            vexflow_1.default.Flow.Formatter.FormatAndDraw(_this.ctx, stave, renderedNotes);
+            // draw ties
+            return {
+                notes: renderedNotes
+            };
         });
+        var ties = this.sheet.ties.map(function (t) {
+            return new vexflow_1.default.Flow.StaveTie({
+                first_note: renderedStaves[t.first_note.staveIndex].notes[t.first_note.noteIndex],
+                last_note: renderedStaves[t.last_note.staveIndex].notes[t.last_note.noteIndex],
+                first_indices: t.first_indices,
+                last_indices: t.last_indices
+            });
+        });
+        ties.map(function (t) { t.setContext(_this.ctx).draw(); });
         // highlight the selected notes
         this.selected.notes.map(function (sn) {
             var selectedNote = _this.svgElm.querySelector("#vf-" + sn.staveIndex + "__" + sn.noteIndex);

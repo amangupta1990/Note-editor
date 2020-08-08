@@ -60,10 +60,14 @@ interface ed_note{
  }
 
  interface ed_tie{
-   first_note: string,
-   last_note: string,
-   first_indices: string,
-   last_indices: string
+   first_note: ed_selected_note,
+   last_note: ed_selected_note,
+   first_indices: number[],
+   last_indices: number[]
+ }
+
+ interface ed_beam{
+    notes: ed_note[];
  }
 
 interface ed_selected_note {staveIndex:number, noteIndex:number};
@@ -77,6 +81,7 @@ interface ed_selected_note {staveIndex:number, noteIndex:number};
  interface ed_sheet{
      staves: ed_stave[],
      ties: ed_tie[]
+     beams: ed_beam[],
  }
 
  interface cursor{
@@ -122,7 +127,8 @@ class Editor {
   private ctx:Vex.Flow.CanvasContext;
   private  sheet: ed_sheet= { 
     staves: [],
-    ties: [] 
+    ties: [],
+    beams: []
   }
 
 
@@ -218,11 +224,28 @@ class Editor {
       }]
 
       this.addNote("c/4")
-      this.addNote("e/4")
-      this.addNote("g/4")
-      this.replaceNote("c/4","g/5")
-      this.changeOctave(1,"c/4")
-      this.changeOctave(-1,"g/4")
+
+      this.selected.notes= [{
+        staveIndex:0,
+        noteIndex:1
+      }]
+
+
+      this.addNote("c/4")
+
+
+      this.selected.notes= [
+        {
+          staveIndex:0,
+          noteIndex:0
+        },
+        {
+        staveIndex:0,
+        noteIndex:1
+      }]
+
+
+      this.tieNotes()
       
     }
 
@@ -303,9 +326,21 @@ class Editor {
   this.selected.notes = notes;
   }
 
-  //TODO: implement 
-  changeDuration(){
+  
+  tieNotes(){
     
+    if(this.selected.notes.length !== 2)
+      {
+        console.error("a tie must be between two notes")
+        return ;
+      }
+
+    this.sheet.ties.push({
+      first_note: this.selected.notes[0],
+      last_note: this.selected.notes[1],
+      first_indices: [0],
+      last_indices: [0]
+    })
   
   }
 
@@ -456,7 +491,7 @@ class Editor {
     this.ctx.clear();
     let staveXpos = 10;
     let staveWidth = 0;
-    this.sheet.staves.map((s, staveIndex) => {
+    const renderedStaves =   this.sheet.staves.map((s, staveIndex) => {
 
       
       staveXpos += staveWidth;
@@ -486,7 +521,7 @@ class Editor {
 
       // draw the notes 
 
-      let staveNotes =  s.notes.map(n=>{
+      const  renderedNotes =  s.notes.map(n=>{
 
 
        // sort notes according to keys
@@ -526,16 +561,30 @@ class Editor {
         return staveNote
        })
     
+
       
-      console.log("numb",staveNotes.length);
-      console.log("bval",this.timeSigBottom)
-      let voice = new Vex.Flow.Voice({ num_beats: this.timeSigTop, beat_value: this.timeSigBottom });
-      voice.addTickables(staveNotes);
-      
-       Vex.Flow.Formatter.FormatAndDraw(this.ctx,stave,staveNotes)
+       Vex.Flow.Formatter.FormatAndDraw(this.ctx,stave,renderedNotes)
+
+
+       // draw ties
+
+       return {
+         notes: renderedNotes
+       }
       
 
     });
+
+    const ties = this.sheet.ties.map(t=>{
+      return new Vex.Flow.StaveTie ({
+       first_note: renderedStaves[t.first_note.staveIndex].notes[t.first_note.noteIndex],
+       last_note: renderedStaves[t.last_note.staveIndex].notes[t.last_note.noteIndex],
+       first_indices: t.first_indices,
+       last_indices: t.last_indices
+      })
+    })
+   
+    ties.map((t) => {t.setContext(this.ctx).draw()})
 
     // highlight the selected notes
     this.selected.notes.map((sn:ed_selected_note)=>{
