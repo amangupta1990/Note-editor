@@ -77,6 +77,7 @@ var DURATION_VALUES = function (key) {
         default: return 0;
     }
 };
+;
 var Editor = /** @class */ (function () {
     function Editor(svgcontainer) {
         //eslint-disable-next-line
@@ -100,7 +101,7 @@ var Editor = /** @class */ (function () {
         this.undoStates = [];
         this.selected = {
             _staves: [],
-            _notes: [{ staveIndex: 0, noteIndex: 0, keys: [REST_POSITIONS("q")], isRest: true, duration: "q", accidentals: [], clef: this.clef }],
+            _notes: [{ staveIndex: 0, noteIndex: 0 }],
             cursor: {
                 _staveIndex: 0,
                 _noteIndex: 0,
@@ -158,8 +159,6 @@ var Editor = /** @class */ (function () {
             this.addKeyboardListeners();
             this.eventsAdded = true;
         }
-        // this.addNote(this.sheet.staves[0],"c/4","q")
-        //this.editNote(this.sheet.staves[0],1,"c/4","w")
     }
     Editor.prototype.saveState = function () {
         var sheet = JSON.stringify(this.sheet);
@@ -202,7 +201,10 @@ var Editor = /** @class */ (function () {
         // modify the rest of the stave to join the notes
         var _this = this;
         var notes = this.selected.notes;
-        notes = notes.map(function (note) {
+        notes = notes.map(function (selectedNote) {
+            var staveIndex = selectedNote.staveIndex;
+            var noteIndex = selectedNote.noteIndex;
+            var note = _this.sheet.staves[staveIndex].notes[noteIndex];
             // if key arledy exists then don't add it again;
             var stave = _this.sheet.staves[note.staveIndex];
             var isRest = note.isRest;
@@ -218,6 +220,28 @@ var Editor = /** @class */ (function () {
     };
     //TODO: implement 
     Editor.prototype.changeDuration = function () {
+    };
+    // note editing functions 
+    Editor.prototype.editOctave = function (octave, keyNote) {
+        var _this = this;
+        if (octave == 1 || octave !== -1) {
+            console.error("supplied value for octave should be either 1 or -1");
+            return;
+        }
+        this.selected.notes.map(function (selectedNote) {
+            var staveIndex = selectedNote.staveIndex;
+            var noteIndex = selectedNote.noteIndex;
+            var keyIndex = _this.sheet.staves[staveIndex].notes[noteIndex].keys.indexOf(keyNote);
+            var note = _this.sheet.staves[staveIndex].notes[noteIndex].keys[keyIndex];
+            if (!note) {
+                console.error("note not found");
+                return;
+            }
+            var _a = note.split("/"), upper = _a[0], lower = _a[1];
+            var newNote = upper + "/" + (lower + octave);
+            // replace the note 
+            _this.sheet.staves[staveIndex].notes[noteIndex].keys[keyIndex] = newNote;
+        });
     };
     Editor.prototype.deleteNotes = function () {
         var _this = this;
@@ -472,7 +496,14 @@ var Editor = /** @class */ (function () {
     };
     // TODO:  handle case for merge which creates dotted notes 
     Editor.prototype.mergeNotes = function () {
-        var newNote = this.selected.notes.reduce(function (a, b) {
+        var _this = this;
+        var selectedNotes = this.selected.notes.map(function (sn) {
+            var staveIndex = sn.staveIndex;
+            var noteIndex = sn.noteIndex;
+            var note = _this.sheet.staves[staveIndex].notes[noteIndex];
+            return note;
+        });
+        var newNote = selectedNotes.reduce(function (a, b) {
             var mergedDuration = '';
             var mergedDurationValue = DURATION_VALUES(a.duration) + DURATION_VALUES(b.duration);
             var dotted = false;

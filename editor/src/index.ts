@@ -59,6 +59,11 @@ interface ed_note{
     noteIndex: number
  }
 
+
+interface ed_selected_note {staveIndex:number, noteIndex:number};
+  
+
+
  interface ed_stave{
      notes:ed_note[]
  }
@@ -76,9 +81,9 @@ interface ed_note{
 
 interface ed_selected {
     _staves?: any[]
-    _notes?: ed_note[],
+    _notes?: {staveIndex:number, noteIndex:number}[],
     cursor: cursor,
-    notes: ed_note[],
+    notes: {staveIndex:number, noteIndex:number}[],
     staves: number[],
 }
 
@@ -121,7 +126,7 @@ class Editor {
 
   private  selected: ed_selected = {
     _staves: [] as ed_stave[],
-    _notes:[{staveIndex: 0 , noteIndex: 0, keys:[REST_POSITIONS("q")], isRest: true, duration: "q" , accidentals:[] , clef: this.clef }] as ed_note[],
+    _notes:[{staveIndex: 0 , noteIndex: 0}],
     cursor:{
       _staveIndex: 0,
       _noteIndex:0,
@@ -192,8 +197,9 @@ class Editor {
       this.addKeyboardListeners();
       this.eventsAdded = true;
     }
-    // this.addNote(this.sheet.staves[0],"c/4","q")
-    //this.editNote(this.sheet.staves[0],1,"c/4","w")
+
+
+    
   }
 
   saveState(){
@@ -243,10 +249,13 @@ class Editor {
     // modify the rest of the stave to join the notes
 
     let notes = this.selected.notes;
-    notes = notes.map((note:ed_note)=>{
+    notes = notes.map((selectedNote:ed_selected_note)=>{
 
+    const  staveIndex = selectedNote.staveIndex;
+    const noteIndex = selectedNote.noteIndex;
+    const note = this.sheet.staves[staveIndex].notes[noteIndex];
     // if key arledy exists then don't add it again;
-
+    
 
     let stave = this.sheet.staves[note.staveIndex];
     let isRest = note.isRest;
@@ -270,11 +279,45 @@ class Editor {
   
   }
 
+ // note editing functions 
+
+  editOctave(octave:number,keyNote:string){
+    if(octave ! == 1 || octave !== -1){
+      console.error("supplied value for octave should be either 1 or -1");
+      return ;
+    }
+
+   this.selected.notes.map(selectedNote=>{
+
+      const staveIndex = selectedNote.staveIndex;
+      const noteIndex = selectedNote.noteIndex;
+      const keyIndex = this.sheet.staves[staveIndex].notes[noteIndex].keys.indexOf(keyNote);
+      const note = this.sheet.staves[staveIndex].notes[noteIndex].keys[keyIndex]
+
+      if(!note){
+        console.error("note not found");
+        return;
+      }
+
+      const [upper , lower ] = note.split("/");
+
+
+      const newNote = `${upper}/${lower+octave}`;
+
+      // replace the note 
+
+    this.sheet.staves[staveIndex].notes[noteIndex].keys[keyIndex] = newNote;
+  
+          
+    })
+
+  }
+
 
   deleteNotes() {
     // convert the note into a rest
     let notes = this.selected.notes;
-    notes = notes.map((note:ed_note)=>{
+    notes = notes.map((note:ed_selected_note)=>{
 
     let stave = this.sheet.staves[note.staveIndex];
     let oldNote = stave.notes[note.noteIndex];
@@ -407,7 +450,7 @@ class Editor {
     });
 
     // highlight the selected notes
-    this.selected.notes.map((sn:ed_note)=>{
+    this.selected.notes.map((sn:ed_selected_note)=>{
       let selectedNote:any = this.svgElm.querySelector(
         `#vf-${sn.staveIndex}__${
           sn.noteIndex
@@ -598,7 +641,15 @@ class Editor {
   // TODO:  handle case for merge which creates dotted notes 
   mergeNotes(){
 
-      const newNote:ed_note = this.selected.notes.reduce((a:any,b:any)=>{
+      const selectedNotes: ed_note[] = this.selected.notes.map(sn=> {
+
+        const  staveIndex = sn.staveIndex;
+        const noteIndex = sn.noteIndex;
+        const note = this.sheet.staves[staveIndex].notes[noteIndex];
+        return note ;
+      })
+
+      const newNote:ed_note = selectedNotes.reduce((a:any,b:any)=>{
 
           let mergedDuration:string='';
           let mergedDurationValue: number =
