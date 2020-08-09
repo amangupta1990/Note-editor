@@ -249,16 +249,25 @@ var Editor = /** @class */ (function () {
         this.selected.notes = notes;
     };
     Editor.prototype.tieNotes = function () {
-        if (this.selected.notes.length !== 2) {
-            console.error("a tie must be between two notes");
+        var ties = [];
+        if (this.selected.notes.length <= 1) {
+            console.error("a tie must be between two notes atleast");
             return;
         }
-        this.sheet.ties.push({
-            first_note: this.selected.notes[0],
-            last_note: this.selected.notes[1],
-            first_indices: [0],
-            last_indices: [0]
-        });
+        // if a tie already exists then remove it 
+        for (var i = 0; i < this.selected.notes.length - 1; i++) {
+            ties.push({
+                first_note: this.selected.notes[i],
+                last_note: this.selected.notes[i + 1],
+                first_indices: [0],
+                last_indices: [0]
+            });
+        }
+        var exists = lodash.isEqualWith(this.sheet.ties, ties, lodash.isEqual);
+        if (exists)
+            this.sheet.ties = lodash.differenceWith(this.sheet.ties, ties, lodash.isEqual);
+        else
+            this.sheet.ties = lodash.concat(this.sheet.ties, ties);
     };
     // note editing functions 
     Editor.prototype.changeOctave = function (octave, keyNote) {
@@ -788,6 +797,13 @@ var Editor = /** @class */ (function () {
                     if (!event.ctrlKey && !event.metaKey)
                         return;
                     _this.redo();
+                    _this.Draw();
+                    break;
+                }
+                case event.key === "t": {
+                    if (!event.ctrlKey && !event.metaKey)
+                        return;
+                    _this.tieNotes();
                     _this.Draw();
                     break;
                 }

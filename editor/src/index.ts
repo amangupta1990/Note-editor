@@ -6,7 +6,7 @@
 
 import Vex from "vexflow";
 import * as lodash from "lodash";
-import { constant } from "lodash";
+import { constant, isEqualWith } from "lodash";
 
 
 
@@ -330,18 +330,33 @@ class Editor {
   
   tieNotes(){
     
-    if(this.selected.notes.length !== 2)
+    let ties = []
+    if(this.selected.notes.length <= 1)
       {
-        console.error("a tie must be between two notes")
+        console.error("a tie must be between two notes atleast")
         return ;
       }
 
-    this.sheet.ties.push({
-      first_note: this.selected.notes[0],
-      last_note: this.selected.notes[1],
-      first_indices: [0],
-      last_indices: [0]
-    })
+      // if a tie already exists then remove it 
+
+      for(let i = 0; i < this.selected.notes.length - 1; i++ ){
+        ties.push({
+          first_note: this.selected.notes[i],
+          last_note: this.selected.notes[i+1],
+          first_indices: [0],
+          last_indices: [0]
+        })
+      }
+
+      let exists = lodash.isEqualWith(this.sheet.ties,ties,lodash.isEqual)
+
+
+      if(exists)
+      this.sheet.ties = lodash.differenceWith(this.sheet.ties,ties,lodash.isEqual)
+      else
+      this.sheet.ties = lodash.concat(this.sheet.ties, ties)
+
+
   
   }
 
@@ -1024,6 +1039,13 @@ class Editor {
         case event.key === "r": {
           if(!event.ctrlKey && !event.metaKey ) return;
           this.redo();
+          this.Draw();
+          break
+        }
+
+        case event.key === "t": {
+          if(!event.ctrlKey && !event.metaKey ) return;
+          this.tieNotes();
           this.Draw();
           break
         }
