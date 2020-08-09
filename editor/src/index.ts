@@ -6,7 +6,7 @@
 
 import Vex from "vexflow";
 import * as lodash from "lodash";
-import { constant, isEqualWith } from "lodash";
+import { constant, isEqualWith, indexOf } from "lodash";
 
 
 
@@ -61,6 +61,7 @@ interface ed_note{
  }
 
  interface ed_tie{
+   [x: string]: any;
    first_note: ed_selected_note,
    last_note: ed_selected_note,
    first_indices: number[],
@@ -329,8 +330,12 @@ class Editor {
 
   
   tieNotes(){
+
+    const getId = (a:ed_selected_note,b:ed_selected_note)=>{
+        return `${a.staveIndex}${b.staveIndex}_${a.noteIndex}${b.noteIndex}`;
+    }
     
-    let ties = []
+    const ties:any = []
     if(this.selected.notes.length <= 1)
       {
         console.error("a tie must be between two notes atleast")
@@ -341,6 +346,7 @@ class Editor {
 
       for(let i = 0; i < this.selected.notes.length - 1; i++ ){
         ties.push({
+          id: getId(this.selected.notes[i],this.selected.notes[i+1]),
           first_note: this.selected.notes[i],
           last_note: this.selected.notes[i+1],
           first_indices: [0],
@@ -348,13 +354,17 @@ class Editor {
         })
       }
 
-      let exists = lodash.isEqualWith(this.sheet.ties,ties,lodash.isEqual)
+      let existingTies = this.sheet.ties.filter(st=> ties.find((t:ed_tie)=> t.id === st.id )!= null  )
 
+      if(existingTies.length){
 
-      if(exists)
-      this.sheet.ties = lodash.differenceWith(this.sheet.ties,ties,lodash.isEqual)
-      else
-      this.sheet.ties = lodash.concat(this.sheet.ties, ties)
+      this.sheet.ties = this.sheet.ties.filter(t=>   existingTies.find(et=>  et.id === t.id  )==null  )
+      }
+      else{
+        let concatedTies  = lodash.concat(this.sheet.ties,ties)
+        this.sheet.ties = concatedTies;
+      }
+      
 
 
   

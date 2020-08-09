@@ -249,6 +249,9 @@ var Editor = /** @class */ (function () {
         this.selected.notes = notes;
     };
     Editor.prototype.tieNotes = function () {
+        var getId = function (a, b) {
+            return "" + a.staveIndex + b.staveIndex + "_" + a.noteIndex + b.noteIndex;
+        };
         var ties = [];
         if (this.selected.notes.length <= 1) {
             console.error("a tie must be between two notes atleast");
@@ -257,17 +260,21 @@ var Editor = /** @class */ (function () {
         // if a tie already exists then remove it 
         for (var i = 0; i < this.selected.notes.length - 1; i++) {
             ties.push({
+                id: getId(this.selected.notes[i], this.selected.notes[i + 1]),
                 first_note: this.selected.notes[i],
                 last_note: this.selected.notes[i + 1],
                 first_indices: [0],
                 last_indices: [0]
             });
         }
-        var exists = lodash.isEqualWith(this.sheet.ties, ties, lodash.isEqual);
-        if (exists)
-            this.sheet.ties = lodash.differenceWith(this.sheet.ties, ties, lodash.isEqual);
-        else
-            this.sheet.ties = lodash.concat(this.sheet.ties, ties);
+        var existingTies = this.sheet.ties.filter(function (st) { return ties.find(function (t) { return t.id === st.id; }) != null; });
+        if (existingTies.length) {
+            this.sheet.ties = this.sheet.ties.filter(function (t) { return existingTies.find(function (et) { return et.id === t.id; }) == null; });
+        }
+        else {
+            var concatedTies = lodash.concat(this.sheet.ties, ties);
+            this.sheet.ties = concatedTies;
+        }
     };
     // note editing functions 
     Editor.prototype.changeOctave = function (octave, keyNote) {
