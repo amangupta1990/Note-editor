@@ -96,7 +96,9 @@ var Editor = /** @class */ (function () {
         this.ctrlActive = false;
         this.metaActive = false;
         this.sheet = {
-            staves: []
+            staves: [],
+            ties: [],
+            beams: []
         };
         this.states = [];
         this.undoStates = [];
@@ -167,11 +169,22 @@ var Editor = /** @class */ (function () {
                     noteIndex: 0
                 }];
             _this.addNote("c/4");
-            _this.addNote("e/4");
-            _this.addNote("g/4");
-            _this.replaceNote("c/4", "g/5");
-            _this.changeOctave(1, "c/4");
-            _this.changeOctave(-1, "g/4");
+            _this.selected.notes = [{
+                    staveIndex: 0,
+                    noteIndex: 1
+                }];
+            _this.addNote("c/4");
+            _this.selected.notes = [
+                {
+                    staveIndex: 0,
+                    noteIndex: 0
+                },
+                {
+                    staveIndex: 0,
+                    noteIndex: 1
+                }
+            ];
+            _this.tieNotes();
         };
         // run test 
         test();
@@ -235,8 +248,26 @@ var Editor = /** @class */ (function () {
         });
         this.selected.notes = notes;
     };
-    //TODO: implement 
-    Editor.prototype.changeDuration = function () {
+    Editor.prototype.tieNotes = function () {
+        var ties = [];
+        if (this.selected.notes.length <= 1) {
+            console.error("a tie must be between two notes atleast");
+            return;
+        }
+        // if a tie already exists then remove it 
+        for (var i = 0; i < this.selected.notes.length - 1; i++) {
+            ties.push({
+                first_note: this.selected.notes[i],
+                last_note: this.selected.notes[i + 1],
+                first_indices: [0],
+                last_indices: [0]
+            });
+        }
+        var exists = lodash.isEqualWith(this.sheet.ties, ties, lodash.isEqual);
+        if (exists)
+            this.sheet.ties = lodash.differenceWith(this.sheet.ties, ties, lodash.isEqual);
+        else
+            this.sheet.ties = lodash.concat(this.sheet.ties, ties);
     };
     // note editing functions 
     Editor.prototype.changeOctave = function (octave, keyNote) {
@@ -352,7 +383,7 @@ var Editor = /** @class */ (function () {
         this.ctx.clear();
         var staveXpos = 10;
         var staveWidth = 0;
-        this.sheet.staves.map(function (s, staveIndex) {
+        var renderedStaves = this.sheet.staves.map(function (s, staveIndex) {
             staveXpos += staveWidth;
             staveWidth = _this.noteWidth * (s.notes.length < 4 ? 4 : s.notes.length);
             // drave the stave first , add timesignature
@@ -370,7 +401,7 @@ var Editor = /** @class */ (function () {
                 fill: "transparent",
             });
             // draw the notes 
-            var staveNotes = s.notes.map(function (n) {
+            var renderedNotes = s.notes.map(function (n) {
                 // sort notes according to keys
                 n.accidentals = n.accidentals || [null];
                 var keys = n.keys.map(function (k, i) { return { index: i, key: k, accidental: n.accidentals[i] }; });
@@ -397,12 +428,31 @@ var Editor = /** @class */ (function () {
                 staveNote.setAttribute("id", n.staveIndex + "__" + n.noteIndex);
                 return staveNote;
             });
-            console.log("numb", staveNotes.length);
-            console.log("bval", _this.timeSigBottom);
+            //automatic beaming 
+            var formatter = new vexflow_1.default.Flow.Formatter();
+            var notes = renderedNotes;
             var voice = new vexflow_1.default.Flow.Voice({ num_beats: _this.timeSigTop, beat_value: _this.timeSigBottom });
-            voice.addTickables(staveNotes);
-            vexflow_1.default.Flow.Formatter.FormatAndDraw(_this.ctx, stave, staveNotes);
+            voice.addTickables(notes);
+            formatter.joinVoices([voice]).formatToStave([voice], stave);
+            var beams = vexflow_1.default.Flow.Beam.generateBeams(notes, {
+                beam_rests: true,
+                beam_middle_only: true
+            });
+            voice.draw(_this.ctx, stave);
+            beams.map(function (b) { return b.setContext(_this.ctx).draw(); });
+            return {
+                notes: renderedNotes
+            };
         });
+        var ties = this.sheet.ties.map(function (t) {
+            return new vexflow_1.default.Flow.StaveTie({
+                first_note: renderedStaves[t.first_note.staveIndex].notes[t.first_note.noteIndex],
+                last_note: renderedStaves[t.last_note.staveIndex].notes[t.last_note.noteIndex],
+                first_indices: t.first_indices,
+                last_indices: t.last_indices
+            });
+        });
+        ties.map(function (t) { t.setContext(_this.ctx).draw(); });
         // highlight the selected notes
         this.selected.notes.map(function (sn) {
             var selectedNote = _this.svgElm.querySelector("#vf-" + sn.staveIndex + "__" + sn.noteIndex);
@@ -604,6 +654,9 @@ var Editor = /** @class */ (function () {
                     dotted = true;
                     break;
             }
+            if (!mergedDuration) {
+                console.warn("cannot merge");
+            }
             var keys1 = a.isRest ? [] : a.keys;
             var keys2 = b.isRest ? [] : b.keys;
             var keys = __spreadArrays(keys1, keys2);
@@ -744,6 +797,13 @@ var Editor = /** @class */ (function () {
                     if (!event.ctrlKey && !event.metaKey)
                         return;
                     _this.redo();
+                    _this.Draw();
+                    break;
+                }
+                case event.key === "t": {
+                    if (!event.ctrlKey && !event.metaKey)
+                        return;
+                    _this.tieNotes();
                     _this.Draw();
                     break;
                 }
