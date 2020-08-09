@@ -419,8 +419,18 @@ var Editor = /** @class */ (function () {
                 staveNote.setAttribute("id", n.staveIndex + "__" + n.noteIndex);
                 return staveNote;
             });
-            vexflow_1.default.Flow.Formatter.FormatAndDraw(_this.ctx, stave, renderedNotes);
-            // draw ties
+            //automatic beaming 
+            var formatter = new vexflow_1.default.Flow.Formatter();
+            var notes = renderedNotes;
+            var voice = new vexflow_1.default.Flow.Voice({ num_beats: _this.timeSigTop, beat_value: _this.timeSigBottom });
+            voice.addTickables(notes);
+            formatter.joinVoices([voice]).formatToStave([voice], stave);
+            var beams = vexflow_1.default.Flow.Beam.generateBeams(notes, {
+                beam_rests: true,
+                beam_middle_only: true
+            });
+            voice.draw(_this.ctx, stave);
+            beams.map(function (b) { return b.setContext(_this.ctx).draw(); });
             return {
                 notes: renderedNotes
             };

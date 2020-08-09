@@ -6,6 +6,7 @@
 
 import Vex from "vexflow";
 import * as lodash from "lodash";
+import { constant } from "lodash";
 
 
 
@@ -526,7 +527,7 @@ class Editor {
 
        // sort notes according to keys
        n.accidentals = n.accidentals || [null];
-       let keys = n.keys.map((k,i)=> {return { index:i, key: k, accidental: n.accidentals[i]  }})
+       let keys = n.keys.map((k,i)=> {return { index:i, key: k, accidental: n.accidentals[i]  }});
        keys = keys.sort((a,b)=> this.compareNotes( a.key.split("/").join('') , b.key.split("/").join('') ) );
 
        let sortedKeys = keys.map(k=>k.key);
@@ -562,11 +563,27 @@ class Editor {
        })
     
 
-      
-       Vex.Flow.Formatter.FormatAndDraw(this.ctx,stave,renderedNotes)
+       //automatic beaming 
+
+       var formatter = new Vex.Flow.Formatter();
+       var notes = renderedNotes
+       var voice = new Vex.Flow.Voice({num_beats: this.timeSigTop, beat_value:this.timeSigBottom});
+       
+       voice.addTickables(notes);
+       formatter.joinVoices([voice]).formatToStave([voice], stave);
 
 
-       // draw ties
+       const beams = Vex.Flow.Beam.generateBeams(notes, {
+        beam_rests: true,
+        beam_middle_only: true
+      });
+
+       
+
+       voice.draw(this.ctx, stave);
+       beams.map(b=> b.setContext(this.ctx).draw())
+
+       
 
        return {
          notes: renderedNotes
@@ -574,6 +591,9 @@ class Editor {
       
 
     });
+
+
+   
 
     const ties = this.sheet.ties.map(t=>{
       return new Vex.Flow.StaveTie ({
@@ -586,6 +606,7 @@ class Editor {
    
     ties.map((t) => {t.setContext(this.ctx).draw()})
 
+    
     // highlight the selected notes
     this.selected.notes.map((sn:ed_selected_note)=>{
       let selectedNote:any = this.svgElm.querySelector(
