@@ -245,7 +245,7 @@ export default {
   mounted: function() {
    this.tab = "note"
    this.$nextTick()
-   .then(()=> this.editor = new Editor(this.$refs.svgcontainer))
+   .then(()=> this.editor = new Editor(this.$refs.svgcontainer,{ timeSig:"4/4", key:"b" }))
   },
   methods: {
   },
