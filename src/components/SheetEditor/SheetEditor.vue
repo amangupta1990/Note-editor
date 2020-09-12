@@ -1,6 +1,7 @@
 <template>
   <div class="text-gray-900">
     <new-sheet-dialog class="dialog" v-if="showNewSheetDialog" @onClickStart="initSheet"  />
+    <error-dialog v-if="showErrorDialog" @onClickYes="showErrorDialog = false;"/>>
     <nav class="menu-bar" id="fixed-header">
    
     
@@ -29,7 +30,8 @@
 
 <script>
 import Editor from '../../../editor/dist/';
-import NewSheetDialog from './newSheetDialog.vue'
+import NewSheetDialog from './newSheetDialog.vue';
+import ErrorDialog from './errorDialog.vue';
 
 export default {
   name: "SheetEditor",
@@ -38,12 +40,14 @@ export default {
 
   },
   components:{
-    NewSheetDialog
+    NewSheetDialog,
+    ErrorDialog
   },
   data() {
     return {
       editor: null,
-      showNewSheetDialog: true,
+      showNewSheetDialog: false,
+      showErrorDialog: true
     };
   },
   mounted: function() {
