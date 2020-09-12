@@ -6,7 +6,7 @@
     <h1 class="text-white text-xl m-4 text-center" > Something went wrong !</h1>
       <!--Body-->
   <div>
-    An error occurred while trying to perform this operation.
+    {{ message || ' An error occurred while trying to perform this operation. '}}
   </div>
  <div class="flex justify-end pt-2">
           <button v-on:click="onClickHandler"
@@ -24,7 +24,7 @@ export default {
   name: "ErrorDialog",
   mixins: [],
   props: {
-
+   message: String
   },
   data: function() {
     return {

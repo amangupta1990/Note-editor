@@ -80,8 +80,6 @@ var DURATION_VALUES = function (key) {
 ;
 var Editor = /** @class */ (function () {
     function Editor(svgcontainer, opts) {
-        var _this = this;
-        //eslint-disable-next-line
         this.keySig = "C";
         this.timeSigTop = 4;
         this.timeSigBottom = 4;
@@ -149,49 +147,22 @@ var Editor = /** @class */ (function () {
                 y: 0
             }
         };
-        debugger;
         var time = opts === null || opts === void 0 ? void 0 : opts.timeSig.split("/");
         this.timeSigTop = time ? parseInt(time[0]) : this.timeSigTop;
         this.timeSigBottom = time ? parseInt(time[1]) : this.timeSigBottom;
         this.keySig = (opts === null || opts === void 0 ? void 0 : opts.key) || this.keySig;
         this.svgElm = svgcontainer;
+        this.onError = opts === null || opts === void 0 ? void 0 : opts.errorHandler;
         this.renderer = new vexflow_1.default.Flow.Renderer(svgcontainer, vexflow_1.default.Flow.Renderer.Backends.SVG);
         this.ctx = this.renderer.getContext();
         // event listerners
         // add first stave by default
         this.addStave();
-        this.Draw();
         if (!this.eventsAdded) {
             this.addEventListeners(this.svgElm);
             this.addKeyboardListeners();
             this.eventsAdded = true;
         }
-        // test case:
-        var test = function () {
-            _this.selected.notes = [{
-                    staveIndex: 0,
-                    noteIndex: 0
-                }];
-            _this.addNote("c/4");
-            _this.selected.notes = [{
-                    staveIndex: 0,
-                    noteIndex: 1
-                }];
-            _this.addNote("c/4");
-            _this.selected.notes = [
-                {
-                    staveIndex: 0,
-                    noteIndex: 0
-                },
-                {
-                    staveIndex: 0,
-                    noteIndex: 1
-                }
-            ];
-            _this.tieNotes();
-        };
-        // run test 
-        //test();
         this.Draw();
     }
     Editor.prototype.saveState = function () {
@@ -877,6 +848,10 @@ var Editor = /** @class */ (function () {
                 }
             });
         });
+    };
+    //
+    Editor.prototype.throwError = function (message) {
+        this.onError && this.onError(message);
     };
     return Editor;
 }());

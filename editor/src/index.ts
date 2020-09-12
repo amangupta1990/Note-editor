@@ -110,7 +110,7 @@ interface ed_selected {
 
 class Editor {
   //eslint-disable-next-line
-
+  private onError:any;
   private keySig:string = "C";
   private timeSigTop: number = 4;
   private timeSigBottom: number = 4;
@@ -193,13 +193,14 @@ class Editor {
     public onNoteSelected!: Function;
     public onStaveSelected!:Function;
 
-  constructor(svgcontainer:HTMLElement,opts:{timeSig:string, key:string}) {
-    debugger;
+  constructor(svgcontainer:HTMLElement,opts:{timeSig:string, key:string , errorHandler: any}) {
+
     let time = opts?.timeSig.split("/");
     this.timeSigTop =  time ? parseInt(time[0])  : this.timeSigTop;
     this.timeSigBottom = time ? parseInt(time[1])  : this.timeSigBottom;
     this.keySig = opts?.key || this.keySig;
     this.svgElm = svgcontainer;
+    this.onError = opts?.errorHandler;
 
      this.renderer   = new Vex.Flow.Renderer(
         svgcontainer,
@@ -213,54 +214,16 @@ class Editor {
     // add first stave by default
     this.addStave();
 
-    this.Draw();
+
     if (!this.eventsAdded) {
       this.addEventListeners(this.svgElm);
       this.addKeyboardListeners();
       this.eventsAdded = true;
     }
 
-        
-
-    // test case:
-
-    const test = ()=>{
-
-      this.selected.notes= [{
-        staveIndex:0,
-        noteIndex:0
-      }]
-
-      this.addNote("c/4")
-
-      this.selected.notes= [{
-        staveIndex:0,
-        noteIndex:1
-      }]
-
-
-      this.addNote("c/4")
-
-
-      this.selected.notes= [
-        {
-          staveIndex:0,
-          noteIndex:0
-        },
-        {
-        staveIndex:0,
-        noteIndex:1
-      }]
-
-
-      this.tieNotes()
       
-    }
-
-    // run test 
-
-    //test();
     this.Draw()
+    
   }
 
   saveState(){
@@ -1129,7 +1092,11 @@ class Editor {
 
   }
 
-  // events
+  //
+
+  throwError(message:string){
+    this.onError && this.onError(message);
+  }
   
 }
 
