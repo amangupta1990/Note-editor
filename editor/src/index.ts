@@ -309,7 +309,7 @@ class Editor {
     const ties:any = []
     if(this.selected.notes.length <= 1)
       {
-        console.error("a tie must be between two notes atleast")
+        this.throwError("a tie must be between two notes atleast")
         return ;
       }
 
@@ -354,7 +354,7 @@ class Editor {
       const note = this.sheet.staves[staveIndex].notes[noteIndex].keys[keyIndex]
 
       if(!note){
-        console.error("note not found");
+        this.throwError("note not found");
         return;
       }
 
@@ -382,7 +382,7 @@ class Editor {
       const note = this.sheet.staves[staveIndex].notes[noteIndex].keys[keyIndex]
 
       if(!note){
-        console.error("note not found");
+        this.throwError("note not found");
         return;
       }
 
@@ -407,7 +407,7 @@ class Editor {
       case accidental === "##":
       case accidental === null : break;
       default : {
-        console.error("incorrect accidnetal value");
+        this.throwError("incorrect accidnetal value");
         return ;
       }
     }    
@@ -421,7 +421,7 @@ class Editor {
       const note = this.sheet.staves[staveIndex].notes[noteIndex].keys[keyIndex]
 
       if(!note){
-        console.error("note not found");
+        this.throwError("note not found");
         return;
       }
 

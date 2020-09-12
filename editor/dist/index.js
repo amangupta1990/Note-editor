@@ -230,7 +230,7 @@ var Editor = /** @class */ (function () {
         };
         var ties = [];
         if (this.selected.notes.length <= 1) {
-            console.error("a tie must be between two notes atleast");
+            this.throwError("a tie must be between two notes atleast");
             return;
         }
         // if a tie already exists then remove it 
@@ -261,7 +261,7 @@ var Editor = /** @class */ (function () {
             var keyIndex = _this.sheet.staves[staveIndex].notes[noteIndex].keys.indexOf(keyNote);
             var note = _this.sheet.staves[staveIndex].notes[noteIndex].keys[keyIndex];
             if (!note) {
-                console.error("note not found");
+                _this.throwError("note not found");
                 return;
             }
             var _a = note.split("/"), upper = _a[0], lower = _a[1];
@@ -278,7 +278,7 @@ var Editor = /** @class */ (function () {
             var keyIndex = _this.sheet.staves[staveIndex].notes[noteIndex].keys.indexOf(currentNote);
             var note = _this.sheet.staves[staveIndex].notes[noteIndex].keys[keyIndex];
             if (!note) {
-                console.error("note not found");
+                _this.throwError("note not found");
                 return;
             }
             // replace the note 
@@ -296,7 +296,7 @@ var Editor = /** @class */ (function () {
             case accidental === "##":
             case accidental === null: break;
             default: {
-                console.error("incorrect accidnetal value");
+                this.throwError("incorrect accidnetal value");
                 return;
             }
         }
@@ -307,7 +307,7 @@ var Editor = /** @class */ (function () {
             var accidentalIndex = keyIndex;
             var note = _this.sheet.staves[staveIndex].notes[noteIndex].keys[keyIndex];
             if (!note) {
-                console.error("note not found");
+                _this.throwError("note not found");
                 return;
             }
             // replace the note 
