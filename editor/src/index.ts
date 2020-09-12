@@ -485,6 +485,9 @@ class Editor {
   }
 
   Draw() {
+
+    try{
+
     this.ctx.clear();
     let staveXpos = 10;
     let staveWidth = 0;
@@ -629,7 +632,12 @@ class Editor {
     })
 
     
+  }
+  catch(e){
 
+    this.throwError(e.message);
+    this.undo()
+  }
 
 
   }
@@ -869,6 +877,18 @@ class Editor {
 
       this.sheet.staves[this.selected.notes[0].staveIndex].notes.splice(this.selected.notes[0].noteIndex,this.selected.notes.length,newNote)
       this.selected.notes = [newNote]
+
+      // re-calcualte note id's 
+
+       let notes = this.sheet.staves[this.selected.notes[0].staveIndex].notes;
+        notes = notes.map((n,i) => {
+        n.staveIndex = this.selected.cursor.staveIndex;
+        n.noteIndex= i;
+        return n 
+        
+      } )
+
+      let notes = this.sheet.staves[this.selected.notes[0].staveIndex].notes = notes;
 
       this.setCursor(newNote.staveIndex, newNote.noteIndex)
 

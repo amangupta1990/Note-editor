@@ -363,88 +363,94 @@ var Editor = /** @class */ (function () {
     };
     Editor.prototype.Draw = function () {
         var _this = this;
-        this.ctx.clear();
-        var staveXpos = 10;
-        var staveWidth = 0;
-        var renderedStaves = this.sheet.staves.map(function (s, staveIndex) {
-            staveXpos += staveWidth;
-            staveWidth = _this.noteWidth * (s.notes.length < _this.timeSigBottom ? _this.timeSigBottom : s.notes.length);
-            // drave the stave first , add timesignature
-            var stave = new vexflow_1.default.Flow.Stave(staveXpos, 40, staveWidth);
-            stave.setAttribute("id", "vf-" + staveIndex);
-            if (staveIndex === 0) {
-                stave.addTimeSignature(_this.timeSigTop + "/" + _this.timeSigBottom);
-                stave.addClef(_this.clef);
-                stave.addKeySignature(lodash.capitalize(_this.keySig));
-            }
-            stave.setContext(_this.ctx).draw();
-            //add selectable overlay
-            _this.ctx.rect(stave.getX(), stave.y, stave.getWidth(), _this.staveHeight, {
-                class: "vf-measureRect",
-                id: "vf-" + staveIndex,
-                fill: "transparent",
-            });
-            // draw the notes 
-            var renderedNotes = s.notes.map(function (n) {
-                // sort notes according to keys
-                n.accidentals = n.accidentals || [null];
-                var keys = n.keys.map(function (k, i) { return { index: i, key: k, accidental: n.accidentals[i] }; });
-                keys = keys.sort(function (a, b) { return _this.compareNotes(a.key.split("/").join(''), b.key.split("/").join('')); });
-                var sortedKeys = keys.map(function (k) { return k.key; });
-                var sortedAccidentals = keys.map(function (k) { return k.accidental; });
-                console.log("unsorted", n.keys);
-                console.log("sorted", sortedKeys);
-                var staveNote = new vexflow_1.default.Flow.StaveNote({
-                    clef: _this.clef,
-                    keys: sortedKeys,
-                    duration: !n.isRest ? n.duration : n.duration + "r",
-                    auto_stem: true,
-                });
-                // add accidental 
-                !n.isRest && sortedAccidentals.length && keys.map(function (accidental, index) {
-                    if (sortedAccidentals[index])
-                        staveNote.addAccidental(index, new vexflow_1.default.Flow.Accidental(sortedAccidentals[index]));
-                });
-                // add dot if dotted
-                if (n.dotted) {
-                    staveNote.addDotToAll();
+        try {
+            this.ctx.clear();
+            var staveXpos_1 = 10;
+            var staveWidth_1 = 0;
+            var renderedStaves_1 = this.sheet.staves.map(function (s, staveIndex) {
+                staveXpos_1 += staveWidth_1;
+                staveWidth_1 = _this.noteWidth * (s.notes.length < _this.timeSigBottom ? _this.timeSigBottom : s.notes.length);
+                // drave the stave first , add timesignature
+                var stave = new vexflow_1.default.Flow.Stave(staveXpos_1, 40, staveWidth_1);
+                stave.setAttribute("id", "vf-" + staveIndex);
+                if (staveIndex === 0) {
+                    stave.addTimeSignature(_this.timeSigTop + "/" + _this.timeSigBottom);
+                    stave.addClef(_this.clef);
+                    stave.addKeySignature(lodash.capitalize(_this.keySig));
                 }
-                staveNote.setAttribute("id", n.staveIndex + "__" + n.noteIndex);
-                return staveNote;
+                stave.setContext(_this.ctx).draw();
+                //add selectable overlay
+                _this.ctx.rect(stave.getX(), stave.y, stave.getWidth(), _this.staveHeight, {
+                    class: "vf-measureRect",
+                    id: "vf-" + staveIndex,
+                    fill: "transparent",
+                });
+                // draw the notes 
+                var renderedNotes = s.notes.map(function (n) {
+                    // sort notes according to keys
+                    n.accidentals = n.accidentals || [null];
+                    var keys = n.keys.map(function (k, i) { return { index: i, key: k, accidental: n.accidentals[i] }; });
+                    keys = keys.sort(function (a, b) { return _this.compareNotes(a.key.split("/").join(''), b.key.split("/").join('')); });
+                    var sortedKeys = keys.map(function (k) { return k.key; });
+                    var sortedAccidentals = keys.map(function (k) { return k.accidental; });
+                    console.log("unsorted", n.keys);
+                    console.log("sorted", sortedKeys);
+                    var staveNote = new vexflow_1.default.Flow.StaveNote({
+                        clef: _this.clef,
+                        keys: sortedKeys,
+                        duration: !n.isRest ? n.duration : n.duration + "r",
+                        auto_stem: true,
+                    });
+                    // add accidental 
+                    !n.isRest && sortedAccidentals.length && keys.map(function (accidental, index) {
+                        if (sortedAccidentals[index])
+                            staveNote.addAccidental(index, new vexflow_1.default.Flow.Accidental(sortedAccidentals[index]));
+                    });
+                    // add dot if dotted
+                    if (n.dotted) {
+                        staveNote.addDotToAll();
+                    }
+                    staveNote.setAttribute("id", n.staveIndex + "__" + n.noteIndex);
+                    return staveNote;
+                });
+                //automatic beaming 
+                var formatter = new vexflow_1.default.Flow.Formatter();
+                var notes = renderedNotes;
+                var voice = new vexflow_1.default.Flow.Voice({ num_beats: _this.timeSigTop, beat_value: _this.timeSigBottom, resolution: vexflow_1.default.Flow.RESOLUTION }).setMode(renderedNotes.length);
+                voice.addTickables(notes);
+                formatter.joinVoices([voice]).formatToStave([voice], stave);
+                var beams = vexflow_1.default.Flow.Beam.generateBeams(notes, {
+                    beam_rests: true,
+                    beam_middle_only: true
+                });
+                voice.draw(_this.ctx, stave);
+                beams.map(function (b) { return b.setContext(_this.ctx).draw(); });
+                return {
+                    notes: renderedNotes
+                };
             });
-            //automatic beaming 
-            var formatter = new vexflow_1.default.Flow.Formatter();
-            var notes = renderedNotes;
-            var voice = new vexflow_1.default.Flow.Voice({ num_beats: _this.timeSigTop, beat_value: _this.timeSigBottom, resolution: vexflow_1.default.Flow.RESOLUTION }).setMode(renderedNotes.length);
-            voice.addTickables(notes);
-            formatter.joinVoices([voice]).formatToStave([voice], stave);
-            var beams = vexflow_1.default.Flow.Beam.generateBeams(notes, {
-                beam_rests: true,
-                beam_middle_only: true
+            var ties = this.sheet.ties.map(function (t) {
+                return new vexflow_1.default.Flow.StaveTie({
+                    first_note: renderedStaves_1[t.first_note.staveIndex].notes[t.first_note.noteIndex],
+                    last_note: renderedStaves_1[t.last_note.staveIndex].notes[t.last_note.noteIndex],
+                    first_indices: t.first_indices,
+                    last_indices: t.last_indices
+                });
             });
-            voice.draw(_this.ctx, stave);
-            beams.map(function (b) { return b.setContext(_this.ctx).draw(); });
-            return {
-                notes: renderedNotes
-            };
-        });
-        var ties = this.sheet.ties.map(function (t) {
-            return new vexflow_1.default.Flow.StaveTie({
-                first_note: renderedStaves[t.first_note.staveIndex].notes[t.first_note.noteIndex],
-                last_note: renderedStaves[t.last_note.staveIndex].notes[t.last_note.noteIndex],
-                first_indices: t.first_indices,
-                last_indices: t.last_indices
+            ties.map(function (t) { t.setContext(_this.ctx).draw(); });
+            // highlight the selected notes
+            this.selected.notes.map(function (sn) {
+                var selectedNote = _this.svgElm.querySelector("#vf-" + sn.staveIndex + "__" + sn.noteIndex);
+                _this._highlightNoteElement(selectedNote, "red");
             });
-        });
-        ties.map(function (t) { t.setContext(_this.ctx).draw(); });
-        // highlight the selected notes
-        this.selected.notes.map(function (sn) {
-            var selectedNote = _this.svgElm.querySelector("#vf-" + sn.staveIndex + "__" + sn.noteIndex);
-            _this._highlightNoteElement(selectedNote, "red");
-        });
-        this.selected.staves.map(function (staveIndex) {
-            _this._highlightStaveElement(_this.svgElm.querySelector("#vf-" + staveIndex), "lightblue");
-        });
+            this.selected.staves.map(function (staveIndex) {
+                _this._highlightStaveElement(_this.svgElm.querySelector("#vf-" + staveIndex), "lightblue");
+            });
+        }
+        catch (e) {
+            this.throwError(e.message);
+            this.undo();
+        }
     };
     Editor.prototype._getSelectedElement = function (event) {
         var ele = event.target;
@@ -651,6 +657,14 @@ var Editor = /** @class */ (function () {
         newNote.noteIndex = this.selected.notes[0].noteIndex;
         this.sheet.staves[this.selected.notes[0].staveIndex].notes.splice(this.selected.notes[0].noteIndex, this.selected.notes.length, newNote);
         this.selected.notes = [newNote];
+        // re-calcualte note id's 
+        var notes = this.sheet.staves[this.selected.notes[0].staveIndex].notes;
+        notes = notes.map(function (n, i) {
+            n.staveIndex = _this.selected.cursor.staveIndex;
+            n.noteIndex = i;
+            return n;
+        });
+        var notes = this.sheet.staves[this.selected.notes[0].staveIndex].notes = notes;
         this.setCursor(newNote.staveIndex, newNote.noteIndex);
     };
     Editor.prototype.setCursor = function (staveIndex, noteIndex) {
