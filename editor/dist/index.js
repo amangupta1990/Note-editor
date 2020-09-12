@@ -79,7 +79,7 @@ var DURATION_VALUES = function (key) {
 };
 ;
 var Editor = /** @class */ (function () {
-    function Editor(svgcontainer) {
+    function Editor(svgcontainer, opts) {
         var _this = this;
         //eslint-disable-next-line
         this.keySig = "C";
@@ -149,12 +149,15 @@ var Editor = /** @class */ (function () {
                 y: 0
             }
         };
+        var time = opts === null || opts === void 0 ? void 0 : opts.timeSig.split("/");
+        this.timeSigTop = time ? parseInt(time[0]) : this.timeSigTop;
+        this.timeSigBottom = time ? parseInt(time[1]) : this.timeSigBottom;
+        this.keySig = (opts === null || opts === void 0 ? void 0 : opts.key) || this.keySig;
         this.svgElm = svgcontainer;
         this.renderer = new vexflow_1.default.Flow.Renderer(svgcontainer, vexflow_1.default.Flow.Renderer.Backends.SVG);
         this.ctx = this.renderer.getContext();
         // event listerners
         // add first stave by default
-        this.addStave();
         this.addStave();
         this.Draw();
         if (!this.eventsAdded) {
@@ -187,7 +190,7 @@ var Editor = /** @class */ (function () {
             _this.tieNotes();
         };
         // run test 
-        test();
+        //test();
         this.Draw();
     }
     Editor.prototype.saveState = function () {
@@ -223,7 +226,7 @@ var Editor = /** @class */ (function () {
         if (index === void 0) { index = this.sheet.staves ? this.sheet.staves.length : 0; }
         this.sheet.staves = this.sheet.staves || [];
         // fill bar with rests
-        var notes = new Array(4).fill({ keys: [REST_POSITIONS("q")], duration: "q", isRest: true })
+        var notes = new Array(this.timeSigTop).fill({ keys: [REST_POSITIONS("q")], duration: "q", isRest: true })
             .map(function (n, i) { return __assign(__assign({}, n), { accidentals: [null], staveIndex: index, noteIndex: i }); });
         this.sheet.staves.splice(index, 0, { notes: notes });
     };
@@ -241,7 +244,7 @@ var Editor = /** @class */ (function () {
             var duration = note.duration.replace('r', '');
             var keys = isRest ? [noteName] : lodash.uniq(__spreadArrays(note.keys, [noteName]));
             var accidentals = note.accidentals ? __spreadArrays(note.accidentals, [_this.accidental]) : _this.accidental ? [_this.accidental] : [null];
-            var newNote = { keys: keys, duration: duration, isRest: false, staveIndex: note.staveIndex, noteIndex: note.noteIndex, accidentals: accidentals, clef: note.clef };
+            var newNote = { keys: keys, duration: duration, isRest: false, staveIndex: note.staveIndex, noteIndex: note.noteIndex, accidentals: accidentals, clef: note.clef, dotted: note.dotted };
             stave.notes[note.noteIndex] = newNote;
             _this.sheet.staves[note.staveIndex] = stave;
             return newNote;
@@ -392,12 +395,12 @@ var Editor = /** @class */ (function () {
         var staveWidth = 0;
         var renderedStaves = this.sheet.staves.map(function (s, staveIndex) {
             staveXpos += staveWidth;
-            staveWidth = _this.noteWidth * (s.notes.length < 4 ? 4 : s.notes.length);
+            staveWidth = _this.noteWidth * (s.notes.length < _this.timeSigBottom ? _this.timeSigBottom : s.notes.length);
             // drave the stave first , add timesignature
             var stave = new vexflow_1.default.Flow.Stave(staveXpos, 40, staveWidth);
             stave.setAttribute("id", "vf-" + staveIndex);
             if (staveIndex === 0) {
-                stave.addTimeSignature("4/4");
+                stave.addTimeSignature(_this.timeSigTop + "/" + _this.timeSigBottom);
                 stave.addClef(_this.clef);
             }
             stave.setContext(_this.ctx).draw();
@@ -424,9 +427,9 @@ var Editor = /** @class */ (function () {
                     auto_stem: true,
                 });
                 // add accidental 
-                !n.isRest && sortedAccidentals.length && sortedAccidentals.map(function (accidental, index) {
-                    if (accidental)
-                        staveNote.addAccidental(index, new vexflow_1.default.Flow.Accidental(accidental));
+                !n.isRest && sortedAccidentals.length && keys.map(function (accidental, index) {
+                    if (sortedAccidentals[index])
+                        staveNote.addAccidental(index, new vexflow_1.default.Flow.Accidental(sortedAccidentals[index]));
                 });
                 // add dot if dotted
                 if (n.dotted) {
@@ -438,7 +441,7 @@ var Editor = /** @class */ (function () {
             //automatic beaming 
             var formatter = new vexflow_1.default.Flow.Formatter();
             var notes = renderedNotes;
-            var voice = new vexflow_1.default.Flow.Voice({ num_beats: _this.timeSigTop, beat_value: _this.timeSigBottom });
+            var voice = new vexflow_1.default.Flow.Voice({ num_beats: _this.timeSigTop, beat_value: _this.timeSigBottom, resolution: vexflow_1.default.Flow.RESOLUTION }).setMode(renderedNotes.length);
             voice.addTickables(notes);
             formatter.joinVoices([voice]).formatToStave([voice], stave);
             var beams = vexflow_1.default.Flow.Beam.generateBeams(notes, {
@@ -621,7 +624,6 @@ var Editor = /** @class */ (function () {
             var mergedDuration = '';
             var mergedDurationValue = DURATION_VALUES(a.duration) + DURATION_VALUES(b.duration);
             var dotted = false;
-            debugger;
             switch (mergedDurationValue) {
                 // cases for regular notes 
                 case 2:
@@ -663,6 +665,7 @@ var Editor = /** @class */ (function () {
             }
             if (!mergedDuration) {
                 console.warn("cannot merge");
+                return;
             }
             var keys1 = a.isRest ? [] : a.keys;
             var keys2 = b.isRest ? [] : b.keys;
@@ -674,6 +677,7 @@ var Editor = /** @class */ (function () {
         newNote.noteIndex = this.selected.notes[0].noteIndex;
         this.sheet.staves[this.selected.notes[0].staveIndex].notes.splice(this.selected.notes[0].noteIndex, this.selected.notes.length, newNote);
         this.selected.notes = [newNote];
+        this.setCursor(newNote.staveIndex, newNote.noteIndex);
     };
     Editor.prototype.setCursor = function (staveIndex, noteIndex) {
         this.selected.cursor = {

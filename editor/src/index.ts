@@ -6,7 +6,7 @@
 
 import Vex from "vexflow";
 import * as lodash from "lodash";
-import { constant, isEqualWith, indexOf } from "lodash";
+
 
 
 
@@ -133,12 +133,8 @@ class Editor {
     beams: []
   }
 
-
-
   private  states:ed_state[]= [];
   private  undoStates:ed_state[] = []
-
-  
 
   private  selected: ed_selected = {
     _staves: [] as ed_stave[],
@@ -192,9 +188,19 @@ class Editor {
   };
 
 
-  constructor(svgcontainer:HTMLElement) {
+    // callbacks 
+    public onRender!: Function;
+    public onNoteSelected!: Function;
+    public onStaveSelected!:Function;
+
+  constructor(svgcontainer:HTMLElement,opts:{timeSig:string, key:string}) {
   
+    let time = opts?.timeSig.split("/");
+    this.timeSigTop =  time ? parseInt(time[0])  : this.timeSigTop;
+    this.timeSigBottom = time ? parseInt(time[1])  : this.timeSigBottom;
+    this.keySig = opts?.key || this.keySig;
     this.svgElm = svgcontainer;
+
      this.renderer   = new Vex.Flow.Renderer(
         svgcontainer,
         Vex.Flow.Renderer.Backends.SVG
@@ -206,7 +212,7 @@ class Editor {
 
     // add first stave by default
     this.addStave();
-    this.addStave();
+
     this.Draw();
     if (!this.eventsAdded) {
       this.addEventListeners(this.svgElm);
@@ -253,7 +259,7 @@ class Editor {
 
     // run test 
 
-    test();
+    //test();
     this.Draw()
   }
 
@@ -295,7 +301,7 @@ class Editor {
     
     // fill bar with rests
 
-    let notes:ed_note[] = new Array(4).fill({keys:[REST_POSITIONS("q")] ,duration:"q",isRest:true})
+    let notes:ed_note[] = new Array(this.timeSigTop).fill({keys:[REST_POSITIONS("q")] ,duration:"q",isRest:true})
                             .map((n,i)=> { return  {...n,accidentals:[null],staveIndex:index, noteIndex:i} })
     this.sheet.staves.splice(index, 0, {notes});
   }
@@ -319,7 +325,7 @@ class Editor {
     let accidentals =  note.accidentals ? [...note.accidentals, this.accidental]: this.accidental? [this.accidental] : [null];
    
 
-    let newNote = {keys,duration,isRest:false,staveIndex:  note.staveIndex,noteIndex: note.noteIndex, accidentals, clef: note.clef};
+    let newNote = {keys,duration,isRest:false,staveIndex:  note.staveIndex,noteIndex: note.noteIndex, accidentals, clef: note.clef, dotted: note.dotted};
     stave.notes[note.noteIndex] = newNote;
     this.sheet.staves[note.staveIndex] = stave;
     return newNote;
@@ -521,7 +527,7 @@ class Editor {
 
       
       staveXpos += staveWidth;
-      staveWidth = this.noteWidth*(s.notes.length  < 4 ? 4 :  s.notes.length   );
+      staveWidth = this.noteWidth*(s.notes.length  < this.timeSigBottom ? this.timeSigBottom :  s.notes.length   );
       // drave the stave first , add timesignature
       let stave = new Vex.Flow.Stave(
         staveXpos,
@@ -532,7 +538,7 @@ class Editor {
     
 
       if(staveIndex === 0){
-          stave.addTimeSignature("4/4");
+          stave.addTimeSignature(`${this.timeSigTop}/${this.timeSigBottom}`);
           stave.addClef(this.clef);
       }
 
@@ -556,7 +562,7 @@ class Editor {
        keys = keys.sort((a,b)=> this.compareNotes( a.key.split("/").join('') , b.key.split("/").join('') ) );
 
        let sortedKeys = keys.map(k=>k.key);
-       let sortedAccidentals = keys.map(k=>k.accidental)
+       let sortedAccidentals:any = keys.map(k=>k.accidental)
 
        console.log("unsorted",n.keys)
        console.log("sorted",sortedKeys)
@@ -572,9 +578,10 @@ class Editor {
         });
 
         // add accidental 
-        !n.isRest && sortedAccidentals.length && sortedAccidentals.map((accidental,index)=>{
-          if(accidental)
-          staveNote.addAccidental(index, new Vex.Flow.Accidental(accidental))
+
+        !n.isRest && sortedAccidentals.length && keys.map((accidental,index)=>{
+          if(sortedAccidentals[index])
+          staveNote.addAccidental(index, new Vex.Flow.Accidental(sortedAccidentals[index]))
         })
 
         // add dot if dotted
@@ -592,7 +599,7 @@ class Editor {
 
        var formatter = new Vex.Flow.Formatter();
        var notes = renderedNotes
-       var voice = new Vex.Flow.Voice({num_beats: this.timeSigTop, beat_value:this.timeSigBottom});
+       var voice = new Vex.Flow.Voice({num_beats: this.timeSigTop, beat_value:this.timeSigBottom, resolution: Vex.Flow.RESOLUTION}).setMode(renderedNotes.length);
        
        voice.addTickables(notes);
        formatter.joinVoices([voice]).formatToStave([voice], stave);
@@ -839,7 +846,7 @@ class Editor {
             DURATION_VALUES(a.duration) + DURATION_VALUES(b.duration)
             let dotted = false;
 
-            debugger;
+    
           switch(mergedDurationValue){
 
           // cases for regular notes 
@@ -867,12 +874,14 @@ class Editor {
 
           if(!mergedDuration){
             console.warn("cannot merge");
+            return ;
           }
 
          let keys1 = a.isRest?  [] : a.keys;
          let keys2 = b.isRest? [] : b.keys;
          let  keys  = [...keys1, ...keys2];
           keys = keys.length ? lodash.uniq(keys) : [REST_POSITIONS(mergedDuration)] ;
+     
 
           return {
             ...a,
@@ -880,6 +889,7 @@ class Editor {
             keys,
             duration:mergedDuration,
             dotted,
+
         }
           
       })
@@ -890,6 +900,8 @@ class Editor {
 
       this.sheet.staves[this.selected.notes[0].staveIndex].notes.splice(this.selected.notes[0].noteIndex,this.selected.notes.length,newNote)
       this.selected.notes = [newNote]
+
+      this.setCursor(newNote.staveIndex, newNote.noteIndex)
 
 
   }
@@ -1110,6 +1122,9 @@ class Editor {
 
 
   }
+
+  // events
+  
 }
 
 export default Editor;
