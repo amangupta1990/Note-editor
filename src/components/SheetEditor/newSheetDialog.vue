@@ -3,6 +3,7 @@
     <div
       class="bg-indigo-500 text-white font-bold rounded-lg border shadow-lg p-10"
     >
+    <h1 class="text-white text-xl m-4 text-center" > New Sheet</h1>
       <!--Body-->
 
       <form class="bg-white  rounded px-8 pt-6 pb-8 mb-4">
