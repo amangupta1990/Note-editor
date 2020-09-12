@@ -194,7 +194,7 @@ class Editor {
     public onStaveSelected!:Function;
 
   constructor(svgcontainer:HTMLElement,opts:{timeSig:string, key:string}) {
-  
+    debugger;
     let time = opts?.timeSig.split("/");
     this.timeSigTop =  time ? parseInt(time[0])  : this.timeSigTop;
     this.timeSigBottom = time ? parseInt(time[1])  : this.timeSigBottom;
@@ -300,8 +300,10 @@ class Editor {
     this.sheet.staves = this.sheet.staves || [];
     
     // fill bar with rests
+    const durationValue = this.timeSigBottom == 4 ? "q" : "8";
+    
 
-    let notes:ed_note[] = new Array(this.timeSigTop).fill({keys:[REST_POSITIONS("q")] ,duration:"q",isRest:true})
+    let notes:ed_note[] = new Array(this.timeSigTop).fill({keys:[REST_POSITIONS(durationValue)] ,duration:durationValue,isRest:true})
                             .map((n,i)=> { return  {...n,accidentals:[null],staveIndex:index, noteIndex:i} })
     this.sheet.staves.splice(index, 0, {notes});
   }
@@ -538,8 +540,12 @@ class Editor {
     
 
       if(staveIndex === 0){
+
+          
+
           stave.addTimeSignature(`${this.timeSigTop}/${this.timeSigBottom}`);
           stave.addClef(this.clef);
+          stave.addKeySignature( lodash.capitalize(this.keySig));
       }
 
       stave.setContext(this.ctx).draw(); 

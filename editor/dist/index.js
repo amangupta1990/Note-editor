@@ -149,6 +149,7 @@ var Editor = /** @class */ (function () {
                 y: 0
             }
         };
+        debugger;
         var time = opts === null || opts === void 0 ? void 0 : opts.timeSig.split("/");
         this.timeSigTop = time ? parseInt(time[0]) : this.timeSigTop;
         this.timeSigBottom = time ? parseInt(time[1]) : this.timeSigBottom;
@@ -226,7 +227,8 @@ var Editor = /** @class */ (function () {
         if (index === void 0) { index = this.sheet.staves ? this.sheet.staves.length : 0; }
         this.sheet.staves = this.sheet.staves || [];
         // fill bar with rests
-        var notes = new Array(this.timeSigTop).fill({ keys: [REST_POSITIONS("q")], duration: "q", isRest: true })
+        var durationValue = this.timeSigBottom == 4 ? "q" : "8";
+        var notes = new Array(this.timeSigTop).fill({ keys: [REST_POSITIONS(durationValue)], duration: durationValue, isRest: true })
             .map(function (n, i) { return __assign(__assign({}, n), { accidentals: [null], staveIndex: index, noteIndex: i }); });
         this.sheet.staves.splice(index, 0, { notes: notes });
     };
@@ -402,6 +404,7 @@ var Editor = /** @class */ (function () {
             if (staveIndex === 0) {
                 stave.addTimeSignature(_this.timeSigTop + "/" + _this.timeSigBottom);
                 stave.addClef(_this.clef);
+                stave.addKeySignature(lodash.capitalize(_this.keySig));
             }
             stave.setContext(_this.ctx).draw();
             //add selectable overlay
