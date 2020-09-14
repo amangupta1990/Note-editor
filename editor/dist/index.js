@@ -153,6 +153,9 @@ var Editor = /** @class */ (function () {
         this.keySig = (opts === null || opts === void 0 ? void 0 : opts.key) || this.keySig;
         this.svgElm = svgcontainer;
         this.onError = opts === null || opts === void 0 ? void 0 : opts.errorHandler;
+        this.onRender = opts === null || opts === void 0 ? void 0 : opts.onRender;
+        this.onNoteSelected = opts === null || opts === void 0 ? void 0 : opts.onNoteSelected;
+        this.onStaveSelected = opts === null || opts === void 0 ? void 0 : opts.onStaveSelected;
         this.renderer = new vexflow_1.default.Flow.Renderer(svgcontainer, vexflow_1.default.Flow.Renderer.Backends.SVG);
         this.ctx = this.renderer.getContext();
         // event listerners
@@ -523,6 +526,7 @@ var Editor = /** @class */ (function () {
         else {
             this.selected.notes = [note];
         }
+        this.onNoteSelected && this.onNoteSelected(this.selected.notes);
     };
     Editor.prototype._addtoSelectedStaves = function (stave) {
         if (this.shiftActive) {
@@ -534,6 +538,7 @@ var Editor = /** @class */ (function () {
         else {
             this.selected.staves = [stave];
         }
+        this.onStaveSelected && this.onStaveSelected(this.selected.staves);
     };
     Editor.prototype.getMousePos = function (canvas, evt) {
         var rect = canvas.getBoundingClientRect();
@@ -664,7 +669,7 @@ var Editor = /** @class */ (function () {
             n.noteIndex = i;
             return n;
         });
-        var notes = this.sheet.staves[this.selected.notes[0].staveIndex].notes = notes;
+        notes = this.sheet.staves[this.selected.notes[0].staveIndex].notes = notes;
         this.setCursor(newNote.staveIndex, newNote.noteIndex);
     };
     Editor.prototype.setCursor = function (staveIndex, noteIndex) {

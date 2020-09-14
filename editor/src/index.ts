@@ -193,14 +193,17 @@ class Editor {
     public onNoteSelected!: Function;
     public onStaveSelected!:Function;
 
-  constructor(svgcontainer:HTMLElement,opts:{timeSig:string, key:string , errorHandler: any}) {
+  constructor(svgcontainer:HTMLElement,opts:{ timeSig:string, key:string , errorHandler: Function, onRender:Function, onNoteSelected: Function, onStaveSelected:Function }) {
 
     let time = opts?.timeSig.split("/");
     this.timeSigTop =  time ? parseInt(time[0])  : this.timeSigTop;
     this.timeSigBottom = time ? parseInt(time[1])  : this.timeSigBottom;
     this.keySig = opts?.key || this.keySig;
     this.svgElm = svgcontainer;
-    this.onError = opts?.errorHandler;
+    this.onError = opts?.errorHandler;  
+    this.onRender = opts?.onRender;
+    this.onNoteSelected = opts?.onNoteSelected;
+    this.onStaveSelected = opts?.onStaveSelected;
 
      this.renderer   = new Vex.Flow.Renderer(
         svgcontainer,
@@ -734,6 +737,9 @@ class Editor {
     else{
       this.selected.notes = [note];
     }
+
+    this.onNoteSelected && this.onNoteSelected(this.selected.notes);
+
   }
 
   private _addtoSelectedStaves(stave:number){
@@ -746,6 +752,7 @@ class Editor {
     else{
       this.selected.staves = [stave];
     }
+    this.onStaveSelected && this.onStaveSelected(this.selected.staves);
   }
 
   getMousePos(canvas:HTMLElement, evt:MouseEvent) {
@@ -888,7 +895,7 @@ class Editor {
         
       } )
 
-      let notes = this.sheet.staves[this.selected.notes[0].staveIndex].notes = notes;
+      notes = this.sheet.staves[this.selected.notes[0].staveIndex].notes = notes;
 
       this.setCursor(newNote.staveIndex, newNote.noteIndex)
 
