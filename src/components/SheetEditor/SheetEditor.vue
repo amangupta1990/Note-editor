@@ -30,7 +30,7 @@
         </div>
       </div>
     </div>
-    <floating-toolbar v-bind:x="noteXPos"   v-bind:y="noteYpos"  />
+    <floating-toolbar v-bind:x="noteXPos"   v-bind:y="noteYpos" @onKey="onToolbarKey"  />
   </div>
 </template>
 
@@ -82,6 +82,20 @@ export default {
       const {x,y} = notes[0];
       this.noteXPos = x;
       this.noteYpos = y;
+    },
+
+    onToolbarKey: function(event){
+        const {type , value} = event;
+        
+        switch(type){
+          case 'undo': this.editor.undo(); break;
+          case 'redo': this.editor.redo(); break;
+          case 'delete': this.editor.deleteNotes(); this.editor.update(); break;
+          case 'note': this.editor.addNote(`${value.toLowerCase()}/4`); this.editor.update(); break;
+        }
+
+        
+
     }
   },
 };

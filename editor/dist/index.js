@@ -537,7 +537,6 @@ var Editor = /** @class */ (function () {
             var bbox = ele === null || ele === void 0 ? void 0 : ele.getBBox();
             return __assign(__assign({}, sn), { x: bbox.x, y: bbox.y });
         });
-        debugger;
         this.onNoteSelected && this.onNoteSelected(notes);
     };
     Editor.prototype._addtoSelectedStaves = function (stave) {
@@ -885,6 +884,10 @@ var Editor = /** @class */ (function () {
         });
     };
     //
+    Editor.prototype.update = function () {
+        this.saveState();
+        this.Draw();
+    };
     Editor.prototype.throwError = function (message) {
         this.onError && this.onError(message);
     };

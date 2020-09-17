@@ -760,7 +760,7 @@ class Editor {
         }
 
     })
-    debugger;
+   
     this.onNoteSelected && this.onNoteSelected(notes);
 
   }
@@ -1148,6 +1148,11 @@ class Editor {
   }
 
   //
+
+  update(){
+    this.saveState();
+    this.Draw();
+  }
 
   throwError(message:string){
     this.onError && this.onError(message);
