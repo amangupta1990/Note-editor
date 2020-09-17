@@ -116,6 +116,7 @@ class Editor {
   private timeSigBottom: number = 4;
   private clef:string = "treble";
   private accidental:(string | null) = "";
+  private mode = "note";
   private staveWidth:number = 400;
   private staveHeight:number = 140;
   private noteWidth:number = 100;
@@ -272,6 +273,10 @@ class Editor {
     let notes:ed_note[] = new Array(this.timeSigTop).fill({keys:[REST_POSITIONS(durationValue)] ,duration:durationValue,isRest:true})
                             .map((n,i)=> { return  {...n,accidentals:[null],staveIndex:index, noteIndex:i} })
     this.sheet.staves.splice(index, 0, {notes});
+  }
+
+  setMode( mode: "chord" | "note" | "rythm" ){
+      this.mode = mode;
   }
 
   addNote(noteName:string) {
@@ -1113,7 +1118,11 @@ class Editor {
         // for adding note s 
         case noteMatch && noteMatch.length === 1: {
           this.saveState();
+          if(this.mode === "note")
           this.addNote(`${event.key.toLowerCase()}/4` )
+          else{
+            // TODO: add chord function
+          }
           this.Draw();
           break;
         } 

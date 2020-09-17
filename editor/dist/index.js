@@ -85,6 +85,7 @@ var Editor = /** @class */ (function () {
         this.timeSigBottom = 4;
         this.clef = "treble";
         this.accidental = "";
+        this.mode = "note";
         this.staveWidth = 400;
         this.staveHeight = 140;
         this.noteWidth = 100;
@@ -205,6 +206,9 @@ var Editor = /** @class */ (function () {
         var notes = new Array(this.timeSigTop).fill({ keys: [REST_POSITIONS(durationValue)], duration: durationValue, isRest: true })
             .map(function (n, i) { return __assign(__assign({}, n), { accidentals: [null], staveIndex: index, noteIndex: i }); });
         this.sheet.staves.splice(index, 0, { notes: notes });
+    };
+    Editor.prototype.setMode = function (mode) {
+        this.mode = mode;
     };
     Editor.prototype.addNote = function (noteName) {
         // modify the rest of the stave to join the notes
@@ -847,7 +851,11 @@ var Editor = /** @class */ (function () {
                 // for adding note s 
                 case noteMatch && noteMatch.length === 1: {
                     _this.saveState();
-                    _this.addNote(event.key.toLowerCase() + "/4");
+                    if (_this.mode === "note")
+                        _this.addNote(event.key.toLowerCase() + "/4");
+                    else {
+                        // TODO: add chord function
+                    }
                     _this.Draw();
                     break;
                 }
