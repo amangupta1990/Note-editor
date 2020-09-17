@@ -738,7 +738,25 @@ class Editor {
       this.selected.notes = [note];
     }
 
-    this.onNoteSelected && this.onNoteSelected(this.selected.notes);
+    // get the xy of the ntoes and output them 
+    let notes = this.selected.notes.map(sn=>{
+     let ele:any = this.svgElm.querySelector(
+        `#vf-${sn.staveIndex}__${
+          sn.noteIndex
+        }`
+      );
+
+      const bbox = ele?.getBBox();
+
+        return {
+          ...sn,
+          x : bbox.x,
+          y: bbox.y
+        }
+
+    })
+    debugger;
+    this.onNoteSelected && this.onNoteSelected(notes);
 
   }
 
@@ -752,6 +770,7 @@ class Editor {
     else{
       this.selected.staves = [stave];
     }
+
     this.onStaveSelected && this.onStaveSelected(this.selected.staves);
   }
 

@@ -517,16 +517,24 @@ var Editor = /** @class */ (function () {
     };
     // Methods for drawing cursor note
     Editor.prototype._addtoSelectedNotes = function (note) {
+        var _this = this;
         if (this.shiftActive) {
-            var notes = lodash.clone(this.selected.notes);
-            notes.push(note);
-            notes = lodash.uniq(notes);
-            this.selected.notes = notes;
+            var notes_1 = lodash.clone(this.selected.notes);
+            notes_1.push(note);
+            notes_1 = lodash.uniq(notes_1);
+            this.selected.notes = notes_1;
         }
         else {
             this.selected.notes = [note];
         }
-        this.onNoteSelected && this.onNoteSelected(this.selected.notes);
+        // get the xy of the ntoes and output them 
+        var notes = this.selected.notes.map(function (sn) {
+            var ele = _this.svgElm.querySelector("#vf-" + sn.staveIndex + "__" + sn.noteIndex);
+            var bbox = ele === null || ele === void 0 ? void 0 : ele.getBBox();
+            return __assign(__assign({}, sn), { x: bbox.x, y: bbox.y });
+        });
+        debugger;
+        this.onNoteSelected && this.onNoteSelected(notes);
     };
     Editor.prototype._addtoSelectedStaves = function (stave) {
         if (this.shiftActive) {

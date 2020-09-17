@@ -6,7 +6,8 @@
     "serve": "vue-cli-service serve",
     "build": "vue-cli-service build",
     "lint": "vue-cli-service lint",
-    "tsc": "tsc"
+    "tsc": "tsc",
+    "watch": "tsc -watch"
   },
   "dependencies": {
     "lodash": "^4.17.19",

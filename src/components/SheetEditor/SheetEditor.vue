@@ -30,6 +30,7 @@
         </div>
       </div>
     </div>
+    <floating-toolbar v-bind:x="noteXPos"   v-bind:y="noteYpos"  />
   </div>
 </template>
 
@@ -37,6 +38,7 @@
 import Editor from "../../../editor/dist/";
 import NewSheetDialog from "./newSheetDialog.vue";
 import ErrorDialog from "./errorDialog.vue";
+import FloatingToolbar from "./floatingToolbar.vue";
 
 export default {
   name: "SheetEditor",
@@ -45,6 +47,7 @@ export default {
   components: {
     NewSheetDialog,
     ErrorDialog,
+    FloatingToolbar
   },
   data() {
     return {
@@ -52,6 +55,8 @@ export default {
       showNewSheetDialog: true,
       showErrorDialog: false,
       errorMessage: "",
+      noteXPos: null,
+      noteYpos: null,
     };
   },
   mounted: function() {
@@ -60,6 +65,7 @@ export default {
   methods: {
     initSheet: function(opts) {
       opts.errorHandler = this.editorErrorHandler;
+      opts.onNoteSelected = this.editorOnNoteSelected;
       this.$nextTick().then(
         () => (this.editor = new Editor(this.$refs.svgcontainer, opts))
       );
@@ -70,6 +76,13 @@ export default {
       this.errorMessage = errorMessage;
       this.showErrorDialog = true;
     },
+
+    editorOnNoteSelected: function(notes){
+      // eslint-disable-next-line no-debugger
+      const {x,y} = notes[0];
+      this.noteXPos = x;
+      this.noteYpos = y;
+    }
   },
 };
 </script>
