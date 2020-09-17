@@ -57,19 +57,23 @@
         <div class="flex -mx-1">
             <div class="w-10 px-1">
                 <button class="block w-full h-10 rounded bg-gray-900 hover:bg-indigo-600 hover:text-white shadow focus:outline-none text-center leading-none">
-                    <i class="mdi mdi-numeric text-lg"></i>
+                     <i class="mdi mdi-arrow-down-bold text-lg"></i>
                 </button>
             </div>
             <div class="w-10 px-1">
                 <button class="block w-full h-10 rounded bg-gray-900 hover:bg-indigo-600 hover:text-white shadow focus:outline-none text-center leading-none">
-                    <i class="mdi mdi-emoticon-happy-outline text-lg"></i>
+                    note
                 </button>
             </div>
             <div class="flex-1 px-1">
-                <button class="block w-full h-10 rounded bg-gray-700 hover:bg-indigo-600 hover:text-white shadow focus:outline-none text-center leading-none text-xs">space</button>
+                <button class="block w-full h-10 rounded bg-gray-700 hover:bg-indigo-600 hover:text-white shadow focus:outline-none text-center leading-none text-xs">
+                     <i class="mdi  mdi-undo text-lg"></i>
+                </button>
             </div>
             <div class="w-20 px-1">
-                <button class="block w-full h-10 rounded bg-gray-900 hover:bg-indigo-600 hover:text-white shadow focus:outline-none text-center leading-none text-xs">return</button>
+                <button class="block w-full h-10 rounded bg-gray-900 hover:bg-indigo-600 hover:text-white shadow focus:outline-none text-center leading-none text-xs">
+                    <i class="mdi  mdi-redo text-lg"></i>
+                </button>
             </div>
         </div>
     </div>
