@@ -499,6 +499,8 @@ class Editor {
     this.ctx.clear();
     let staveXpos = 10;
     let staveWidth = 0;
+    // increase the width of the svg element to fit staves
+    this.svgElm.style.width = `${(this.sheet.staves.length)*(this.timeSigTop*200)}`
     const renderedStaves =   this.sheet.staves.map((s, staveIndex) => {
 
       
@@ -543,12 +545,6 @@ class Editor {
 
        let sortedKeys = keys.map(k=>k.key);
        let sortedAccidentals:any = keys.map(k=>k.accidental)
-
-       console.log("unsorted",n.keys)
-       console.log("sorted",sortedKeys)
-
-     
-       
 
        let  staveNote: Vex.Flow.StaveNote | any = new Vex.Flow.StaveNote({
           clef: this.clef,
@@ -651,6 +647,7 @@ class Editor {
   }
 
  private  _getSelectedElement(event:any) {
+    try{
     let ele = event.target;
     while (
       ele.classList.value.indexOf("vf-stavenote") < 0 &&
@@ -671,6 +668,10 @@ class Editor {
       ele.classList.value.indexOf("vf-stavenote") > -1 ? "note" : "stave",
       ...id,
     ];
+  }
+  catch(e){
+    console.error(e)
+  }
   }
 
  private  _highlightNoteElement(ele:(HTMLElement | null), color:string = "black") {
@@ -695,8 +696,6 @@ class Editor {
 
     svgElem.addEventListener("click", (event) => {
       event.preventDefault();
-
-
       // eslint-disable-next-line no-unused-vars
       let [ele, type, staveIndex, noteIndex] = this._getSelectedElement(event);
 
@@ -722,7 +721,7 @@ class Editor {
       }
       this.Draw();
 
-    });
+    },false);
 
     svgElem.addEventListener("blur", () => {
       this.Draw();
@@ -1088,6 +1087,14 @@ class Editor {
         case event.key === "t": {
           if(!event.ctrlKey && !event.metaKey ) return;
           this.tieNotes();
+          this.Draw();
+          break
+        }
+
+        case event.key === "a": {
+          if(!event.ctrlKey && !event.metaKey ) return;
+          this.saveState()
+          this.addStave();
           this.Draw();
           break
         }

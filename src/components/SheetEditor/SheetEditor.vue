@@ -21,6 +21,7 @@
               <!-- use rather div, but before that resolve NaNs in viewbox problem -->
               <!-- <div id="svg-container" width="800" height="420"></div> -->
               <svg
+                @contextmenu.prevent.stop="handleClick($event)"
                 id="svg-container"
                 class="svg-contatainer"
                 ref="svgcontainer"
@@ -63,6 +64,8 @@ export default {
       errorMessage: "",
       noteXPos: null,
       noteYpos: null,
+      selectedNote:null,
+      selectedStave:null,
       contextMenuOpts:[
         {name: 'chord'},
         {name: 'rythm'},
@@ -91,12 +94,14 @@ export default {
     },
 
     editorOnNoteSelected: function(notes){
-      // eslint-disable-next-line no-debugger
+      this.selectedNote = notes[0];
       const {x,y} = notes[0];
       this.noteXPos = x;
       this.noteYpos = y;
-      event
-      this.$refs.vueSimpleContextMenu.showMenu(event, notes[0])
+      
+    },
+    handleClick (event) {
+      this.$refs.vueSimpleContextMenu.showMenu(event, this.selectedNote)
     },
 
     onToolbarKey: function(event){
@@ -117,6 +122,12 @@ export default {
 </script>
 
 <style>
+
+#svg-wrapper{
+  @apply overflow-x-scroll;
+  width:100vw;
+}
+
 .svg-contatainer {
   @apply w-full  outline-none;
   height: 100vh;

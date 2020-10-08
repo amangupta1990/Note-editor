@@ -374,6 +374,8 @@ var Editor = /** @class */ (function () {
             this.ctx.clear();
             var staveXpos_1 = 10;
             var staveWidth_1 = 0;
+            // increase the width of the svg element to fit staves
+            this.svgElm.style.width = "" + (this.sheet.staves.length) * (this.timeSigTop * 200);
             var renderedStaves_1 = this.sheet.staves.map(function (s, staveIndex) {
                 staveXpos_1 += staveWidth_1;
                 staveWidth_1 = _this.noteWidth * (s.notes.length < _this.timeSigBottom ? _this.timeSigBottom : s.notes.length);
@@ -400,8 +402,6 @@ var Editor = /** @class */ (function () {
                     keys = keys.sort(function (a, b) { return _this.compareNotes(a.key.split("/").join(''), b.key.split("/").join('')); });
                     var sortedKeys = keys.map(function (k) { return k.key; });
                     var sortedAccidentals = keys.map(function (k) { return k.accidental; });
-                    console.log("unsorted", n.keys);
-                    console.log("sorted", sortedKeys);
                     var staveNote = new vexflow_1.default.Flow.StaveNote({
                         clef: _this.clef,
                         keys: sortedKeys,
@@ -460,21 +460,26 @@ var Editor = /** @class */ (function () {
         }
     };
     Editor.prototype._getSelectedElement = function (event) {
-        var ele = event.target;
-        while (ele.classList.value.indexOf("vf-stavenote") < 0 &&
-            ele.classList.value.indexOf("vf-measureRect") < 0) {
-            ele = ele.parentElement;
+        try {
+            var ele = event.target;
+            while (ele.classList.value.indexOf("vf-stavenote") < 0 &&
+                ele.classList.value.indexOf("vf-measureRect") < 0) {
+                ele = ele.parentElement;
+            }
+            // prevent the cursor note form getting selected
+            var id = ele.id;
+            if (id.indexOf("auto") > -1)
+                return [];
+            id = id.split("-")[1].split("__");
+            // return an element only if there is a valid id selected
+            return __spreadArrays([
+                ele,
+                ele.classList.value.indexOf("vf-stavenote") > -1 ? "note" : "stave"
+            ], id);
         }
-        // prevent the cursor note form getting selected
-        var id = ele.id;
-        if (id.indexOf("auto") > -1)
-            return [];
-        id = id.split("-")[1].split("__");
-        // return an element only if there is a valid id selected
-        return __spreadArrays([
-            ele,
-            ele.classList.value.indexOf("vf-stavenote") > -1 ? "note" : "stave"
-        ], id);
+        catch (e) {
+            console.error(e);
+        }
     };
     Editor.prototype._highlightNoteElement = function (ele, color) {
         if (color === void 0) { color = "black"; }
@@ -514,7 +519,7 @@ var Editor = /** @class */ (function () {
                 }
             }
             _this.Draw();
-        });
+        }, false);
         svgElem.addEventListener("blur", function () {
             _this.Draw();
         });
@@ -819,6 +824,14 @@ var Editor = /** @class */ (function () {
                     if (!event.ctrlKey && !event.metaKey)
                         return;
                     _this.tieNotes();
+                    _this.Draw();
+                    break;
+                }
+                case event.key === "a": {
+                    if (!event.ctrlKey && !event.metaKey)
+                        return;
+                    _this.saveState();
+                    _this.addStave();
                     _this.Draw();
                     break;
                 }
