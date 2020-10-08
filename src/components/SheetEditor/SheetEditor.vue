@@ -30,7 +30,13 @@
         </div>
       </div>
     </div>
-    <floating-toolbar v-bind:x="noteXPos"   v-bind:y="noteYpos" @onKey="onToolbarKey"  />
+    <vue-simple-context-menu
+  :elementId="'myUniqueId'"
+  :options="contextMenuOpts"
+  :ref="'vueSimpleContextMenu'"
+  @option-clicked="optionClicked"
+/>
+    <!-- <floating-toolbar v-bind:x="noteXPos"   v-bind:y="noteYpos" @onKey="onToolbarKey"  /> -->
   </div>
 </template>
 
@@ -38,7 +44,7 @@
 import Editor from "../../../editor/dist/";
 import NewSheetDialog from "./newSheetDialog.vue";
 import ErrorDialog from "./errorDialog.vue";
-import FloatingToolbar from "./floatingToolbar.vue";
+
 
 export default {
   name: "SheetEditor",
@@ -46,8 +52,8 @@ export default {
   props: {},
   components: {
     NewSheetDialog,
-    ErrorDialog,
-    FloatingToolbar
+    ErrorDialog
+    
   },
   data() {
     return {
@@ -57,12 +63,19 @@ export default {
       errorMessage: "",
       noteXPos: null,
       noteYpos: null,
+      contextMenuOpts:[
+        {name: 'chord'},
+        {name: 'rythm'},
+      ],
     };
   },
   mounted: function() {
     this.tab = "note";
   },
   methods: {
+    optionClicked (event) {
+  window.alert(JSON.stringify(event))
+},
     initSheet: function(opts) {
       opts.errorHandler = this.editorErrorHandler;
       opts.onNoteSelected = this.editorOnNoteSelected;
@@ -82,6 +95,8 @@ export default {
       const {x,y} = notes[0];
       this.noteXPos = x;
       this.noteYpos = y;
+      event
+      this.$refs.vueSimpleContextMenu.showMenu(event, notes[0])
     },
 
     onToolbarKey: function(event){
