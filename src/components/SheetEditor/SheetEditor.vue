@@ -31,6 +31,7 @@
         </div>
       </div>
     </div>
+    <chord-drawer chordNote="C" tonic= "major" ></chord-drawer>
     <vue-simple-context-menu
   :elementId="'myUniqueId'"
   :options="contextMenuOpts"
@@ -45,6 +46,7 @@
 import Editor from "../../../editor/dist/";
 import NewSheetDialog from "./newSheetDialog.vue";
 import ErrorDialog from "./errorDialog.vue";
+import ChordDrawer from "./ChordDrawer";
 
 
 export default {
@@ -53,7 +55,8 @@ export default {
   props: {},
   components: {
     NewSheetDialog,
-    ErrorDialog
+    ErrorDialog,
+    ChordDrawer
     
   },
   data() {
