@@ -6,6 +6,7 @@
       @onClickStart="initSheet"
     />
     <error-dialog
+    class="dialog"
       v-if="showErrorDialog"
       @onClickYes="showErrorDialog = false"
       :message="errorMessage"
@@ -21,6 +22,7 @@
               <!-- use rather div, but before that resolve NaNs in viewbox problem -->
               <!-- <div id="svg-container" width="800" height="420"></div> -->
               <svg
+                @contextmenu.prevent.stop="handleClick($event)"
                 id="svg-container"
                 class="svg-contatainer"
                 ref="svgcontainer"
@@ -30,7 +32,14 @@
         </div>
       </div>
     </div>
-    <floating-toolbar v-bind:x="noteXPos"   v-bind:y="noteYpos" @onKey="onToolbarKey"  />
+    <chord-drawer chordNote="C" tonic= "major" @chordselected="onChordSelected" v-bind:show="showChordDrawer" @toggle="toggleChordDrawer" ></chord-drawer>
+    <vue-simple-context-menu
+  :elementId="'myUniqueId'"
+  :options="contextMenuOpts"
+  :ref="'vueSimpleContextMenu'"
+  @option-clicked="optionClicked"
+/>
+    <!-- <floating-toolbar v-bind:x="noteXPos"   v-bind:y="noteYpos" @onKey="onToolbarKey"  /> -->
   </div>
 </template>
 
@@ -38,7 +47,8 @@
 import Editor from "../../../editor/dist/";
 import NewSheetDialog from "./newSheetDialog.vue";
 import ErrorDialog from "./errorDialog.vue";
-import FloatingToolbar from "./floatingToolbar.vue";
+import ChordDrawer from "./ChordDrawer";
+
 
 export default {
   name: "SheetEditor",
@@ -47,22 +57,44 @@ export default {
   components: {
     NewSheetDialog,
     ErrorDialog,
-    FloatingToolbar
+    ChordDrawer
+    
   },
   data() {
     return {
       editor: null,
       showNewSheetDialog: true,
       showErrorDialog: false,
+      showChordDrawer:false,
       errorMessage: "",
       noteXPos: null,
       noteYpos: null,
+      selectedNote:null,
+      selectedStave:null,
+      contextMenuOpts:[
+        {name: 'chord'},
+        {name: 'rythm'},
+      ],
     };
   },
   mounted: function() {
     this.tab = "note";
+    this.showChordDrawer = false;
   },
   methods: {
+    toggleChordDrawer: function(val){
+      this.showChordDrawer=val;
+    },
+    optionClicked (event) {
+        switch (event.option.name) {
+          case 'chord':
+            this.showChordDrawer = true;
+            break;
+        
+          default:
+            break;
+        }
+},
     initSheet: function(opts) {
       opts.errorHandler = this.editorErrorHandler;
       opts.onNoteSelected = this.editorOnNoteSelected;
@@ -78,10 +110,14 @@ export default {
     },
 
     editorOnNoteSelected: function(notes){
-      // eslint-disable-next-line no-debugger
+      this.selectedNote = notes[0];
       const {x,y} = notes[0];
       this.noteXPos = x;
       this.noteYpos = y;
+      
+    },
+    handleClick (event) {
+      this.$refs.vueSimpleContextMenu.showMenu(event, this.selectedNote)
     },
 
     onToolbarKey: function(event){
@@ -96,15 +132,24 @@ export default {
 
         
 
+    },
+    onChordSelected: function(chord){
+      this.editor.addChord(chord);
     }
   },
 };
 </script>
 
 <style>
+
+#svg-wrapper{
+  @apply overflow-x-scroll;
+  width:100vw;
+}
+
 .svg-contatainer {
   @apply w-full  outline-none;
-  height: 100vh;
+  height: 94vh;
   z-index: 1;
 }
 
