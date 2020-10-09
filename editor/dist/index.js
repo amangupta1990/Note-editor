@@ -30,12 +30,25 @@ var __importStar = (this && this.__importStar) || function (mod) {
     __setModuleDefault(result, mod);
     return result;
 };
-var __spreadArrays = (this && this.__spreadArrays) || function () {
-    for (var s = 0, i = 0, il = arguments.length; i < il; i++) s += arguments[i].length;
-    for (var r = Array(s), k = 0, i = 0; i < il; i++)
-        for (var a = arguments[i], j = 0, jl = a.length; j < jl; j++, k++)
-            r[k] = a[j];
-    return r;
+var __read = (this && this.__read) || function (o, n) {
+    var m = typeof Symbol === "function" && o[Symbol.iterator];
+    if (!m) return o;
+    var i = m.call(o), r, ar = [], e;
+    try {
+        while ((n === void 0 || n-- > 0) && !(r = i.next()).done) ar.push(r.value);
+    }
+    catch (error) { e = { error: error }; }
+    finally {
+        try {
+            if (r && !r.done && (m = i["return"])) m.call(i);
+        }
+        finally { if (e) throw e.error; }
+    }
+    return ar;
+};
+var __spread = (this && this.__spread) || function () {
+    for (var ar = [], i = 0; i < arguments.length; i++) ar = ar.concat(__read(arguments[i]));
+    return ar;
 };
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
@@ -43,6 +56,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 var vexflow_1 = __importDefault(require("vexflow"));
 var lodash = __importStar(require("lodash"));
+var tonal_1 = require("@tonaljs/tonal");
 var REST_POSITIONS = function (key) {
     switch (key) {
         case "q": return "b/4";
@@ -210,7 +224,7 @@ var Editor = /** @class */ (function () {
     Editor.prototype.setMode = function (mode) {
         this.mode = mode;
     };
-    Editor.prototype.addNote = function (noteName) {
+    Editor.prototype.addNote = function (noteName, accidental) {
         // modify the rest of the stave to join the notes
         var _this = this;
         var notes = this.selected.notes;
@@ -222,14 +236,30 @@ var Editor = /** @class */ (function () {
             var stave = _this.sheet.staves[note.staveIndex];
             var isRest = note.isRest;
             var duration = note.duration.replace('r', '');
-            var keys = isRest ? [noteName] : lodash.uniq(__spreadArrays(note.keys, [noteName]));
-            var accidentals = note.accidentals ? __spreadArrays(note.accidentals, [_this.accidental]) : _this.accidental ? [_this.accidental] : [null];
+            var keys = isRest ? [noteName] : lodash.uniq(__spread(note.keys, [noteName]));
+            var accidentals = note.accidentals ? __spread(note.accidentals, [_this.accidental]) : _this.accidental || accidental ? [accidental || _this.accidental] : [null];
             var newNote = { keys: keys, duration: duration, isRest: false, staveIndex: note.staveIndex, noteIndex: note.noteIndex, accidentals: accidentals, clef: note.clef, dotted: note.dotted };
             stave.notes[note.noteIndex] = newNote;
             _this.sheet.staves[note.staveIndex] = stave;
             return newNote;
         });
         this.selected.notes = notes;
+    };
+    Editor.prototype.addChord = function (chord) {
+        var _this = this;
+        this.deleteNotes();
+        var oct = 4;
+        var _chord = tonal_1.Chord.get(chord);
+        var root = _chord.tonic;
+        _chord.intervals.map(function (interval, index) {
+            var n = tonal_1.Note.transpose(root, interval);
+            var _a = __read(n.split(''), 2), note = _a[0], accidental = _a[1];
+            _this.addNote(note + "/" + oct, accidental);
+            if (note > "G") {
+                oct++;
+            }
+        });
+        this.Draw();
     };
     Editor.prototype.tieNotes = function () {
         var getId = function (a, b) {
@@ -271,7 +301,7 @@ var Editor = /** @class */ (function () {
                 _this.throwError("note not found");
                 return;
             }
-            var _a = note.split("/"), upper = _a[0], lower = _a[1];
+            var _a = __read(note.split("/"), 2), upper = _a[0], lower = _a[1];
             var newNote = upper + "/" + (parseInt(lower) + octave);
             // replace the note 
             _this.sheet.staves[staveIndex].notes[noteIndex].keys[keyIndex] = newNote;
@@ -472,7 +502,7 @@ var Editor = /** @class */ (function () {
                 return [];
             id = id.split("-")[1].split("__");
             // return an element only if there is a valid id selected
-            return __spreadArrays([
+            return __spread([
                 ele,
                 ele.classList.value.indexOf("vf-stavenote") > -1 ? "note" : "stave"
             ], id);
@@ -504,7 +534,7 @@ var Editor = /** @class */ (function () {
         svgElem.addEventListener("click", function (event) {
             event.preventDefault();
             // eslint-disable-next-line no-unused-vars
-            var _a = _this._getSelectedElement(event), ele = _a[0], type = _a[1], staveIndex = _a[2], noteIndex = _a[3];
+            var _a = __read(_this._getSelectedElement(event), 4), ele = _a[0], type = _a[1], staveIndex = _a[2], noteIndex = _a[3];
             switch (type) {
                 case "note": {
                     //  
@@ -602,7 +632,7 @@ var Editor = /** @class */ (function () {
                 accidentals: accidentals
             };
         });
-        notes.splice.apply(notes, __spreadArrays([this.selected.cursor.noteIndex, 1], newNotes));
+        notes.splice.apply(notes, __spread([this.selected.cursor.noteIndex, 1], newNotes));
         // remap ids 
         notes = notes.map(function (n, i) {
             n.staveIndex = _this.selected.cursor.staveIndex;
@@ -670,7 +700,7 @@ var Editor = /** @class */ (function () {
             }
             var keys1 = a.isRest ? [] : a.keys;
             var keys2 = b.isRest ? [] : b.keys;
-            var keys = __spreadArrays(keys1, keys2);
+            var keys = __spread(keys1, keys2);
             keys = keys.length ? lodash.uniq(keys) : [REST_POSITIONS(mergedDuration)];
             return __assign(__assign({}, a), { isRest: a.isRest && b.isRest, keys: keys, duration: mergedDuration, dotted: dotted });
         });

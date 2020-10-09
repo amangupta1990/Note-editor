@@ -6,6 +6,7 @@
       @onClickStart="initSheet"
     />
     <error-dialog
+    class="dialog"
       v-if="showErrorDialog"
       @onClickYes="showErrorDialog = false"
       :message="errorMessage"
@@ -31,7 +32,7 @@
         </div>
       </div>
     </div>
-    <chord-drawer chordNote="C" tonic= "major" ></chord-drawer>
+    <chord-drawer chordNote="C" tonic= "major" @chordselected="onChordSelected" v-bind:show="showChordDrawer" @toggle="toggleChordDrawer" ></chord-drawer>
     <vue-simple-context-menu
   :elementId="'myUniqueId'"
   :options="contextMenuOpts"
@@ -64,6 +65,7 @@ export default {
       editor: null,
       showNewSheetDialog: true,
       showErrorDialog: false,
+      showChordDrawer:false,
       errorMessage: "",
       noteXPos: null,
       noteYpos: null,
@@ -77,10 +79,21 @@ export default {
   },
   mounted: function() {
     this.tab = "note";
+    this.showChordDrawer = false;
   },
   methods: {
+    toggleChordDrawer: function(val){
+      this.showChordDrawer=val;
+    },
     optionClicked (event) {
-  window.alert(JSON.stringify(event))
+        switch (event.option.name) {
+          case 'chord':
+            this.showChordDrawer = true;
+            break;
+        
+          default:
+            break;
+        }
 },
     initSheet: function(opts) {
       opts.errorHandler = this.editorErrorHandler;
@@ -119,6 +132,9 @@ export default {
 
         
 
+    },
+    onChordSelected: function(chord){
+      this.editor.addChord(chord);
     }
   },
 };
@@ -133,7 +149,7 @@ export default {
 
 .svg-contatainer {
   @apply w-full  outline-none;
-  height: 100vh;
+  height: 94vh;
   z-index: 1;
 }
 

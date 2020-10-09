@@ -6,7 +6,7 @@
 
 import Vex from "vexflow";
 import * as lodash from "lodash";
-
+import {Chord, interval, Note} from "@tonaljs/tonal"
 
 
 
@@ -279,7 +279,7 @@ class Editor {
       this.mode = mode;
   }
 
-  addNote(noteName:string) {
+  addNote(noteName:string,accidental?:string) {
     // modify the rest of the stave to join the notes
 
     let notes = this.selected.notes;
@@ -295,7 +295,7 @@ class Editor {
     let isRest = note.isRest;
     let duration =  note.duration.replace('r','');
     let keys = isRest ? [noteName] :   lodash.uniq([...note.keys, noteName]);
-    let accidentals =  note.accidentals ? [...note.accidentals, this.accidental]: this.accidental? [this.accidental] : [null];
+    let accidentals =  note.accidentals ? [...note.accidentals, this.accidental]: this.accidental || accidental  ? [ accidental || this.accidental ] : [null];
    
 
     let newNote = {keys,duration,isRest:false,staveIndex:  note.staveIndex,noteIndex: note.noteIndex, accidentals, clef: note.clef, dotted: note.dotted};
@@ -305,6 +305,23 @@ class Editor {
 
   })
   this.selected.notes = notes;
+  }
+
+  addChord(chord:string){
+    
+
+    this.deleteNotes();
+
+    let oct = 4;
+    const _chord = Chord.get(chord);
+    const root:any = _chord.tonic;
+    _chord.intervals.map((interval:string,index:number)=> {
+      const n = Note.transpose(root,interval);
+      const [note, accidental] = n.split('');
+      this.addNote(`${note}/${oct}`,accidental);
+      if(note > "G"){  oct++; }
+    } )
+    this.Draw();
   }
 
   
