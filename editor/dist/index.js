@@ -237,7 +237,7 @@ var Editor = /** @class */ (function () {
             var isRest = note.isRest;
             var duration = note.duration.replace('r', '');
             var keys = isRest ? [noteName] : lodash.uniq(__spread(note.keys, [noteName]));
-            var accidentals = note.accidentals ? __spread(note.accidentals, [_this.accidental]) : _this.accidental || accidental ? [accidental || _this.accidental] : [null];
+            var accidentals = note.accidentals ? __spread(note.accidentals, [accidental || _this.accidental]) : accidental || _this.accidental ? [accidental || _this.accidental] : [null];
             var newNote = { keys: keys, duration: duration, isRest: false, staveIndex: note.staveIndex, noteIndex: note.noteIndex, accidentals: accidentals, clef: note.clef, dotted: note.dotted };
             stave.notes[note.noteIndex] = newNote;
             _this.sheet.staves[note.staveIndex] = stave;
@@ -245,19 +245,17 @@ var Editor = /** @class */ (function () {
         });
         this.selected.notes = notes;
     };
-    Editor.prototype.addChord = function (chord) {
+    Editor.prototype.addChord = function (tonic, chord) {
         var _this = this;
+        debugger;
         this.deleteNotes();
-        var oct = 4;
-        var _chord = tonal_1.Chord.get(chord);
+        var _chord = tonal_1.Chord.getChord(chord, tonic + "4");
         var root = _chord.tonic;
         _chord.intervals.map(function (interval, index) {
             var n = tonal_1.Note.transpose(root, interval);
-            var _a = __read(n.split(''), 2), note = _a[0], accidental = _a[1];
-            _this.addNote(note + "/" + oct, accidental);
-            if (note > "G") {
-                oct++;
-            }
+            var _a = __read(n.split(/(?=[0-9])/g), 2), _note = _a[0], octave = _a[1];
+            var _b = __read(_note.split(''), 2), note = _b[0], accidental = _b[1];
+            _this.addNote(note + "/" + octave, accidental);
         });
         this.Draw();
     };

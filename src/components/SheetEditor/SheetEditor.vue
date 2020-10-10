@@ -134,7 +134,8 @@ export default {
 
     },
     onChordSelected: function(chord){
-      this.editor.addChord(chord);
+      const variation = chord.variation.replace(chord.tonic,'');
+      this.editor.addChord(chord.tonic,variation);
     }
   },
 };
