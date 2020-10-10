@@ -295,7 +295,7 @@ class Editor {
     let isRest = note.isRest;
     let duration =  note.duration.replace('r','');
     let keys = isRest ? [noteName] :   lodash.uniq([...note.keys, noteName]);
-    let accidentals =  note.accidentals ? [...note.accidentals, this.accidental]: this.accidental || accidental  ? [ accidental || this.accidental ] : [null];
+    let accidentals =  note.accidentals ? [...note.accidentals, accidental || this.accidental]: accidental || this.accidental  ? [ accidental || this.accidental ] : [null];
    
 
     let newNote = {keys,duration,isRest:false,staveIndex:  note.staveIndex,noteIndex: note.noteIndex, accidentals, clef: note.clef, dotted: note.dotted};
@@ -307,19 +307,19 @@ class Editor {
   this.selected.notes = notes;
   }
 
-  addChord(chord:string){
+  addChord(tonic:string,chord:string){
     
-
+    debugger;
     this.deleteNotes();
 
-    let oct = 4;
-    const _chord = Chord.get(chord);
+
+    const _chord = Chord.getChord(chord, tonic+"4");
     const root:any = _chord.tonic;
     _chord.intervals.map((interval:string,index:number)=> {
       const n = Note.transpose(root,interval);
-      const [note, accidental] = n.split('');
-      this.addNote(`${note}/${oct}`,accidental);
-      if(note > "G"){  oct++; }
+      let [ _note, octave]= n.split(/(?=[0-9])/g);
+      let [ note , accidental] = _note.split('');
+      this.addNote(`${note}/${octave}`,accidental);
     } )
     this.Draw();
   }

@@ -13,14 +13,14 @@
         </button>
 
     <div  class="chordVariations">
-           <button v-on:click="$emit('chordselected', chordVariation)" v-for="(chordVariation, variationIndex ) in chordVariations(scaleChords.chords[index])" :key="variationIndex" class="chordVariation" >{{chordVariation}}</button> 
+           <button v-on:click="$emit('chordselected', { tonic: getChordTonic(scaleChords.chords[index]), variation: chordVariation})" v-for="(chordVariation, variationIndex ) in chordVariations(scaleChords.chords[index])" :key="variationIndex" class="chordVariation" >{{chordVariation}}</button> 
     </div>
     </nav>
  </div>
  </div>   
 </template>
 <script>
-import { Scale, Chord, Key } from "@tonaljs/tonal";
+import {  Chord, Key } from "@tonaljs/tonal";
   export default {
   name: "chordDrawer",
   mixins: [],
@@ -46,16 +46,19 @@ import { Scale, Chord, Key } from "@tonaljs/tonal";
       toggle: function(){
           this.$emit("toggle", !this.show);
       },
-      getChordName(chordName,index){
-          if(!this.chordNote) return '';
-          const scale = Scale.get(`${this.chordNote} ${this.tonic}`);
-          const note = scale.notes[index];
-          return Chord.getChord(chordName, note).name;
-      },
+    //   getChordName(chordName,index){
+    //       if(!this.chordNote) return '';
+    //       const scale = Scale.get(`${this.chordNote} ${this.tonic}`);
+    //       const note = scale.notes[index];
+    //       return Chord.getChord(chordName, note).name;
+    //   },
       chordVariations:function(chord){
           const chords = [chord, ...Chord.extended(chord)];
           return chords;
       },
+      getChordTonic(chord){
+          return Chord.get(chord).tonic;
+      }
 
        
   },
