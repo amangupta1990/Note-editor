@@ -44,7 +44,7 @@
 </template>
 
 <script>
-import Editor from "../../../editor/dist/";
+import {Editor} from "../../../editor/dist/";
 import NewSheetDialog from "./newSheetDialog.vue";
 import ErrorDialog from "./errorDialog.vue";
 import ChordDrawer from "./ChordDrawer";
