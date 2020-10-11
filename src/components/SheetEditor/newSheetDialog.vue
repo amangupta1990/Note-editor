@@ -60,8 +60,8 @@ export default {
   },
   data: function() {
     return {
-      key: "d",
-      time: "5/8",
+      key: "c",
+      time: "4/4",
       timeSigError: false,
     };
   },
