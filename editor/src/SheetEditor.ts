@@ -12,7 +12,7 @@ import {playChord} from './AudioEngine';
 
 const REST_POSITIONS = (key:string)=>{
 
-switch(key){
+switch(key.toLocaleLowerCase()){
   case "q":  return "b/4";
   case "h":  return "b/4";
   case "w": return "e/5";
@@ -24,7 +24,7 @@ switch(key){
 };
 
 const NOTE_VAlUES =  (key:string)=>{
-    switch(key){ 
+    switch(key.toLocaleLowerCase()){ 
   case "c": return 1;
   case "d": return 2;
   case "e": return 3;
@@ -37,7 +37,7 @@ const NOTE_VAlUES =  (key:string)=>{
 }
 
 const DURATION_VALUES =  (key:string)=>{
-  switch(key){ 
+  switch(key.toLocaleLowerCase()){ 
 case "w": return 32;
 case "h": return 16;
 case "q": return 8;
@@ -293,9 +293,23 @@ class Editor {
     let noteToAdd;
   
     if(noteName.indexOf("/") == -1){
-    const currOctave = note.keys.map(k=> parseInt(k.split("/")[1])  ).sort((a,b,)=> b-a)[0];
-    const currentKey = note.keys.map(k=> (k.split("/")[0])  ).sort()[0];
-    const oct =  noteName <= currentKey  ? currOctave + 1 : currOctave;
+    const sortedNotes = Note.sortedNames(note.keys.map(k=> k.split("/").join('')), Note.descending  );
+    const [currentKey, o] =  sortedNotes[0].split('');
+    const currOctave = parseInt(o);
+    let oct;
+
+    if(note.isRest) {
+      oct = 4;
+    }
+    else{
+      switch(this.compareNotes(`${currentKey}${currOctave}`, `${noteName}${currOctave}`)){
+        
+        case -1 :  oct= currOctave; break;
+        case 0:
+        case 1 :   oct = currOctave+1; break;
+                  
+      }
+    }
     noteToAdd = `${noteName}/${oct}`
     }
     else{
@@ -516,8 +530,8 @@ class Editor {
   // note sorting fuction 
 
  private   compareNotes (noteA:string, noteB:String) {
-    const toneA = noteA.charAt(0);
-    const toneB = noteB.charAt(0);
+    const toneA = noteA.charAt(0).toLocaleLowerCase();
+    const toneB = noteB.charAt(0).toLocaleLowerCase();
     const octaveA = parseInt(noteA.charAt(1));
     const octaveB = parseInt(noteB.charAt(1));
   

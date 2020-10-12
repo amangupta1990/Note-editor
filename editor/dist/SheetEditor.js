@@ -59,7 +59,7 @@ var lodash = __importStar(require("lodash"));
 var tonal_1 = require("@tonaljs/tonal");
 var AudioEngine_1 = require("./AudioEngine");
 var REST_POSITIONS = function (key) {
-    switch (key) {
+    switch (key.toLocaleLowerCase()) {
         case "q": return "b/4";
         case "h": return "b/4";
         case "w": return "e/5";
@@ -70,7 +70,7 @@ var REST_POSITIONS = function (key) {
     }
 };
 var NOTE_VAlUES = function (key) {
-    switch (key) {
+    switch (key.toLocaleLowerCase()) {
         case "c": return 1;
         case "d": return 2;
         case "e": return 3;
@@ -82,7 +82,7 @@ var NOTE_VAlUES = function (key) {
     }
 };
 var DURATION_VALUES = function (key) {
-    switch (key) {
+    switch (key.toLocaleLowerCase()) {
         case "w": return 32;
         case "h": return 16;
         case "q": return 8;
@@ -236,9 +236,24 @@ var Editor = /** @class */ (function () {
             // if key arledy exists then don't add it again;
             var noteToAdd;
             if (noteName.indexOf("/") == -1) {
-                var currOctave = note.keys.map(function (k) { return parseInt(k.split("/")[1]); }).sort(function (a, b) { return b - a; })[0];
-                var currentKey = note.keys.map(function (k) { return (k.split("/")[0]); }).sort()[0];
-                var oct = noteName <= currentKey ? currOctave + 1 : currOctave;
+                var sortedNotes = tonal_1.Note.sortedNames(note.keys.map(function (k) { return k.split("/").join(''); }), tonal_1.Note.descending);
+                var _a = __read(sortedNotes[0].split(''), 2), currentKey = _a[0], o = _a[1];
+                var currOctave = parseInt(o);
+                var oct = void 0;
+                if (note.isRest) {
+                    oct = 4;
+                }
+                else {
+                    switch (_this.compareNotes("" + currentKey + currOctave, "" + noteName + currOctave)) {
+                        case -1:
+                            oct = currOctave;
+                            break;
+                        case 0:
+                        case 1:
+                            oct = currOctave + 1;
+                            break;
+                    }
+                }
                 noteToAdd = noteName + "/" + oct;
             }
             else {
@@ -396,8 +411,8 @@ var Editor = /** @class */ (function () {
     };
     // note sorting fuction 
     Editor.prototype.compareNotes = function (noteA, noteB) {
-        var toneA = noteA.charAt(0);
-        var toneB = noteB.charAt(0);
+        var toneA = noteA.charAt(0).toLocaleLowerCase();
+        var toneB = noteB.charAt(0).toLocaleLowerCase();
         var octaveA = parseInt(noteA.charAt(1));
         var octaveB = parseInt(noteB.charAt(1));
         if (octaveA === octaveB) {
