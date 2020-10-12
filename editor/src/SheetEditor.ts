@@ -7,7 +7,7 @@
 import Vex from "vexflow";
 import * as lodash from "lodash";
 import {Chord, interval, Note} from "@tonaljs/tonal"
-
+import {playChord} from './AudioEngine';
 
 
 const REST_POSITIONS = (key:string)=>{
@@ -289,12 +289,25 @@ class Editor {
     const noteIndex = selectedNote.noteIndex;
     const note = this.sheet.staves[staveIndex].notes[noteIndex];
     // if key arledy exists then don't add it again;
+
+    let noteToAdd;
+  
+    if(noteName.indexOf("/") == -1){
+    const currOctave = note.keys.map(k=> parseInt(k.split("/")[1])  ).sort((a,b,)=> b-a)[0];
+    const currentKey = note.keys.map(k=> (k.split("/")[0])  ).sort()[0];
+    const oct =  noteName <= currentKey  ? currOctave + 1 : currOctave;
+    noteToAdd = `${noteName}/${oct}`
+    }
+    else{
+      noteToAdd = noteName;
+    }
+
     
 
     let stave = this.sheet.staves[note.staveIndex];
     let isRest = note.isRest;
     let duration =  note.duration.replace('r','');
-    let keys = isRest ? [noteName] :   lodash.uniq([...note.keys, noteName]);
+    let keys = isRest ? [noteToAdd] :   lodash.uniq([...note.keys, noteToAdd]);
     let accidentals =  note.accidentals ? [...note.accidentals, accidental || this.accidental]: accidental || this.accidental  ? [ accidental || this.accidental ] : [null];
    
 
@@ -305,14 +318,27 @@ class Editor {
 
   })
   this.selected.notes = notes;
+
+  // play the notes:
+  return notes;
+  }
+
+  playback(notes:ed_note[]){
+      
+  const tone_notes = (notes).map((n,i)=>n.keys.map(k=> {
+    const accidental = n.accidentals[i] || '';
+    const [note , oct] = k.split("/");
+    return `${note}${accidental}${oct}`
+    }))
+    tone_notes.map(tn=> playChord(tn))
   }
 
   addChord(tonic:string,chord:string){
     
-    debugger;
+
     this.deleteNotes();
 
-
+    const tone_chords:string[] = [];
     const _chord = Chord.getChord(chord, tonic+"4");
     const root:any = _chord.tonic;
     _chord.intervals.map((interval:string,index:number)=> {
@@ -320,8 +346,10 @@ class Editor {
       let [ _note, octave]= n.split(/(?=[0-9])/g);
       let [ note , accidental] = _note.split('');
       this.addNote(`${note}/${octave}`,accidental);
+      tone_chords.push(`${note}${octave}`);
     } )
     this.Draw();
+    playChord(tone_chords);
   }
 
   
@@ -1147,8 +1175,10 @@ class Editor {
         // for adding note s 
         case noteMatch && noteMatch.length === 1: {
           this.saveState();
-          if(this.mode === "note")
-          this.addNote(`${event.key.toLowerCase()}/4` )
+          if(this.mode === "note"){
+          let notes = this.addNote(event.key.toLowerCase())
+          this.playback(notes as ed_note[])
+          }
           else{
             // TODO: add chord function
           }

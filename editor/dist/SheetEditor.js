@@ -57,6 +57,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 var vexflow_1 = __importDefault(require("vexflow"));
 var lodash = __importStar(require("lodash"));
 var tonal_1 = require("@tonaljs/tonal");
+var AudioEngine_1 = require("./AudioEngine");
 var REST_POSITIONS = function (key) {
     switch (key) {
         case "q": return "b/4";
@@ -233,10 +234,20 @@ var Editor = /** @class */ (function () {
             var noteIndex = selectedNote.noteIndex;
             var note = _this.sheet.staves[staveIndex].notes[noteIndex];
             // if key arledy exists then don't add it again;
+            var noteToAdd;
+            if (noteName.indexOf("/") == -1) {
+                var currOctave = note.keys.map(function (k) { return parseInt(k.split("/")[1]); }).sort(function (a, b) { return b - a; })[0];
+                var currentKey = note.keys.map(function (k) { return (k.split("/")[0]); }).sort()[0];
+                var oct = noteName <= currentKey ? currOctave + 1 : currOctave;
+                noteToAdd = noteName + "/" + oct;
+            }
+            else {
+                noteToAdd = noteName;
+            }
             var stave = _this.sheet.staves[note.staveIndex];
             var isRest = note.isRest;
             var duration = note.duration.replace('r', '');
-            var keys = isRest ? [noteName] : lodash.uniq(__spread(note.keys, [noteName]));
+            var keys = isRest ? [noteToAdd] : lodash.uniq(__spread(note.keys, [noteToAdd]));
             var accidentals = note.accidentals ? __spread(note.accidentals, [accidental || _this.accidental]) : accidental || _this.accidental ? [accidental || _this.accidental] : [null];
             var newNote = { keys: keys, duration: duration, isRest: false, staveIndex: note.staveIndex, noteIndex: note.noteIndex, accidentals: accidentals, clef: note.clef, dotted: note.dotted };
             stave.notes[note.noteIndex] = newNote;
@@ -244,11 +255,21 @@ var Editor = /** @class */ (function () {
             return newNote;
         });
         this.selected.notes = notes;
+        // play the notes:
+        return notes;
+    };
+    Editor.prototype.playback = function (notes) {
+        var tone_notes = (notes).map(function (n, i) { return n.keys.map(function (k) {
+            var accidental = n.accidentals[i] || '';
+            var _a = __read(k.split("/"), 2), note = _a[0], oct = _a[1];
+            return "" + note + accidental + oct;
+        }); });
+        tone_notes.map(function (tn) { return AudioEngine_1.playChord(tn); });
     };
     Editor.prototype.addChord = function (tonic, chord) {
         var _this = this;
-        debugger;
         this.deleteNotes();
+        var tone_chords = [];
         var _chord = tonal_1.Chord.getChord(chord, tonic + "4");
         var root = _chord.tonic;
         _chord.intervals.map(function (interval, index) {
@@ -256,8 +277,10 @@ var Editor = /** @class */ (function () {
             var _a = __read(n.split(/(?=[0-9])/g), 2), _note = _a[0], octave = _a[1];
             var _b = __read(_note.split(''), 2), note = _b[0], accidental = _b[1];
             _this.addNote(note + "/" + octave, accidental);
+            tone_chords.push("" + note + octave);
         });
         this.Draw();
+        AudioEngine_1.playChord(tone_chords);
     };
     Editor.prototype.tieNotes = function () {
         var getId = function (a, b) {
@@ -890,8 +913,10 @@ var Editor = /** @class */ (function () {
                 // for adding note s 
                 case noteMatch && noteMatch.length === 1: {
                     _this.saveState();
-                    if (_this.mode === "note")
-                        _this.addNote(event.key.toLowerCase() + "/4");
+                    if (_this.mode === "note") {
+                        var notes = _this.addNote(event.key.toLowerCase());
+                        _this.playback(notes);
+                    }
                     else {
                         // TODO: add chord function
                     }
