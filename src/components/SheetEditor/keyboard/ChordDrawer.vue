@@ -3,9 +3,7 @@
 
  <div v-bind:class="[{ 'open': show }, 'drawer-container']" >
 
-<button class="drawer-handler" v-on:click="toggle()">
-   Chords
-</button>
+
 <div class="container-inner">  
     <nav class="chord-scales" v-for="(grade, index) in scaleChords.grades" :key="index">
      <button class="chord-heading">
@@ -43,15 +41,7 @@ import {  Chord, Key } from "@tonaljs/tonal";
       
   },
   methods: {
-      toggle: function(){
-          this.$emit("toggle", !this.show);
-      },
-    //   getChordName(chordName,index){
-    //       if(!this.chordNote) return '';
-    //       const scale = Scale.get(`${this.chordNote} ${this.tonic}`);
-    //       const note = scale.notes[index];
-    //       return Chord.getChord(chordName, note).name;
-    //   },
+
       chordVariations:function(chord){
           const chords = [chord, ...Chord.extended(chord)];
           return chords;
@@ -74,7 +64,7 @@ import {  Chord, Key } from "@tonaljs/tonal";
 </script>
 <style>
     .drawer-container{
-        @apply w-full absolute bottom-0 bg-gray-700 shadow-lg transition-all transform translate-y-full duration-200;
+        @apply w-full h-full bottom-0 bg-gray-700 shadow-lg;
         max-height: 50vh;
     }
 
@@ -84,9 +74,7 @@ import {  Chord, Key } from "@tonaljs/tonal";
          max-height: 50vh;
     }
 
-    .open{
-        @apply translate-y-0;
-    }
+
 
     .chord-scales{
         @apply flex flex-row ;
