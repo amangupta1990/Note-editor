@@ -289,12 +289,25 @@ class Editor {
     const noteIndex = selectedNote.noteIndex;
     const note = this.sheet.staves[staveIndex].notes[noteIndex];
     // if key arledy exists then don't add it again;
+
+    let noteToAdd;
+  
+    if(noteName.indexOf("/") == -1){
+    const currOctave = note.keys.map(k=> parseInt(k.split("/")[1])  ).sort((a,b,)=> b-a)[0];
+    const currentKey = note.keys.map(k=> (k.split("/")[0])  ).sort()[0];
+    const oct =  noteName <= currentKey  ? currOctave + 1 : currOctave;
+    noteToAdd = `${noteName}/${oct}`
+    }
+    else{
+      noteToAdd = noteName;
+    }
+
     
 
     let stave = this.sheet.staves[note.staveIndex];
     let isRest = note.isRest;
     let duration =  note.duration.replace('r','');
-    let keys = isRest ? [noteName] :   lodash.uniq([...note.keys, noteName]);
+    let keys = isRest ? [noteToAdd] :   lodash.uniq([...note.keys, noteToAdd]);
     let accidentals =  note.accidentals ? [...note.accidentals, accidental || this.accidental]: accidental || this.accidental  ? [ accidental || this.accidental ] : [null];
    
 
@@ -308,7 +321,12 @@ class Editor {
 
   // play the notes:
 
-  const tone_notes = (notes as ed_note[]).map(n=>n.keys.map(k=> k.split("/").join('')))
+  
+  const tone_notes = (notes as ed_note[]).map((n,i)=>n.keys.map(k=> {
+  const accidental = n.accidentals[i] || '';
+  const [note , oct] = k.split("/");
+  return `${note}${accidental}${oct}`
+  }))
   tone_notes.map(tn=> playChord(tn))
 
   }
@@ -1156,7 +1174,7 @@ class Editor {
         case noteMatch && noteMatch.length === 1: {
           this.saveState();
           if(this.mode === "note")
-          this.addNote(`${event.key.toLowerCase()}/4` )
+          this.addNote(event.key.toLowerCase())
           else{
             // TODO: add chord function
           }
