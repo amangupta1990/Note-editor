@@ -59,7 +59,7 @@ var lodash = __importStar(require("lodash"));
 var tonal_1 = require("@tonaljs/tonal");
 var AudioEngine_1 = require("./AudioEngine");
 var REST_POSITIONS = function (key) {
-    switch (key) {
+    switch (key.toLocaleLowerCase()) {
         case "q": return "b/4";
         case "h": return "b/4";
         case "w": return "e/5";
@@ -70,7 +70,7 @@ var REST_POSITIONS = function (key) {
     }
 };
 var NOTE_VAlUES = function (key) {
-    switch (key) {
+    switch (key.toLocaleLowerCase()) {
         case "c": return 1;
         case "d": return 2;
         case "e": return 3;
@@ -82,7 +82,7 @@ var NOTE_VAlUES = function (key) {
     }
 };
 var DURATION_VALUES = function (key) {
-    switch (key) {
+    switch (key.toLocaleLowerCase()) {
         case "w": return 32;
         case "h": return 16;
         case "q": return 8;
@@ -236,9 +236,24 @@ var Editor = /** @class */ (function () {
             // if key arledy exists then don't add it again;
             var noteToAdd;
             if (noteName.indexOf("/") == -1) {
-                var currOctave = note.keys.map(function (k) { return parseInt(k.split("/")[1]); }).sort(function (a, b) { return b - a; })[0];
-                var currentKey = note.keys.map(function (k) { return (k.split("/")[0]); }).sort()[0];
-                var oct = noteName <= currentKey ? currOctave + 1 : currOctave;
+                var sortedNotes = tonal_1.Note.sortedNames(note.keys.map(function (k) { return k.split("/").join(''); }), tonal_1.Note.descending);
+                var _a = __read(sortedNotes[0].split(''), 2), currentKey = _a[0], o = _a[1];
+                var currOctave = parseInt(o);
+                var oct = void 0;
+                if (note.isRest) {
+                    oct = 4;
+                }
+                else {
+                    switch (_this.compareNotes("" + currentKey + currOctave, "" + noteName + currOctave)) {
+                        case -1:
+                            oct = currOctave;
+                            break;
+                        case 0:
+                        case 1:
+                            oct = currOctave + 1;
+                            break;
+                    }
+                }
                 noteToAdd = noteName + "/" + oct;
             }
             else {
@@ -396,8 +411,8 @@ var Editor = /** @class */ (function () {
     };
     // note sorting fuction 
     Editor.prototype.compareNotes = function (noteA, noteB) {
-        var toneA = noteA.charAt(0);
-        var toneB = noteB.charAt(0);
+        var toneA = noteA.charAt(0).toLocaleLowerCase();
+        var toneB = noteB.charAt(0).toLocaleLowerCase();
         var octaveA = parseInt(noteA.charAt(1));
         var octaveB = parseInt(noteB.charAt(1));
         if (octaveA === octaveB) {
@@ -840,75 +855,80 @@ var Editor = /** @class */ (function () {
                     break;
                 }
                 case event.key === "s": {
-                    if (!event.ctrlKey)
-                        return;
-                    _this.saveState();
-                    _this.splitSelectedNote();
-                    _this.Draw();
-                    break;
+                    if (event.ctrlKey) {
+                        ;
+                        _this.saveState();
+                        _this.splitSelectedNote();
+                        _this.Draw();
+                        break;
+                    }
                 }
                 case event.key === "j": {
-                    if (!event.ctrlKey)
-                        return;
-                    _this.saveState();
-                    _this.mergeNotes();
-                    _this.Draw();
-                    break;
+                    if (event.ctrlKey) {
+                        ;
+                        _this.saveState();
+                        _this.mergeNotes();
+                        _this.Draw();
+                        break;
+                    }
                 }
                 // undo and redo
                 case event.key === "z": {
-                    if (!event.ctrlKey && !event.metaKey)
-                        return;
-                    _this.undo();
-                    _this.Draw();
-                    break;
+                    if (event.ctrlKey || event.metaKey) {
+                        ;
+                        _this.undo();
+                        _this.Draw();
+                        break;
+                    }
                 }
                 case event.key === "r": {
-                    if (!event.ctrlKey && !event.metaKey)
-                        return;
-                    _this.redo();
-                    _this.Draw();
-                    break;
+                    if (event.ctrlKey || event.metaKey) {
+                        _this.redo();
+                        _this.Draw();
+                        break;
+                    }
                 }
                 case event.key === "t": {
-                    if (!event.ctrlKey && !event.metaKey)
-                        return;
-                    _this.tieNotes();
-                    _this.Draw();
-                    break;
+                    if (event.ctrlKey || event.metaKey) {
+                        ;
+                        _this.tieNotes();
+                        _this.Draw();
+                        break;
+                    }
                 }
                 case event.key === "a": {
-                    if (!event.ctrlKey && !event.metaKey)
-                        return;
-                    _this.saveState();
-                    _this.addStave();
-                    _this.Draw();
-                    break;
+                    if (event.ctrlKey || event.metaKey) {
+                        ;
+                        _this.saveState();
+                        _this.addStave();
+                        _this.Draw();
+                        break;
+                    }
                 }
                 // enable accidentals accordingly 
                 case event.key === "B" || event.key === "#" || event.key === "N": {
-                    if (!event.shiftKey)
-                        return;
-                    var key = event.key.toLowerCase();
-                    switch (true) {
-                        case _this.accidental === null:
-                            _this.accidental = key;
-                            break;
-                        case _this.accidental && _this.accidental.indexOf(key) < 0:
-                            _this.accidental = key;
-                            break;
-                        case key === "b":
-                            _this.accidental = _this.accidental === "b" && _this.accidental === key ? _this.accidental = "bb" : null;
-                            break;
-                        case key === "#":
-                            _this.accidental = _this.accidental === "#" && _this.accidental === key ? _this.accidental = "##" : null;
-                            break;
-                        case key === "n":
-                            _this.accidental = _this.accidental === "n" ? _this.accidental = null : _this.accidental = "n";
-                            break;
+                    if (event.shiftKey) {
+                        var key = event.key.toLowerCase();
+                        switch (true) {
+                            case _this.accidental === null:
+                                _this.accidental = key;
+                                break;
+                            case _this.accidental && _this.accidental.indexOf(key) < 0:
+                                _this.accidental = key;
+                                break;
+                            case key === "b":
+                                _this.accidental = _this.accidental === "b" && _this.accidental === key ? _this.accidental = "bb" : null;
+                                break;
+                            case key === "#":
+                                _this.accidental = _this.accidental === "#" && _this.accidental === key ? _this.accidental = "##" : null;
+                                break;
+                            case key === "n":
+                                _this.accidental = _this.accidental === "n" ? _this.accidental = null : _this.accidental = "n";
+                                break;
+                        }
+                        console.log(_this.accidental);
+                        break;
                     }
-                    console.log(_this.accidental);
-                    break;
                 }
                 // for adding note s 
                 case noteMatch && noteMatch.length === 1: {

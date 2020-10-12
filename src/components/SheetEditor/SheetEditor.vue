@@ -32,7 +32,7 @@
         </div>
       </div>
     </div>
-    <chord-drawer chordNote="C" tonic= "major" @chordselected="onChordSelected" v-bind:show="showChordDrawer" @toggle="toggleChordDrawer" ></chord-drawer>
+    <chord-drawer v-if="keySig" v-bind:chordNote="keySig" tonic= "major" @chordselected="onChordSelected" v-bind:show="showChordDrawer" @toggle="toggleChordDrawer" ></chord-drawer>
     <vue-simple-context-menu
   :elementId="'myUniqueId'"
   :options="contextMenuOpts"
@@ -63,6 +63,7 @@ export default {
   data() {
     return {
       editor: null,
+      keySig: "",
       showNewSheetDialog: true,
       showErrorDialog: false,
       showChordDrawer:false,
@@ -96,6 +97,7 @@ export default {
         }
 },
     initSheet: function(opts) {
+      this.keySig = opts.key;
       opts.errorHandler = this.editorErrorHandler;
       opts.onNoteSelected = this.editorOnNoteSelected;
       this.$nextTick().then(
