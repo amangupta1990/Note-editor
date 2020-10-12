@@ -320,15 +320,17 @@ class Editor {
   this.selected.notes = notes;
 
   // play the notes:
+  return notes;
+  }
 
-  
-  const tone_notes = (notes as ed_note[]).map((n,i)=>n.keys.map(k=> {
-  const accidental = n.accidentals[i] || '';
-  const [note , oct] = k.split("/");
-  return `${note}${accidental}${oct}`
-  }))
-  tone_notes.map(tn=> playChord(tn))
-
+  playback(notes:ed_note[]){
+      
+  const tone_notes = (notes).map((n,i)=>n.keys.map(k=> {
+    const accidental = n.accidentals[i] || '';
+    const [note , oct] = k.split("/");
+    return `${note}${accidental}${oct}`
+    }))
+    tone_notes.map(tn=> playChord(tn))
   }
 
   addChord(tonic:string,chord:string){
@@ -1173,8 +1175,10 @@ class Editor {
         // for adding note s 
         case noteMatch && noteMatch.length === 1: {
           this.saveState();
-          if(this.mode === "note")
-          this.addNote(event.key.toLowerCase())
+          if(this.mode === "note"){
+          let notes = this.addNote(event.key.toLowerCase())
+          this.playback(notes as ed_note[])
+          }
           else{
             // TODO: add chord function
           }

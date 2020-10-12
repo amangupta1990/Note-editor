@@ -256,7 +256,10 @@ var Editor = /** @class */ (function () {
         });
         this.selected.notes = notes;
         // play the notes:
-        var tone_notes = notes.map(function (n, i) { return n.keys.map(function (k) {
+        return notes;
+    };
+    Editor.prototype.playback = function (notes) {
+        var tone_notes = (notes).map(function (n, i) { return n.keys.map(function (k) {
             var accidental = n.accidentals[i] || '';
             var _a = __read(k.split("/"), 2), note = _a[0], oct = _a[1];
             return "" + note + accidental + oct;
@@ -910,8 +913,10 @@ var Editor = /** @class */ (function () {
                 // for adding note s 
                 case noteMatch && noteMatch.length === 1: {
                     _this.saveState();
-                    if (_this.mode === "note")
-                        _this.addNote(event.key.toLowerCase());
+                    if (_this.mode === "note") {
+                        var notes = _this.addNote(event.key.toLowerCase());
+                        _this.playback(notes);
+                    }
                     else {
                         // TODO: add chord function
                     }
