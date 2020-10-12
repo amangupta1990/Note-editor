@@ -32,14 +32,13 @@
         </div>
       </div>
     </div>
-    <chord-drawer v-if="keySig" v-bind:chordNote="keySig" tonic= "major" @chordselected="onChordSelected" v-bind:show="showChordDrawer" @toggle="toggleChordDrawer" ></chord-drawer>
+    <keyboard  @onKey="onToolbarKey" @chordselected="onChordSelected" v-bind:keySig="keySig" tonic="major" />
     <vue-simple-context-menu
   :elementId="'myUniqueId'"
   :options="contextMenuOpts"
   :ref="'vueSimpleContextMenu'"
-  @option-clicked="optionClicked"
-/>
-    <!-- <floating-toolbar v-bind:x="noteXPos"   v-bind:y="noteYpos" @onKey="onToolbarKey"  /> -->
+  @option-clicked="optionClicked"/>
+
   </div>
 </template>
 
@@ -47,7 +46,8 @@
 import {Editor} from "../../../editor/dist/";
 import NewSheetDialog from "./newSheetDialog.vue";
 import ErrorDialog from "./errorDialog.vue";
-import ChordDrawer from "./ChordDrawer";
+import {Keyboard} from "./keyboard";
+
 
 
 export default {
@@ -57,7 +57,7 @@ export default {
   components: {
     NewSheetDialog,
     ErrorDialog,
-    ChordDrawer
+    Keyboard,
     
   },
   data() {

@@ -1,7 +1,7 @@
 
 <template>
 
-    <div class="bg-gray-800 text-gray-500 text-sm rounded-lg shadow-lg overflow-hidden p-5 absolute"  :style="style">
+    <div class="bg-gray-800 text-gray-500 text-sm rounded-lg  overflow-hidden p-5  bottom-0 w-64 m-auto block">
         <div class="flex -mx-1 justify-center">
             <div class="w-8 px-1 mb-2">
                 <button class="block w-full h-10 rounded bg-gray-700 hover:bg-indigo-600 hover:text-white shadow focus:outline-none text-center leading-none"  v-on:click="onInput('note','A')"  >A</button>
@@ -110,7 +110,7 @@
 </template>
 <script>
    export default {
-  name: "FloatingToolbar",
+  name: "KeyPad",
   mixins: [],
   props: {
       visible: Boolean,
@@ -152,11 +152,7 @@
         }
   },
   computed: {
-      style: function(){
-          // eslint-disable-next-line no-debugger
-          let s = `left: ${ Math.round(this.x || 0) }px ; top: ${ Math.round(this.y+100 || 0) }px`;
-         return s;
-      },
+
 
   }
 };
