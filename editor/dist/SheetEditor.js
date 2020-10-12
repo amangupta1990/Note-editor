@@ -855,75 +855,80 @@ var Editor = /** @class */ (function () {
                     break;
                 }
                 case event.key === "s": {
-                    if (!event.ctrlKey)
-                        return;
-                    _this.saveState();
-                    _this.splitSelectedNote();
-                    _this.Draw();
-                    break;
+                    if (event.ctrlKey) {
+                        ;
+                        _this.saveState();
+                        _this.splitSelectedNote();
+                        _this.Draw();
+                        break;
+                    }
                 }
                 case event.key === "j": {
-                    if (!event.ctrlKey)
-                        return;
-                    _this.saveState();
-                    _this.mergeNotes();
-                    _this.Draw();
-                    break;
+                    if (event.ctrlKey) {
+                        ;
+                        _this.saveState();
+                        _this.mergeNotes();
+                        _this.Draw();
+                        break;
+                    }
                 }
                 // undo and redo
                 case event.key === "z": {
-                    if (!event.ctrlKey && !event.metaKey)
-                        return;
-                    _this.undo();
-                    _this.Draw();
-                    break;
+                    if (event.ctrlKey || event.metaKey) {
+                        ;
+                        _this.undo();
+                        _this.Draw();
+                        break;
+                    }
                 }
                 case event.key === "r": {
-                    if (!event.ctrlKey && !event.metaKey)
-                        return;
-                    _this.redo();
-                    _this.Draw();
-                    break;
+                    if (event.ctrlKey || event.metaKey) {
+                        _this.redo();
+                        _this.Draw();
+                        break;
+                    }
                 }
                 case event.key === "t": {
-                    if (!event.ctrlKey && !event.metaKey)
-                        return;
-                    _this.tieNotes();
-                    _this.Draw();
-                    break;
+                    if (event.ctrlKey || event.metaKey) {
+                        ;
+                        _this.tieNotes();
+                        _this.Draw();
+                        break;
+                    }
                 }
                 case event.key === "a": {
-                    if (!event.ctrlKey && !event.metaKey)
-                        return;
-                    _this.saveState();
-                    _this.addStave();
-                    _this.Draw();
-                    break;
+                    if (event.ctrlKey || event.metaKey) {
+                        ;
+                        _this.saveState();
+                        _this.addStave();
+                        _this.Draw();
+                        break;
+                    }
                 }
                 // enable accidentals accordingly 
                 case event.key === "B" || event.key === "#" || event.key === "N": {
-                    if (!event.shiftKey)
-                        return;
-                    var key = event.key.toLowerCase();
-                    switch (true) {
-                        case _this.accidental === null:
-                            _this.accidental = key;
-                            break;
-                        case _this.accidental && _this.accidental.indexOf(key) < 0:
-                            _this.accidental = key;
-                            break;
-                        case key === "b":
-                            _this.accidental = _this.accidental === "b" && _this.accidental === key ? _this.accidental = "bb" : null;
-                            break;
-                        case key === "#":
-                            _this.accidental = _this.accidental === "#" && _this.accidental === key ? _this.accidental = "##" : null;
-                            break;
-                        case key === "n":
-                            _this.accidental = _this.accidental === "n" ? _this.accidental = null : _this.accidental = "n";
-                            break;
+                    if (event.shiftKey) {
+                        var key = event.key.toLowerCase();
+                        switch (true) {
+                            case _this.accidental === null:
+                                _this.accidental = key;
+                                break;
+                            case _this.accidental && _this.accidental.indexOf(key) < 0:
+                                _this.accidental = key;
+                                break;
+                            case key === "b":
+                                _this.accidental = _this.accidental === "b" && _this.accidental === key ? _this.accidental = "bb" : null;
+                                break;
+                            case key === "#":
+                                _this.accidental = _this.accidental === "#" && _this.accidental === key ? _this.accidental = "##" : null;
+                                break;
+                            case key === "n":
+                                _this.accidental = _this.accidental === "n" ? _this.accidental = null : _this.accidental = "n";
+                                break;
+                        }
+                        console.log(_this.accidental);
+                        break;
                     }
-                    console.log(_this.accidental);
-                    break;
                 }
                 // for adding note s 
                 case noteMatch && noteMatch.length === 1: {

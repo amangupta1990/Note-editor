@@ -1117,56 +1117,62 @@ class Editor {
         }
 
         case event.key === "s": {
-          if(!event.ctrlKey) return;
+          if(event.ctrlKey) {;
           this.saveState()
           this.splitSelectedNote();
           this.Draw();
-          break
+          break;
+          }
         }
 
         case event.key === "j": {
-          if(!event.ctrlKey) return;
+          if(event.ctrlKey) {;
           this.saveState()
           this.mergeNotes();
           this.Draw();
-          break
+          break;
+          }
         }
 
         // undo and redo
 
         case event.key === "z": {
-          if(!event.ctrlKey && !event.metaKey ) return;
+          if(event.ctrlKey || event.metaKey ) {;
           this.undo();
           this.Draw();
-          break
+          break;
+          }
         }
 
         case event.key === "r": {
-          if(!event.ctrlKey && !event.metaKey ) return;
+          if(event.ctrlKey || event.metaKey ){
           this.redo();
           this.Draw();
-          break
+          break;
+          }
         }
 
         case event.key === "t": {
-          if(!event.ctrlKey && !event.metaKey ) return;
+          if(event.ctrlKey || event.metaKey ){;
           this.tieNotes();
           this.Draw();
-          break
+          break;
+          }
         }
 
         case event.key === "a": {
-          if(!event.ctrlKey && !event.metaKey ) return;
+          if(event.ctrlKey || event.metaKey ) {;
           this.saveState()
           this.addStave();
           this.Draw();
           break
+          }
         }
 
         // enable accidentals accordingly 
 
         case event.key === "B"  || event.key === "#"  || event.key === "N" : {
-          if(!event.shiftKey ) return;
+          if(event.shiftKey ){
           
           let key = event.key.toLowerCase();
 
@@ -1184,6 +1190,7 @@ class Editor {
           console.log(this.accidental)
 
           break;
+        }
         }
 
         // for adding note s 
