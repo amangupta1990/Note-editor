@@ -57,6 +57,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 var vexflow_1 = __importDefault(require("vexflow"));
 var lodash = __importStar(require("lodash"));
 var tonal_1 = require("@tonaljs/tonal");
+var AudioEngine_1 = require("./AudioEngine");
 var REST_POSITIONS = function (key) {
     switch (key) {
         case "q": return "b/4";
@@ -244,11 +245,14 @@ var Editor = /** @class */ (function () {
             return newNote;
         });
         this.selected.notes = notes;
+        // play the notes:
+        var tone_notes = notes.map(function (n) { return n.keys.map(function (k) { return k.split("/").join(''); }); });
+        tone_notes.map(function (tn) { return AudioEngine_1.playChord(tn); });
     };
     Editor.prototype.addChord = function (tonic, chord) {
         var _this = this;
-        debugger;
         this.deleteNotes();
+        var tone_chords = [];
         var _chord = tonal_1.Chord.getChord(chord, tonic + "4");
         var root = _chord.tonic;
         _chord.intervals.map(function (interval, index) {
@@ -256,8 +260,10 @@ var Editor = /** @class */ (function () {
             var _a = __read(n.split(/(?=[0-9])/g), 2), _note = _a[0], octave = _a[1];
             var _b = __read(_note.split(''), 2), note = _b[0], accidental = _b[1];
             _this.addNote(note + "/" + octave, accidental);
+            tone_chords.push("" + note + octave);
         });
         this.Draw();
+        AudioEngine_1.playChord(tone_chords);
     };
     Editor.prototype.tieNotes = function () {
         var getId = function (a, b) {

@@ -7,7 +7,7 @@
 import Vex from "vexflow";
 import * as lodash from "lodash";
 import {Chord, interval, Note} from "@tonaljs/tonal"
-
+import {playChord} from './AudioEngine';
 
 
 const REST_POSITIONS = (key:string)=>{
@@ -305,14 +305,20 @@ class Editor {
 
   })
   this.selected.notes = notes;
+
+  // play the notes:
+
+  const tone_notes = (notes as ed_note[]).map(n=>n.keys.map(k=> k.split("/").join('')))
+  tone_notes.map(tn=> playChord(tn))
+
   }
 
   addChord(tonic:string,chord:string){
     
-    debugger;
+
     this.deleteNotes();
 
-
+    const tone_chords:string[] = [];
     const _chord = Chord.getChord(chord, tonic+"4");
     const root:any = _chord.tonic;
     _chord.intervals.map((interval:string,index:number)=> {
@@ -320,8 +326,10 @@ class Editor {
       let [ _note, octave]= n.split(/(?=[0-9])/g);
       let [ note , accidental] = _note.split('');
       this.addNote(`${note}/${octave}`,accidental);
+      tone_chords.push(`${note}${octave}`);
     } )
     this.Draw();
+    playChord(tone_chords);
   }
 
   
