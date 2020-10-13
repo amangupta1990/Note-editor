@@ -32,7 +32,7 @@
         </div>
       </div>
     </div>
-    <keyboard  @onKey="onToolbarKey" @chordselected="onChordSelected" v-bind:keySig="keySig" tonic="major" />
+    <keyboard  @onKey="onToolbarKey" @chordselected="onChordSelected" v-bind:keySig="keySig" tonic="major" v-if="editor" />
     <vue-simple-context-menu
   :elementId="'myUniqueId'"
   :options="contextMenuOpts"
@@ -74,8 +74,7 @@ export default {
       selectedNote:null,
       selectedStave:null,
       contextMenuOpts:[
-        {name: 'chord'},
-        {name: 'rythm'},
+        {name: 'Add Stave'},
       ],
     };
   },
@@ -89,8 +88,8 @@ export default {
     },
     optionClicked (event) {
         switch (event.option.name) {
-          case 'chord':
-            this.showChordDrawer = true;
+          case 'Add Stave':
+            this.api.addStave()
             break;
         
           default:
