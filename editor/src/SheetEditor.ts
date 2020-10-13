@@ -216,7 +216,7 @@ class Editor {
     // event listerners
 
     // add first stave by default
-    this.addStave();
+    this._addStave();
 
 
     if (!this.eventsAdded) {
@@ -263,7 +263,7 @@ class Editor {
 
   }
 
-  addStave(index = this.sheet.staves ? this.sheet.staves.length : 0) {
+  _addStave(index = this.sheet.staves ? this.sheet.staves.length : 0) {
     this.sheet.staves = this.sheet.staves || [];
     
     // fill bar with rests
@@ -279,7 +279,7 @@ class Editor {
       this.mode = mode;
   }
 
-  addNote(noteName:string,accidental?:string) {
+  private _addNote(noteName:string,accidental?:string) {
     // modify the rest of the stave to join the notes
 
     let notes = this.selected.notes;
@@ -334,23 +334,24 @@ class Editor {
   this.selected.notes = notes;
 
   // play the notes:
-  return notes;
+  
+  return this.getToneNotes(notes as ed_note[]);
   }
 
-  playback(notes:ed_note[]){
+  private getToneNotes(notes:ed_note[]){
       
   const tone_notes = (notes).map((n,i)=>n.keys.map(k=> {
     const accidental = n.accidentals[i] || '';
     const [note , oct] = k.split("/");
     return `${note}${accidental}${oct}`
     }))
-    tone_notes.map(tn=> playChord(tn))
+    return tone_notes;
   }
 
-  addChord(tonic:string,chord:string){
+  private _addChord(tonic:string,chord:string){
     
 
-    this.deleteNotes();
+    this._deleteNotes();
 
     const tone_chords:string[] = [];
     const _chord = Chord.getChord(chord, tonic+"4");
@@ -359,15 +360,15 @@ class Editor {
       const n = Note.transpose(root,interval);
       let [ _note, octave]= n.split(/(?=[0-9])/g);
       let [ note , accidental] = _note.split('');
-      this.addNote(`${note}/${octave}`,accidental);
+      this._addNote(`${note}/${octave}`,accidental);
       tone_chords.push(`${note}${octave}`);
     } )
     this.Draw();
-    playChord(tone_chords);
+    return tone_chords;
   }
 
   
-  tieNotes(){
+  private _tieNotes(){
 
     const getId = (a:ed_selected_note,b:ed_selected_note)=>{
         return `${a.staveIndex}${b.staveIndex}_${a.noteIndex}${b.noteIndex}`;
@@ -501,7 +502,7 @@ class Editor {
   }
 
 
-  deleteNotes() {
+  private _deleteNotes() {
     // convert the note into a rest
     let notes = this.selected.notes;
     notes = notes.map((note:ed_selected_note)=>{
@@ -846,7 +847,7 @@ class Editor {
   }
 
 
-  splitSelectedNote(){
+   private _splitSelectedNote(){
     let stave = this.sheet.staves[this.selected.cursor.staveIndex];
     let notes = stave.notes;
     let selectedNote = stave.notes[this.selected.cursor.noteIndex];
@@ -908,9 +909,7 @@ class Editor {
 
  }
 
-
-  // TODO:  handle case for merge which creates dotted notes 
-  mergeNotes(){
+  private _mergeNotes(){
 
       const selectedNotes: ed_note[] = this.selected.notes.map(sn=> {
 
@@ -989,7 +988,7 @@ class Editor {
 
   }
 
-  setCursor(staveIndex:number,noteIndex:number){
+  private _setCursor(staveIndex:number,noteIndex:number){
     this.selected.cursor ={
       staveIndex: staveIndex,
       noteIndex: noteIndex
@@ -1111,7 +1110,7 @@ class Editor {
 
         case event.key === "Backspace": {
           this.saveState()
-          this.deleteNotes();
+          this._deleteNotes();
           this.Draw();
           break;
         }
@@ -1119,7 +1118,7 @@ class Editor {
         case event.key === "s": {
           if(event.ctrlKey) {;
           this.saveState()
-          this.splitSelectedNote();
+          this._splitSelectedNote();
           this.Draw();
           break;
           }
@@ -1128,7 +1127,7 @@ class Editor {
         case event.key === "j": {
           if(event.ctrlKey) {;
           this.saveState()
-          this.mergeNotes();
+          this._mergeNotes();
           this.Draw();
           break;
           }
@@ -1154,7 +1153,7 @@ class Editor {
 
         case event.key === "t": {
           if(event.ctrlKey || event.metaKey ){;
-          this.tieNotes();
+          this._tieNotes();
           this.Draw();
           break;
           }
@@ -1163,7 +1162,7 @@ class Editor {
         case event.key === "a": {
           if(event.ctrlKey || event.metaKey ) {;
           this.saveState()
-          this.addStave();
+          this._addStave();
           this.Draw();
           break
           }
@@ -1197,8 +1196,8 @@ class Editor {
         case noteMatch && noteMatch.length === 1: {
           this.saveState();
           if(this.mode === "note"){
-          let notes = this.addNote(event.key.toLowerCase())
-          this.playback(notes as ed_note[])
+          let notes = this._addNote(event.key.toLowerCase());
+                notes.map(n=> playChord(n))
           }
           else{
             // TODO: add chord function
@@ -1229,14 +1228,47 @@ class Editor {
 
   //
 
-  update(){
-    this.saveState();
-    this.Draw();
+  withStateSave(func:Function)  : Function  {
+    return (...args:any[])=>{
+      this.saveState();
+      let res = func.apply(this,args);
+      return res;
+    }
+  }
+
+  withDraw(func:Function)  : Function  {
+    return (...args:any[])=>{
+      let res = func.apply(this,args);
+      this.Draw();
+      return res;
+    }
+  }
+
+
+
+  API(){
+    return {
+      addStave : this.withDraw(this.withStateSave(this._addStave)),
+      addNote: this.withDraw(this.withStateSave(this._addNote)),
+      addChord: this.withDraw(this.withStateSave(this._addChord)),
+      splitSelectedNote: this.withDraw(this.withStateSave(this._splitSelectedNote)),
+      mergeNotes: this.withDraw(this.withStateSave(this._mergeNotes)),
+      undo: this.withDraw(this.undo),
+      redo: this.withDraw(this.redo),
+      deleteNotes: this.withDraw(this.withStateSave(this._deleteNotes)),
+      cursorBack: this.withDraw(this._cursorBack),
+      cursorForward: this.withDraw(this._cursorForward),
+      setCursor: this.withDraw(this._setCursor),
+      playback : playChord
+
+    }
   }
 
   throwError(message:string){
     this.onError && this.onError(message);
   }
+
+
   
 }
 
