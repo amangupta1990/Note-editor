@@ -163,7 +163,7 @@
           <div class="w-20 px-1">
             <button
               class="block w-full h-10 rounded bg-gray-900 hover:bg-indigo-600 hover:text-white shadow focus:outline-none text-center leading-none text-xs"
-              v-on:click="onInput('redo', -1)"
+              v-on:click="onInput('redo')"
             >
               <i class="mdi  mdi-redo text-lg"></i>
             </button>
@@ -211,7 +211,7 @@ export default {
           break;
         case this.mode === "chord" && type === "chordType":
           break;
-        case type === "undo" || type === "redo" || type === "delete" || "rigthArrow" || "leftArrow":
+        case type === "undo" || type === "redo" || type === "delete" || type === "rightArrow" || type === "leftArrow":
           this.$emit("onKey", { type });
           break;
       }

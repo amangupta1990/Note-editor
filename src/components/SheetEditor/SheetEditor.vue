@@ -63,6 +63,7 @@ export default {
   data() {
     return {
       editor: null,
+      api: null,
       keySig: "",
       showNewSheetDialog: true,
       showErrorDialog: false,
@@ -101,7 +102,11 @@ export default {
       opts.errorHandler = this.editorErrorHandler;
       opts.onNoteSelected = this.editorOnNoteSelected;
       this.$nextTick().then(
-        () => (this.editor = new Editor(this.$refs.svgcontainer, opts))
+        () => {
+          this.editor = new Editor(this.$refs.svgcontainer, opts)
+          this.api = this.editor.API();
+          }
+        
       );
       this.showNewSheetDialog = false;
     },
@@ -126,10 +131,17 @@ export default {
         const {type , value} = event;
         
         switch(type){
-          case 'undo': this.editor.undo(); break;
-          case 'redo': this.editor.redo(); break;
-          case 'delete': this.editor.deleteNotes(); this.editor.update(); break;
-          case 'note': this.editor.addNote(`${value.toLowerCase()}/4`); this.editor.update(); break;
+          case 'undo': this.api.undo(); break;
+          case 'redo': this.api.redo(); break;
+          case 'delete': this.api.deleteNotes();  break;
+          case 'note':  
+                  // eslint-disable-next-line no-case-declarations
+                  const notes = this.api.addNote(value.toLowerCase()); 
+                  // eslint-disable-next-line no-debugger
+                  notes.map(n=> this.api.playback(n))
+                  break;
+          case 'rightArrow': this.api.cursorForward(); break;
+          case 'leftArrow': this.api.cursorBack(); break;
         }
 
         
@@ -137,7 +149,8 @@ export default {
     },
     onChordSelected: function(chord){
       const variation = chord.variation.replace(chord.tonic,'');
-      this.editor.addChord(chord.tonic,variation);
+      const notes =this.api.addChord(chord.tonic,variation);
+      this.api.playback(notes);
     }
   },
 };

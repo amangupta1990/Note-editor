@@ -176,7 +176,7 @@ var Editor = /** @class */ (function () {
         this.ctx = this.renderer.getContext();
         // event listerners
         // add first stave by default
-        this.addStave();
+        this._addStave();
         if (!this.eventsAdded) {
             this.addEventListeners(this.svgElm);
             this.addKeyboardListeners();
@@ -213,7 +213,7 @@ var Editor = /** @class */ (function () {
         this.sheet = JSON.parse(undoSate.sheet);
         this.selected = JSON.parse(undoSate.selected);
     };
-    Editor.prototype.addStave = function (index) {
+    Editor.prototype._addStave = function (index) {
         if (index === void 0) { index = this.sheet.staves ? this.sheet.staves.length : 0; }
         this.sheet.staves = this.sheet.staves || [];
         // fill bar with rests
@@ -225,7 +225,7 @@ var Editor = /** @class */ (function () {
     Editor.prototype.setMode = function (mode) {
         this.mode = mode;
     };
-    Editor.prototype.addNote = function (noteName, accidental) {
+    Editor.prototype._addNote = function (noteName, accidental) {
         // modify the rest of the stave to join the notes
         var _this = this;
         var notes = this.selected.notes;
@@ -271,19 +271,19 @@ var Editor = /** @class */ (function () {
         });
         this.selected.notes = notes;
         // play the notes:
-        return notes;
+        return this.getToneNotes(notes);
     };
-    Editor.prototype.playback = function (notes) {
+    Editor.prototype.getToneNotes = function (notes) {
         var tone_notes = (notes).map(function (n, i) { return n.keys.map(function (k) {
             var accidental = n.accidentals[i] || '';
             var _a = __read(k.split("/"), 2), note = _a[0], oct = _a[1];
             return "" + note + accidental + oct;
         }); });
-        tone_notes.map(function (tn) { return AudioEngine_1.playChord(tn); });
+        return tone_notes;
     };
-    Editor.prototype.addChord = function (tonic, chord) {
+    Editor.prototype._addChord = function (tonic, chord) {
         var _this = this;
-        this.deleteNotes();
+        this._deleteNotes();
         var tone_chords = [];
         var _chord = tonal_1.Chord.getChord(chord, tonic + "4");
         var root = _chord.tonic;
@@ -291,13 +291,13 @@ var Editor = /** @class */ (function () {
             var n = tonal_1.Note.transpose(root, interval);
             var _a = __read(n.split(/(?=[0-9])/g), 2), _note = _a[0], octave = _a[1];
             var _b = __read(_note.split(''), 2), note = _b[0], accidental = _b[1];
-            _this.addNote(note + "/" + octave, accidental);
+            _this._addNote(note + "/" + octave, accidental);
             tone_chords.push("" + note + octave);
         });
         this.Draw();
-        AudioEngine_1.playChord(tone_chords);
+        return tone_chords;
     };
-    Editor.prototype.tieNotes = function () {
+    Editor.prototype._tieNotes = function () {
         var getId = function (a, b) {
             return "" + a.staveIndex + b.staveIndex + "_" + a.noteIndex + b.noteIndex;
         };
@@ -387,7 +387,7 @@ var Editor = /** @class */ (function () {
             _this.sheet.staves[staveIndex].notes[noteIndex].accidentals[accidentalIndex] = accidental;
         });
     };
-    Editor.prototype.deleteNotes = function () {
+    Editor.prototype._deleteNotes = function () {
         var _this = this;
         // convert the note into a rest
         var notes = this.selected.notes;
@@ -629,7 +629,7 @@ var Editor = /** @class */ (function () {
             y: evt.clientY - rect.top,
         };
     };
-    Editor.prototype.splitSelectedNote = function () {
+    Editor.prototype._splitSelectedNote = function () {
         var stave = this.sheet.staves[this.selected.cursor.staveIndex];
         var notes = stave.notes;
         var selectedNote = stave.notes[this.selected.cursor.noteIndex];
@@ -684,8 +684,7 @@ var Editor = /** @class */ (function () {
         });
         this.sheet.staves = staves;
     };
-    // TODO:  handle case for merge which creates dotted notes 
-    Editor.prototype.mergeNotes = function () {
+    Editor.prototype._mergeNotes = function () {
         var _this = this;
         var selectedNotes = this.selected.notes.map(function (sn) {
             var staveIndex = sn.staveIndex;
@@ -753,7 +752,7 @@ var Editor = /** @class */ (function () {
         // re-calcualte note id's 
         this._remapIds();
     };
-    Editor.prototype.setCursor = function (staveIndex, noteIndex) {
+    Editor.prototype._setCursor = function (staveIndex, noteIndex) {
         this.selected.cursor = {
             staveIndex: staveIndex,
             noteIndex: noteIndex
@@ -850,7 +849,7 @@ var Editor = /** @class */ (function () {
                 }
                 case event.key === "Backspace": {
                     _this.saveState();
-                    _this.deleteNotes();
+                    _this._deleteNotes();
                     _this.Draw();
                     break;
                 }
@@ -858,7 +857,7 @@ var Editor = /** @class */ (function () {
                     if (event.ctrlKey) {
                         ;
                         _this.saveState();
-                        _this.splitSelectedNote();
+                        _this._splitSelectedNote();
                         _this.Draw();
                         break;
                     }
@@ -867,7 +866,7 @@ var Editor = /** @class */ (function () {
                     if (event.ctrlKey) {
                         ;
                         _this.saveState();
-                        _this.mergeNotes();
+                        _this._mergeNotes();
                         _this.Draw();
                         break;
                     }
@@ -891,7 +890,7 @@ var Editor = /** @class */ (function () {
                 case event.key === "t": {
                     if (event.ctrlKey || event.metaKey) {
                         ;
-                        _this.tieNotes();
+                        _this._tieNotes();
                         _this.Draw();
                         break;
                     }
@@ -900,7 +899,7 @@ var Editor = /** @class */ (function () {
                     if (event.ctrlKey || event.metaKey) {
                         ;
                         _this.saveState();
-                        _this.addStave();
+                        _this._addStave();
                         _this.Draw();
                         break;
                     }
@@ -934,8 +933,8 @@ var Editor = /** @class */ (function () {
                 case noteMatch && noteMatch.length === 1: {
                     _this.saveState();
                     if (_this.mode === "note") {
-                        var notes = _this.addNote(event.key.toLowerCase());
-                        _this.playback(notes);
+                        var notes = _this._addNote(event.key.toLowerCase());
+                        notes.map(function (n) { return AudioEngine_1.playChord(n); });
                     }
                     else {
                         // TODO: add chord function
@@ -969,9 +968,45 @@ var Editor = /** @class */ (function () {
         });
     };
     //
-    Editor.prototype.update = function () {
-        this.saveState();
-        this.Draw();
+    Editor.prototype.withStateSave = function (func) {
+        var _this = this;
+        return function () {
+            var args = [];
+            for (var _i = 0; _i < arguments.length; _i++) {
+                args[_i] = arguments[_i];
+            }
+            _this.saveState();
+            var res = func.apply(_this, args);
+            return res;
+        };
+    };
+    Editor.prototype.withDraw = function (func) {
+        var _this = this;
+        return function () {
+            var args = [];
+            for (var _i = 0; _i < arguments.length; _i++) {
+                args[_i] = arguments[_i];
+            }
+            var res = func.apply(_this, args);
+            _this.Draw();
+            return res;
+        };
+    };
+    Editor.prototype.API = function () {
+        return {
+            addStave: this.withDraw(this.withStateSave(this._addStave)),
+            addNote: this.withDraw(this.withStateSave(this._addNote)),
+            addChord: this.withDraw(this.withStateSave(this._addChord)),
+            splitSelectedNote: this.withDraw(this.withStateSave(this._splitSelectedNote)),
+            mergeNotes: this.withDraw(this.withStateSave(this._mergeNotes)),
+            undo: this.withDraw(this.undo),
+            redo: this.withDraw(this.redo),
+            deleteNotes: this.withDraw(this.withStateSave(this._deleteNotes)),
+            cursorBack: this.withDraw(this._cursorBack),
+            cursorForward: this.withDraw(this._cursorForward),
+            setCursor: this.withDraw(this._setCursor),
+            playback: AudioEngine_1.playChord
+        };
     };
     Editor.prototype.throwError = function (message) {
         this.onError && this.onError(message);
