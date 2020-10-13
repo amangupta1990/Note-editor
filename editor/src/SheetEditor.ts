@@ -221,7 +221,6 @@ class Editor {
 
     if (!this.eventsAdded) {
       this.addEventListeners(this.svgElm);
-      this.addKeyboardListeners();
       this.eventsAdded = true;
     }
 
@@ -279,7 +278,7 @@ class Editor {
       this.mode = mode;
   }
 
-  private _addNote(noteName:string,accidental?:string) {
+  private _addNote(noteName:string,accidental:any  = null) {
     // modify the rest of the stave to join the notes
 
     let notes = this.selected.notes;
@@ -322,7 +321,12 @@ class Editor {
     let isRest = note.isRest;
     let duration =  note.duration.replace('r','');
     let keys = isRest ? [noteToAdd] :   lodash.uniq([...note.keys, noteToAdd]);
-    let accidentals =  note.accidentals ? [...note.accidentals, accidental || this.accidental]: accidental || this.accidental  ? [ accidental || this.accidental ] : [null];
+    let accidentals:any[] = [];
+
+    switch(true){
+      case isRest: accidentals = [accidental || null]; break;
+      case !isRest: accidentals = [...note.accidentals, accidental || null]; break;
+    }
    
 
     let newNote = {keys,duration,isRest:false,staveIndex:  note.staveIndex,noteIndex: note.noteIndex, accidentals, clef: note.clef, dotted: note.dotted};
@@ -1085,148 +1089,6 @@ class Editor {
     this._addtoSelectedNotes(selectedNote)
   }
 
-  // add keyboard controls
-  addKeyboardListeners() {
-
-  
-    document.addEventListener("keyup", (event) => {
-
-      
-
-      let noteMatch = event.key.length === 1 ? event.key.match(/[abcdefg]/) : null;
-
-      switch (true) {
-        case event.key === "ArrowRight": {
-          this._cursorForward();
-          this.Draw();
-          break;
-        }
-
-        case event.key === "ArrowLeft": {
-          this._cursorBack();
-          this.Draw();
-          break;
-        }
-
-        case event.key === "Backspace": {
-          this.saveState()
-          this._deleteNotes();
-          this.Draw();
-          break;
-        }
-
-        case event.key === "s": {
-          if(event.ctrlKey) {;
-          this.saveState()
-          this._splitSelectedNote();
-          this.Draw();
-          break;
-          }
-        }
-
-        case event.key === "j": {
-          if(event.ctrlKey) {;
-          this.saveState()
-          this._mergeNotes();
-          this.Draw();
-          break;
-          }
-        }
-
-        // undo and redo
-
-        case event.key === "z": {
-          if(event.ctrlKey || event.metaKey ) {;
-          this.undo();
-          this.Draw();
-          break;
-          }
-        }
-
-        case event.key === "r": {
-          if(event.ctrlKey || event.metaKey ){
-          this.redo();
-          this.Draw();
-          break;
-          }
-        }
-
-        case event.key === "t": {
-          if(event.ctrlKey || event.metaKey ){;
-          this._tieNotes();
-          this.Draw();
-          break;
-          }
-        }
-
-        case event.key === "a": {
-          if(event.ctrlKey || event.metaKey ) {;
-          this.saveState()
-          this._addStave();
-          this.Draw();
-          break
-          }
-        }
-
-        // enable accidentals accordingly 
-
-        case event.key === "B"  || event.key === "#"  || event.key === "N" : {
-          if(event.shiftKey ){
-          
-          let key = event.key.toLowerCase();
-
-          switch(true){
-            case this.accidental === null : this.accidental = key ; break;
-            case this.accidental  && this.accidental.indexOf(key) < 0 : this.accidental = key; break;
-            case key === "b":
-                this.accidental = this.accidental === "b" && this.accidental === key ? this.accidental = "bb" :  null  ; break;
-            case key === "#":
-                this.accidental = this.accidental === "#" && this.accidental === key? this.accidental = "##" :  null; break;
-            case key === "n":
-                  this.accidental = this.accidental ==="n" ? this.accidental = null : this.accidental = "n" ; break;
-            
-          }
-          console.log(this.accidental)
-
-          break;
-        }
-        }
-
-        // for adding note s 
-        case noteMatch && noteMatch.length === 1: {
-          this.saveState();
-          if(this.mode === "note"){
-          let notes = this._addNote(event.key.toLowerCase());
-                notes.map(n=> playChord(n))
-          }
-          else{
-            // TODO: add chord function
-          }
-          this.Draw();
-          break;
-        } 
-
-        case event.key === "Control": this.ctrlActive = false; break;
-        case event.key === "Shift": this.shiftActive = false; break;
-        case event.key === "Meta": this.metaActive = false; break;
-
-      }
-
-      document.addEventListener("keydown",(event)=>{
-        switch(true){
-        case event.key === "Control": this.ctrlActive = true; break;
-        case event.key === "Shift": this.shiftActive = true; break;
-        case event.key === "Meta": this.metaActive = true; break;
-        }
-      })
-
-      
-    });
-
-
-  }
-
-  //
 
   withStateSave(func:Function)  : Function  {
     return (...args:any[])=>{

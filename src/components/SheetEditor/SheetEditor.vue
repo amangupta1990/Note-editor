@@ -136,7 +136,9 @@ export default {
           case 'delete': this.api.deleteNotes();  break;
           case 'note':  
                   // eslint-disable-next-line no-case-declarations
-                  const notes = this.api.addNote(value.toLowerCase()); 
+                  const [note , acc1, acc2] = value.split('')
+                  // eslint-disable-next-line no-case-declarations
+                  const notes = this.api.addNote(note.toLowerCase(), `${acc1 || ''}${acc2 || ''}`); 
                   // eslint-disable-next-line no-debugger
                   notes.map(n=> this.api.playback(n))
                   break;
