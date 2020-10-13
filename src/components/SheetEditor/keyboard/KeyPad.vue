@@ -199,7 +199,7 @@ export default {
             value: value+(this.accidental || ''),
           });
           break;
-        case type === "undo" || type === "redo" || type === "delete" || type === "rightArrow" || type === "leftArrow":
+        case type === "undo" || type === "redo" || type === "delete" || type === "rightArrow" || type === "leftArrow" || type === "addStave":
           this.$emit("onKey", { type });
           break;
         case type === "accidental":

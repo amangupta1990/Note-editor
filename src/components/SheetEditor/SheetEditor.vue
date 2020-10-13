@@ -143,6 +143,7 @@ export default {
                   break;
           case 'rightArrow': this.api.cursorForward(); break;
           case 'leftArrow': this.api.cursorBack(); break;
+          case 'addStave': this.api.addStave();
         }
 
         
