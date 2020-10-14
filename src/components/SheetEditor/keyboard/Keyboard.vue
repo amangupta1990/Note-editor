@@ -14,7 +14,7 @@
       </ul>
   </div>
       <key-pad  @onKey="onToolbarKey" v-if="tab==='KEYPAD'"  />
-     <chord-drawer v-if="keySig && tab ==='DRAWER'" v-bind:chordNote="keySig" v-bind:tonic= "tonic" @chordselected="onChordSelected" />
+     <chord-drawer @onKey="onToolbarKey" v-if="keySig && tab ==='DRAWER'" v-bind:chordNote="keySig" v-bind:tonic= "tonic" @chordselected="onChordSelected"  />
   </div>
 </template>
 <script>

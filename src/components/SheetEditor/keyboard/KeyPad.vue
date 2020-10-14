@@ -188,7 +188,11 @@ export default {
   },
   mounted: function() {
     this.visible = false;
-    this.addKeyboardListeners();
+    document.addEventListener("keyup",this.KeyboardListeners)
+  }
+,
+  beforeDestroy: function(){
+    document.removeEventListener('keyup',this.KeyboardListeners);
   },
   methods: {
     onInput: function(type, value) {
@@ -207,12 +211,7 @@ export default {
           break;
       }
     },
-    addKeyboardListeners() {
-
-  
-    document.addEventListener("keyup", (event) => {
-
-      
+    KeyboardListeners(event) {
 
       let noteMatch = event.key.length === 1 ? event.key.match(/[abcdefg]/) : null;
 
@@ -326,7 +325,7 @@ export default {
       })
 
       
-    });
+  
 
 
   }
