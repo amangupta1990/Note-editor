@@ -795,8 +795,8 @@ class Editor {
 
   // Methods for drawing cursor note
 
-  private _addtoSelectedNotes(note:ed_note){
-    if(this.shiftActive){
+  private _addtoSelectedNotes(note:ed_note,shiftActive?:boolean){
+    if(shiftActive){
       let notes = lodash.clone(this.selected.notes);
       notes.push(note)
       notes = lodash.uniq(notes);
@@ -1035,7 +1035,7 @@ class Editor {
   }
 
   // cursor manipulation methods
-  _cursorForward() {
+  _cursorForward(shiftKey:boolean) {
     let sIndex = this.selected.cursor.staveIndex;
     let nIndex = this.selected.cursor.noteIndex;
     
@@ -1058,14 +1058,14 @@ class Editor {
     this.selected.cursor.noteIndex = nIndex;
     let selectedNote = this.sheet.staves[sIndex].notes[nIndex]
 
-    this._addtoSelectedNotes(selectedNote)
+    this._addtoSelectedNotes(selectedNote,shiftKey)
 
 
 
 
   }
 
-  _cursorBack() {
+  _cursorBack(shiftKey:boolean) {
     let sIndex = this.selected.cursor.staveIndex;
     let nIndex = this.selected.cursor.noteIndex;
 
@@ -1086,7 +1086,7 @@ class Editor {
     this.selected.cursor.staveIndex = sIndex;
     this.selected.cursor.noteIndex = nIndex;
     let selectedNote = this.sheet.staves[sIndex].notes[nIndex]
-    this._addtoSelectedNotes(selectedNote)
+    this._addtoSelectedNotes(selectedNote,shiftKey)
   }
 
 

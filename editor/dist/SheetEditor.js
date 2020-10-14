@@ -599,9 +599,9 @@ var Editor = /** @class */ (function () {
         });
     };
     // Methods for drawing cursor note
-    Editor.prototype._addtoSelectedNotes = function (note) {
+    Editor.prototype._addtoSelectedNotes = function (note, shiftActive) {
         var _this = this;
-        if (this.shiftActive) {
+        if (shiftActive) {
             var notes_1 = lodash.clone(this.selected.notes);
             notes_1.push(note);
             notes_1 = lodash.uniq(notes_1);
@@ -799,7 +799,7 @@ var Editor = /** @class */ (function () {
         return [cursorNoteKey, staveIndex, noteIndex];
     };
     // cursor manipulation methods
-    Editor.prototype._cursorForward = function () {
+    Editor.prototype._cursorForward = function (shiftKey) {
         var sIndex = this.selected.cursor.staveIndex;
         var nIndex = this.selected.cursor.noteIndex;
         switch (true) {
@@ -818,9 +818,9 @@ var Editor = /** @class */ (function () {
         this.selected.cursor.staveIndex = sIndex;
         this.selected.cursor.noteIndex = nIndex;
         var selectedNote = this.sheet.staves[sIndex].notes[nIndex];
-        this._addtoSelectedNotes(selectedNote);
+        this._addtoSelectedNotes(selectedNote, shiftKey);
     };
-    Editor.prototype._cursorBack = function () {
+    Editor.prototype._cursorBack = function (shiftKey) {
         var sIndex = this.selected.cursor.staveIndex;
         var nIndex = this.selected.cursor.noteIndex;
         switch (true) {
@@ -837,7 +837,7 @@ var Editor = /** @class */ (function () {
         this.selected.cursor.staveIndex = sIndex;
         this.selected.cursor.noteIndex = nIndex;
         var selectedNote = this.sheet.staves[sIndex].notes[nIndex];
-        this._addtoSelectedNotes(selectedNote);
+        this._addtoSelectedNotes(selectedNote, shiftKey);
     };
     Editor.prototype.withStateSave = function (func) {
         var _this = this;

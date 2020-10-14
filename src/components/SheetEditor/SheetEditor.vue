@@ -141,8 +141,8 @@ export default {
                   // eslint-disable-next-line no-debugger
                   notes.map(n=> this.api.playback(n))
                   break;
-          case 'rightArrow': this.api.cursorForward(); break;
-          case 'leftArrow': this.api.cursorBack(); break;
+          case 'rightArrow': this.api.cursorForward(value); break;
+          case 'leftArrow': this.api.cursorBack(value); break;
           case 'addStave': this.api.addStave();
         }
 
