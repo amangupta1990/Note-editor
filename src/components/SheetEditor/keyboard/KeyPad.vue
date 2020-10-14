@@ -71,14 +71,7 @@
           </div>
         </div>
         <div class="flex -mx-1">
-          <div class="key-wrapper">
-            <button
-              class="block w-full h-10 rounded bg-gray-900 hover:bg-indigo-600 hover:text-white shadow focus:outline-none text-center leading-none"
-              v-on:click="onInput('octaveChange', 1)"
-            >
-              +
-            </button>
-          </div>
+
           <div class="flex flex-1 justify-center">
             <div class="key-wrapper">
               <button
@@ -112,16 +105,8 @@
                 ##
               </button>
             </div>
-            <div class="key-wrapper">
-              <button
-                v-bind:class="['key',accidental === 'N' ? 'accidentalOn' : '']"
-                v-on:click="onInput('accidental', 'N')"
-              >
-                N
-              </button>
-            </div>
           </div>
-          <div class="key-wrapper">
+          <div class="key-wrapper" style="width:9em">
             <button
               class="block w-full h-10 rounded bg-gray-900 hover:bg-indigo-600 hover:text-white shadow focus:outline-none text-center leading-none"
               v-on:click="onInput('delete')"
@@ -131,15 +116,6 @@
           </div>
         </div>
         <div class="flex -mx-1">
-          <div class="w-10 px-1">
-            <button
-              class="block w-full h-10 rounded bg-gray-900 hover:bg-indigo-600 hover:text-white shadow focus:outline-none text-center leading-none"
-              v-on:click="onInput('octaveChange', -1)"
-            >
-              -
-            </button>
-          </div>
-
           <div class="w-20 px-1 float-right">
             <button
               class="block w-full h-10 rounded bg-gray-700 hover:bg-indigo-600 hover:text-white shadow focus:outline-none text-center leading-none text-xs"
