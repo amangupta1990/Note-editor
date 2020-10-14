@@ -32,7 +32,7 @@
         </div>
       </div>
     </div>
-    <keyboard  @onKey="onToolbarKey" @chordselected="onChordSelected" v-bind:keySig="keySig" tonic="major" />
+    <keyboard  @onKey="onToolbarKey" @chordselected="onChordSelected" v-bind:keySig="keySig" tonic="major" v-if="editor" />
     <vue-simple-context-menu
   :elementId="'myUniqueId'"
   :options="contextMenuOpts"
@@ -74,8 +74,7 @@ export default {
       selectedNote:null,
       selectedStave:null,
       contextMenuOpts:[
-        {name: 'chord'},
-        {name: 'rythm'},
+        {name: 'Add Stave'},
       ],
     };
   },
@@ -89,8 +88,8 @@ export default {
     },
     optionClicked (event) {
         switch (event.option.name) {
-          case 'chord':
-            this.showChordDrawer = true;
+          case 'Add Stave':
+            this.api.addStave()
             break;
         
           default:
@@ -136,12 +135,15 @@ export default {
           case 'delete': this.api.deleteNotes();  break;
           case 'note':  
                   // eslint-disable-next-line no-case-declarations
-                  const notes = this.api.addNote(value.toLowerCase()); 
+                  const [note , acc1, acc2] = value.split('')
+                  // eslint-disable-next-line no-case-declarations
+                  const notes = this.api.addNote(note.toLowerCase(), `${acc1 || ''}${acc2 || ''}`); 
                   // eslint-disable-next-line no-debugger
-                  notes.map(n=> this.api.playback(n))
+                  notes.map(n=> this.api.playback(n.map(_n=>_n.replace("##","x"))   ))
                   break;
-          case 'rightArrow': this.api.cursorForward(); break;
-          case 'leftArrow': this.api.cursorBack(); break;
+          case 'rightArrow': this.api.cursorForward(value); break;
+          case 'leftArrow': this.api.cursorBack(value); break;
+          case 'addStave': this.api.addStave();
         }
 
         

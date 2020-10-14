@@ -15,10 +15,12 @@
     </div>
     </nav>
  </div>
+ <mini-key-pad @onKey="onInput" />
  </div>   
 </template>
 <script>
 import {  Chord, Key } from "@tonaljs/tonal";
+import MiniKeyPad from './miniKeypad'
   export default {
   name: "chordDrawer",
   mixins: [],
@@ -28,7 +30,7 @@ import {  Chord, Key } from "@tonaljs/tonal";
       show: Boolean
   },
   components: {
-
+      MiniKeyPad
   },
   data() {
     return {
@@ -48,7 +50,10 @@ import {  Chord, Key } from "@tonaljs/tonal";
       },
       getChordTonic(chord){
           return Chord.get(chord).tonic;
-      }
+      },
+      onInput: function(event) {
+            this.$emit('onKey',event);
+    }
 
        
   },
@@ -70,8 +75,9 @@ import {  Chord, Key } from "@tonaljs/tonal";
 
     .container-inner{
          overflow-y:scroll;
-         @apply w-full h-full;
+         @apply w-full h-full pb-10;
          max-height: 50vh;
+         
     }
 
 
