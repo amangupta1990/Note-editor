@@ -25,7 +25,7 @@
           </button>
         </div>
 
-        <div class="w-20 px-1 ">
+        <div class="key-wrapper ">
           <button
             class="block w-full h-10 rounded bg-gray-700 hover:bg-indigo-600 hover:text-white shadow focus:outline-none text-center leading-none text-xs"
             v-on:click="onInput('undo')"
@@ -33,7 +33,7 @@
             <i class="mdi  mdi-undo text-lg"></i>
           </button>
         </div>
-        <div class="w-20 px-1">
+        <div class="key-wrapper">
           <button
             class="block w-full h-10 rounded bg-gray-900 hover:bg-indigo-600 hover:text-white shadow focus:outline-none text-center leading-none text-xs"
             v-on:click="onInput('redo')"
@@ -102,11 +102,12 @@ export default {
   computed: {},
 };
 </script>
-<style>
+<style scoped>
 @import url(https://cdnjs.cloudflare.com/ajax/libs/MaterialDesign-Webfont/5.3.45/css/materialdesignicons.min.css);
 
 .key-wrapper {
-  @apply w-10 px-1 mb-2;
+  @apply  px-1 mb-2;
+  width: 5.5em;
 }
 
 .key {

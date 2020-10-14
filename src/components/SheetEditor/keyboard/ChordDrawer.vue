@@ -75,8 +75,9 @@ import MiniKeyPad from './miniKeypad'
 
     .container-inner{
          overflow-y:scroll;
-         @apply w-full h-full;
+         @apply w-full h-full pb-10;
          max-height: 50vh;
+         
     }
 
 

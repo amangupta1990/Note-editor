@@ -95,22 +95,9 @@ export default  function   KeyboardListeners(event,cb) {
         break;
       } 
 
-      case event.key === "Control": this.ctrlActive = false; break;
-      case event.key === "Shift": this.shiftActive = false; break;
-      case event.key === "Meta": this.metaActive = false; break;
+
 
     }
-
-    document.addEventListener("keydown",(event)=>{
-      switch(true){
-      case event.key === "Control": this.ctrlActive = true; break;
-      case event.key === "Shift": this.shiftActive = true; break;
-      case event.key === "Meta": this.metaActive = true; break;
-      }
-    })
-
-    
-
 
 
 }
