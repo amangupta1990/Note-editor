@@ -139,7 +139,7 @@ export default {
                   // eslint-disable-next-line no-case-declarations
                   const notes = this.api.addNote(note.toLowerCase(), `${acc1 || ''}${acc2 || ''}`); 
                   // eslint-disable-next-line no-debugger
-                  notes.map(n=> this.api.playback(n))
+                  notes.map(n=> this.api.playback(n.map(_n=>_n.replace("##","x"))   ))
                   break;
           case 'rightArrow': this.api.cursorForward(value); break;
           case 'leftArrow': this.api.cursorBack(value); break;
