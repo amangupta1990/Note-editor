@@ -1,2 +1,2 @@
 # Note-editor
-Created with CodeSandbox
+Created with note-editor
