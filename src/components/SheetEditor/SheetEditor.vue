@@ -47,6 +47,7 @@ import {Editor} from "../../../editor/dist/";
 import NewSheetDialog from "./newSheetDialog.vue";
 import ErrorDialog from "./errorDialog.vue";
 import {Keyboard} from "./keyboard";
+import {playChord} from "../../../editor/dist/AudioEngine.js";
 
 
 
@@ -139,11 +140,13 @@ export default {
                   // eslint-disable-next-line no-case-declarations
                   const notes = this.api.addNote(note.toLowerCase(), `${acc1 || ''}${acc2 || ''}`); 
                   // eslint-disable-next-line no-debugger
-                  notes.map(n=> this.api.playback(n.map(_n=>_n.replace("##","x"))   ))
+                  playChord(notes);
                   break;
           case 'rightArrow': this.api.cursorForward(value); break;
           case 'leftArrow': this.api.cursorBack(value); break;
-          case 'addStave': this.api.addStave();
+          case 'addStave': this.api.addStave(); break;
+          case 'splitNote': this.api.splitSelectedNote(); break;
+          case 'mergeNote': this.api.mergeNotes(); break;
         }
 
         
@@ -152,7 +155,7 @@ export default {
     onChordSelected: function(chord){
       const variation = chord.variation.replace(chord.tonic,'');
       const notes =this.api.addChord(chord.tonic,variation);
-      this.api.playback(notes);
+      playChord(notes);
     }
   },
 };

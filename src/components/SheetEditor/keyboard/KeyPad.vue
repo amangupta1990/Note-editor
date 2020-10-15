@@ -196,7 +196,7 @@ export default {
             value: value+(this.accidental || ''),
           });
           break;
-        case type === "undo" || type === "redo" || type === "delete" || type === "rightArrow" || type === "leftArrow" || type === "addStave":
+        case type === "undo" || type === "redo" || type === "delete" || type === "rightArrow" || type === "leftArrow" || type === "addStave" || type === "mergeNote" || type === "splitNote":
           this.$emit("onKey", { type, value });
           break;
         case type === "accidental":

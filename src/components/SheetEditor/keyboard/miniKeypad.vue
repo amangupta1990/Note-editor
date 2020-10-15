@@ -90,7 +90,7 @@ export default {
           type === "delete" ||
           type === "rightArrow" ||
           type === "leftArrow" ||
-          type === "addStave":
+          type === "addStave" || type === "mergeNote" || type === "splitNote":
           this.$emit("onKey", { type, value });
           break;
         case type === "accidental":

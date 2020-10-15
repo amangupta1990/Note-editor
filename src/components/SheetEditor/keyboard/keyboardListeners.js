@@ -29,7 +29,6 @@ export default  function   KeyboardListeners(event,cb) {
       case event.key === "j": {
         if(event.ctrlKey) {
         cb('mergeNote');
-        this.Draw();
         break;
         }
       }

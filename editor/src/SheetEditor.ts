@@ -9,6 +9,15 @@ import * as lodash from "lodash";
 import {Chord, interval, Note} from "@tonaljs/tonal"
 import {playChord} from './AudioEngine';
 
+import {ed_note,
+        ed_selected_note,
+        ed_beam,
+        ed_selected,
+        ed_sheet,
+        ed_state,
+        ed_stave,
+        ed_tie
+        } from './models'
 
 const REST_POSITIONS = (key:string)=>{
 
@@ -48,63 +57,6 @@ default: return 0;
   }
 }
 
-// types  
-interface ed_note{
-    clef: any; 
-    duration : string,
-    keys: string[],
-    accidentals: ( string | null )[],
-    dotted?: boolean;
-    isRest: boolean,
-    staveIndex: number,
-    noteIndex: number
- }
-
- interface ed_tie{
-   [x: string]: any;
-   first_note: ed_selected_note,
-   last_note: ed_selected_note,
-   first_indices: number[],
-   last_indices: number[]
- }
-
- interface ed_beam{
-    notes: ed_note[];
- }
-
-interface ed_selected_note {staveIndex:number, noteIndex:number};
-  
-
-
- interface ed_stave{
-     notes:ed_note[]
- }
-
- interface ed_sheet{
-     staves: ed_stave[],
-     ties: ed_tie[]
-     beams: ed_beam[],
- }
-
- interface cursor{
-     _staveIndex?: number,
-     _noteIndex?: number,
-     noteIndex: any,
-     staveIndex:any
- }
-
-interface ed_selected {
-    _staves?: any[]
-    _notes?: {staveIndex:number, noteIndex:number}[],
-    cursor: cursor,
-    notes: {staveIndex:number, noteIndex:number}[],
-    staves: number[],
-}
-
- interface ed_state {
-     sheet: string,
-     selected: string
- }
 
 
 
@@ -338,18 +290,8 @@ class Editor {
   this.selected.notes = notes;
 
   // play the notes:
-  
-  return this.getToneNotes(notes as ed_note[]);
-  }
+  return notes;
 
-  private getToneNotes(notes:ed_note[]){
-      
-  const tone_notes = (notes).map((n,i)=>n.keys.map(k=> {
-    const accidental = n.accidentals[i] || '';
-    const [note , oct] = k.split("/");
-    return `${note}${accidental}${oct}`
-    }))
-    return tone_notes;
   }
 
   private _addChord(tonic:string,chord:string){
@@ -357,18 +299,19 @@ class Editor {
 
     this._deleteNotes();
 
-    const tone_chords:string[] = [];
+     
     const _chord = Chord.getChord(chord, tonic+"4");
     const root:any = _chord.tonic;
+    let tone_chord:ed_note[] = [];
     _chord.intervals.map((interval:string,index:number)=> {
       const n = Note.transpose(root,interval);
       let [ _note, octave]= n.split(/(?=[0-9])/g);
       let [ note , accidental] = _note.split('');
-      this._addNote(`${note}/${octave}`,accidental);
-      tone_chords.push(`${note}${octave}`);
+      let ns =  this._addNote(`${note}/${octave}`,accidental);
+      tone_chord =   ns as ed_note[];
+      
     } )
-    this.Draw();
-    return tone_chords;
+    return tone_chord;
   }
 
   
@@ -1120,8 +1063,7 @@ class Editor {
       deleteNotes: this.withDraw(this.withStateSave(this._deleteNotes)),
       cursorBack: this.withDraw(this._cursorBack),
       cursorForward: this.withDraw(this._cursorForward),
-      setCursor: this.withDraw(this._setCursor),
-      playback : playChord
+      setCursor: this.withDraw(this._setCursor)
 
     }
   }

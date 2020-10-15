@@ -57,7 +57,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 var vexflow_1 = __importDefault(require("vexflow"));
 var lodash = __importStar(require("lodash"));
 var tonal_1 = require("@tonaljs/tonal");
-var AudioEngine_1 = require("./AudioEngine");
 var REST_POSITIONS = function (key) {
     switch (key.toLocaleLowerCase()) {
         case "q": return "b/4";
@@ -92,7 +91,6 @@ var DURATION_VALUES = function (key) {
         default: return 0;
     }
 };
-;
 var Editor = /** @class */ (function () {
     function Editor(svgcontainer, opts) {
         this.keySig = "C";
@@ -279,31 +277,22 @@ var Editor = /** @class */ (function () {
         });
         this.selected.notes = notes;
         // play the notes:
-        return this.getToneNotes(notes);
-    };
-    Editor.prototype.getToneNotes = function (notes) {
-        var tone_notes = (notes).map(function (n, i) { return n.keys.map(function (k) {
-            var accidental = n.accidentals[i] || '';
-            var _a = __read(k.split("/"), 2), note = _a[0], oct = _a[1];
-            return "" + note + accidental + oct;
-        }); });
-        return tone_notes;
+        return notes;
     };
     Editor.prototype._addChord = function (tonic, chord) {
         var _this = this;
         this._deleteNotes();
-        var tone_chords = [];
         var _chord = tonal_1.Chord.getChord(chord, tonic + "4");
         var root = _chord.tonic;
+        var tone_chord = [];
         _chord.intervals.map(function (interval, index) {
             var n = tonal_1.Note.transpose(root, interval);
             var _a = __read(n.split(/(?=[0-9])/g), 2), _note = _a[0], octave = _a[1];
             var _b = __read(_note.split(''), 2), note = _b[0], accidental = _b[1];
-            _this._addNote(note + "/" + octave, accidental);
-            tone_chords.push("" + note + octave);
+            var ns = _this._addNote(note + "/" + octave, accidental);
+            tone_chord = ns;
         });
-        this.Draw();
-        return tone_chords;
+        return tone_chord;
     };
     Editor.prototype._tieNotes = function () {
         var getId = function (a, b) {
@@ -875,8 +864,7 @@ var Editor = /** @class */ (function () {
             deleteNotes: this.withDraw(this.withStateSave(this._deleteNotes)),
             cursorBack: this.withDraw(this._cursorBack),
             cursorForward: this.withDraw(this._cursorForward),
-            setCursor: this.withDraw(this._setCursor),
-            playback: AudioEngine_1.playChord
+            setCursor: this.withDraw(this._setCursor)
         };
     };
     Editor.prototype.throwError = function (message) {

@@ -1,30 +1,48 @@
 "use strict";
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    Object.defineProperty(o, k2, { enumerable: true, get: function() { return m[k]; } });
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
-var __importStar = (this && this.__importStar) || function (mod) {
-    if (mod && mod.__esModule) return mod;
-    var result = {};
-    if (mod != null) for (var k in mod) if (k !== "default" && Object.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
-    __setModuleDefault(result, mod);
-    return result;
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.playChord = void 0;
-var Tone = __importStar(require("tone"));
-var synth = new Tone.PolySynth().toDestination();
-function playChord(notes) {
-    var now = Tone.now();
-    synth.triggerAttackRelease(notes, "8n", now);
+var tone_1 = require("tone");
+var DURATION_VALUES = function (key) {
+    switch (key.toLocaleLowerCase()) {
+        case "w": return '1n';
+        case "h": return '2n';
+        case "q": return '4n';
+        case "8": return '8n';
+        case "16": return '16n';
+        case "32": return '32n';
+        default: return 0;
+    }
+};
+var synth = new tone_1.PolySynth().toDestination();
+function getToneNotes(notes) {
+    var tone_notes = (notes).map(function (_note, i) {
+        var accidentals = _note.accidentals.map(function (acc) { return acc === null || acc === void 0 ? void 0 : acc.replace("##", "x"); });
+        return {
+            notes: _note.keys.map(function (k, i) { return k.replace("/", accidentals[i] || ''); }),
+            duration: DURATION_VALUES(_note.duration)
+        };
+    });
+    return tone_notes;
+}
+function playChord(_notes) {
+    var _now = tone_1.now();
+    var notesToPlay = getToneNotes(_notes);
+    notesToPlay.map(function (n) {
+        var notes = n.notes, duration = n.duration;
+        synth.triggerAttackRelease(notes, duration, _now);
+    });
 }
 exports.playChord = playChord;
+var AudioEngine = /** @class */ (function () {
+    function AudioEngine() {
+        this._numTracks = 0;
+        this._tracks = {};
+    }
+    AudioEngine.prototype.add = function () {
+        this._tracks[this._numTracks] = [];
+    };
+    AudioEngine.prototype.updateTrack = function (staves) {
+    };
+    return AudioEngine;
+}());
 //# sourceMappingURL=AudioEngine.js.map
