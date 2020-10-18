@@ -47,7 +47,7 @@ import {Editor} from "../../../editor/dist/";
 import NewSheetDialog from "./newSheetDialog.vue";
 import ErrorDialog from "./errorDialog.vue";
 import {Keyboard} from "./keyboard";
-import {playChord} from "../../../editor/dist/AudioEngine.js";
+import {playChord, AudioEngine} from "../../../editor/dist/AudioEngine.js";
 
 
 
@@ -64,6 +64,7 @@ export default {
   data() {
     return {
       editor: null,
+      audioEngine: null,
       api: null,
       keySig: "",
       showNewSheetDialog: true,
@@ -101,10 +102,13 @@ export default {
       this.keySig = opts.key;
       opts.errorHandler = this.editorErrorHandler;
       opts.onNoteSelected = this.editorOnNoteSelected;
+      opts.onRender = this.editorOnUpdate;
       this.$nextTick().then(
         () => {
           this.editor = new Editor(this.$refs.svgcontainer, opts)
           this.api = this.editor.API();
+          const sheet = this.api.sheet();
+          this.audioEngine = new AudioEngine(sheet,opts.timeSig)
           }
         
       );
@@ -122,6 +126,10 @@ export default {
       this.noteXPos = x;
       this.noteYpos = y;
       
+    },
+    editorOnUpdate: function(sheet){
+      if(this.audioEngine)
+      this.audioEngine.updateTrack(sheet);
     },
     handleClick (event) {
       this.$refs.vueSimpleContextMenu.showMenu(event, this.selectedNote)

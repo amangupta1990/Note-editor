@@ -650,6 +650,9 @@ class Editor {
     this.undo()
   }
 
+  // return the sheet 
+
+  this.onRender && this.onRender(this.sheet)
 
   }
 
@@ -1063,7 +1066,8 @@ class Editor {
       deleteNotes: this.withDraw(this.withStateSave(this._deleteNotes)),
       cursorBack: this.withDraw(this._cursorBack),
       cursorForward: this.withDraw(this._cursorForward),
-      setCursor: this.withDraw(this._setCursor)
+      setCursor: this.withDraw(this._setCursor),
+      sheet: ()=> this.sheet
 
     }
   }

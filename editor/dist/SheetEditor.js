@@ -521,6 +521,8 @@ var Editor = /** @class */ (function () {
             this.throwError(e.message);
             this.undo();
         }
+        // return the sheet 
+        this.onRender && this.onRender(this.sheet);
     };
     Editor.prototype._getSelectedElement = function (event) {
         try {
@@ -853,6 +855,7 @@ var Editor = /** @class */ (function () {
         };
     };
     Editor.prototype.API = function () {
+        var _this = this;
         return {
             addStave: this.withDraw(this.withStateSave(this._addStave)),
             addNote: this.withDraw(this.withStateSave(this._addNote)),
@@ -864,7 +867,8 @@ var Editor = /** @class */ (function () {
             deleteNotes: this.withDraw(this.withStateSave(this._deleteNotes)),
             cursorBack: this.withDraw(this._cursorBack),
             cursorForward: this.withDraw(this._cursorForward),
-            setCursor: this.withDraw(this._setCursor)
+            setCursor: this.withDraw(this._setCursor),
+            sheet: function () { return _this.sheet; }
         };
     };
     Editor.prototype.throwError = function (message) {
