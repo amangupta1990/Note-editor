@@ -55,6 +55,17 @@ var __spread = (this && this.__spread) || function () {
     for (var ar = [], i = 0; i < arguments.length; i++) ar = ar.concat(__read(arguments[i]));
     return ar;
 };
+var __values = (this && this.__values) || function(o) {
+    var s = typeof Symbol === "function" && Symbol.iterator, m = s && o[s], i = 0;
+    if (m) return m.call(o);
+    if (o && typeof o.length === "number") return {
+        next: function () {
+            if (o && i >= o.length) o = void 0;
+            return { value: o && o[i++], done: !o };
+        }
+    };
+    throw new TypeError(s ? "Object is not iterable." : "Symbol.iterator is not defined.");
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AudioEngine = exports.playChord = void 0;
 var lodash_1 = require("lodash");
@@ -119,31 +130,43 @@ var AudioEngine = /** @class */ (function () {
     AudioEngine.prototype._add = function () {
         this._tracks[this._numTracks] = [];
     };
+    AudioEngine.prototype._getTime = function (staveIndex, noteIndex, duration) {
+        return staveIndex + ":" + noteIndex + ":0";
+    };
     AudioEngine.prototype.updateTrack = function (sheet) {
+        var e_1, _a;
         var _this = this;
+        tone_1.Transport.stop();
+        tone_1.Transport.cancel();
         this.notes = [];
-        var _now = tone_1.now();
         sheet.staves
             .map(function (stave) { return stave.notes; })
             .map(function (_notes) { _this.notes = lodash_1.concat(_this.notes, _notes); });
         var _notes = this.notes;
-        var t = tone_1.Transport.now();
         var partNotes = _notes.map(function (note, i) {
             var _a = getToneNotes([note])[0], notes = _a.notes, duration = _a.duration;
-            var notesToPlay = notes.map(function (_note) {
-                var n = { "time": t, "note": _note, "velocity": note.isRest ? 0 : 0.5, duration: duration };
-                return n;
-            });
-            return { notesToPlay: notesToPlay, time: t };
+            var time = _this._getTime(note.staveIndex, note.noteIndex, note.duration);
+            return { notes: notes, time: time, duration: duration, isRest: note.isRest };
         });
-        console.log(t);
-        t += tone_1.Time(t).toMilliseconds();
-        partNotes.map(function (pn) {
-            new tone_1.Part(function (time, value) {
-                //the value is an object which contains both the note and the velocity
-                synth.triggerAttackRelease(value.note, value.duration, '', value.velocity);
-            }, pn).start(0);
-        });
+        var _loop_1 = function (pn) {
+            tone_1.Transport.schedule(function (time) {
+                if (!pn.isRest)
+                    synth.triggerAttackRelease(pn.notes, pn.duration, time);
+            }, pn.time);
+        };
+        try {
+            for (var partNotes_1 = __values(partNotes), partNotes_1_1 = partNotes_1.next(); !partNotes_1_1.done; partNotes_1_1 = partNotes_1.next()) {
+                var pn = partNotes_1_1.value;
+                _loop_1(pn);
+            }
+        }
+        catch (e_1_1) { e_1 = { error: e_1_1 }; }
+        finally {
+            try {
+                if (partNotes_1_1 && !partNotes_1_1.done && (_a = partNotes_1.return)) _a.call(partNotes_1);
+            }
+            finally { if (e_1) throw e_1.error; }
+        }
         tone_1.Transport.start();
     };
     return AudioEngine;

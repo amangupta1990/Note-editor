@@ -92,46 +92,46 @@ export class  AudioEngine {
         _add(){
                 this._tracks[this._numTracks] = []
         }
+
+        _getTime(staveIndex: number, noteIndex: number , duration: string){
+                
+                
+                return `${staveIndex}:${noteIndex}:0`;
+                
+
+        }
+
         updateTrack(sheet:ed_sheet){
+                Transport.stop();
+                Transport.cancel();
                 this.notes = [];
-                let _now = now();
                 sheet.staves
                 .map((stave:ed_stave)=>stave.notes)
                 .map((_notes:ed_note[])=>  { this.notes = concat( this.notes ,_notes) } );
                 const _notes = this.notes;
 
                 
-                
-                
-                let t =  Transport.now();                     
+                                  
                 const partNotes =   _notes.map((note: ed_note,i:number)=>{
 
                         const {notes ,duration} = getToneNotes([note])[0];
                  
-                           const notesToPlay =    notes.map((_note)=>{
-                                const n = {"time" : t , "note" : _note  , "velocity":  note.isRest? 0 :   0.5 , duration }
-                                return n;
-                                })
-
-                                
-                                
-                                return {notesToPlay, time : t};
+                
+                                const time = this._getTime(note.staveIndex, note.noteIndex, note.duration  )
+                                return { notes, time , duration , isRest : note.isRest};
                                 
                        })
                        
-                                console.log(t);
-                                t += Time(t).toMilliseconds();
+
                                              
                                             
-                                               
-                partNotes.map(pn=>{
-                        new Part(function(time, value){
-                                //the value is an object which contains both the note and the velocity
-                                
-                                synth.triggerAttackRelease(value.note, value.duration, '' , value.velocity);
-                        }, pn).start(0);
-                })
-
+                for (const pn of partNotes) {
+                        Transport.schedule((time) => {
+                                if(!pn.isRest)
+                                synth.triggerAttackRelease(pn.notes, pn.duration ,time);
+                        }, pn.time);
+                }                      
+       
                 Transport.start();
                 
          }
