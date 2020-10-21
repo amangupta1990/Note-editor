@@ -1,4 +1,4 @@
-import { concat, flatten } from "lodash";
+import { concat, curry, flatten } from "lodash";
 import {PolySynth , now  , Transport, Part, start as startAudio, TransportTime, Time, } from "tone";
 import { Tone } from "tone/build/esm/core/Tone";
 import {ed_note,
@@ -46,7 +46,7 @@ function getToneNotes(notes:ed_note[]){
         }
 
 export function playChord(_notes:ed_note[]) {
-        return
+        return;
         const _now = now()
         const notesToPlay = getToneNotes(_notes);
         notesToPlay.map(n=>{
@@ -62,8 +62,14 @@ export function playChord(_notes:ed_note[]) {
 // exact should be an exact replica of the sheet object in vexflow 
 
 
-interface au_track  {
-        
+interface au_seek  {
+        bar:number,
+        beat:number,
+        sixteenth:number,
+        position: {
+                current:number,
+                total:number
+        }
 }
 
 export class  AudioEngine {
@@ -73,8 +79,20 @@ export class  AudioEngine {
         private _numTracks:number = 0;
         private _tracks:any = {}; 
         private notes: ed_note[];
+        private animationID: any;
+        private seekBar:au_seek; 
+        private _onProgress!:Function;
 
-        constructor(sheet:ed_sheet, timeSig: string,  BPM : number ,){
+        constructor(sheet:ed_sheet, timeSig: string,  BPM : number , onProgress:Function){
+                this.seekBar = {
+                        bar: 0,
+                        beat: 0,
+                        sixteenth: 0,
+                        position: {
+                                current : 0,
+                                total: 0,
+                        }
+                }
                 this.bpm = BPM || 120 ;
                 this.notes = [];
                 this.timeSig = [ ... timeSig.split("/")].map((sig=> parseInt(sig)));
@@ -84,6 +102,7 @@ export class  AudioEngine {
                 Transport.on('stop',()=>{
                         console.log('transportEnded')
                 })
+                this._onProgress = onProgress;
 
 
                 
@@ -102,8 +121,7 @@ export class  AudioEngine {
         }
 
         updateTrack(sheet:ed_sheet){
-                Transport.stop();
-                Transport.cancel();
+                this.stop();
                 this.notes = [];
                 sheet.staves
                 .map((stave:ed_stave)=>stave.notes)
@@ -125,15 +143,48 @@ export class  AudioEngine {
 
                                              
                                             
-                for (const pn of partNotes) {
+                for (let index = 0 ; index < partNotes.length ; index++) {
+                        const pn = partNotes[index];
                         Transport.schedule((time) => {
-                                if(!pn.isRest)
+                                if(!pn.isRest){
                                 synth.triggerAttackRelease(pn.notes, pn.duration ,time);
+                                }
+                                this.seekBar = {
+                                        bar : parseInt(pn.time.split(":")[0]),
+                                        beat : parseInt(pn.time.split(":")[1]),
+                                        sixteenth: parseInt(pn.time.split(":")[2]),
+                                        position :{
+                                                current : index,
+                                                total: partNotes.length
+                                        }
+                                }
+
                         }, pn.time);
                 }                      
        
-                Transport.start();
+                const start = partNotes[0].time;
+                const end = partNotes[partNotes.length-1].time
+                this.play(start,end);
                 
+         }
+         progress(){
+                 // scale it between 0-1
+                        const transport = Transport;
+			const progress = (this.seekBar.position.current +  1) / this.seekBar.position.total;
+                        console.log (progress*100);
+                        this._onProgress && this._onProgress(this.seekBar);
+                        this.animationID =  requestAnimationFrame(this.progress.bind(this))
+         }
+         play(start:string,end:string){
+                 Transport.loopStart = start;
+                 Transport.loopEnd = end;
+                 Transport.start();
+                 this.animationID = requestAnimationFrame(this.progress.bind(this))
+         }
+         stop(){
+                 Transport.stop();
+                 Transport.cancel();
+                 cancelAnimationFrame(this.animationID);
          }
 
 }

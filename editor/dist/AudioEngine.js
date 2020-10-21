@@ -55,17 +55,6 @@ var __spread = (this && this.__spread) || function () {
     for (var ar = [], i = 0; i < arguments.length; i++) ar = ar.concat(__read(arguments[i]));
     return ar;
 };
-var __values = (this && this.__values) || function(o) {
-    var s = typeof Symbol === "function" && Symbol.iterator, m = s && o[s], i = 0;
-    if (m) return m.call(o);
-    if (o && typeof o.length === "number") return {
-        next: function () {
-            if (o && i >= o.length) o = void 0;
-            return { value: o && o[i++], done: !o };
-        }
-    };
-    throw new TypeError(s ? "Object is not iterable." : "Symbol.iterator is not defined.");
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AudioEngine = exports.playChord = void 0;
 var lodash_1 = require("lodash");
@@ -114,9 +103,18 @@ function playChord(_notes) {
 }
 exports.playChord = playChord;
 var AudioEngine = /** @class */ (function () {
-    function AudioEngine(sheet, timeSig, BPM) {
+    function AudioEngine(sheet, timeSig, BPM, onProgress) {
         this._numTracks = 0;
         this._tracks = {};
+        this.seekBar = {
+            bar: 0,
+            beat: 0,
+            sixteenth: 0,
+            position: {
+                current: 0,
+                total: 0,
+            }
+        };
         this.bpm = BPM || 120;
         this.notes = [];
         this.timeSig = __spread(timeSig.split("/")).map((function (sig) { return parseInt(sig); }));
@@ -126,6 +124,7 @@ var AudioEngine = /** @class */ (function () {
         tone_1.Transport.on('stop', function () {
             console.log('transportEnded');
         });
+        this._onProgress = onProgress;
     }
     AudioEngine.prototype._add = function () {
         this._tracks[this._numTracks] = [];
@@ -134,10 +133,8 @@ var AudioEngine = /** @class */ (function () {
         return staveIndex + ":" + noteIndex + ":0";
     };
     AudioEngine.prototype.updateTrack = function (sheet) {
-        var e_1, _a;
         var _this = this;
-        tone_1.Transport.stop();
-        tone_1.Transport.cancel();
+        this.stop();
         this.notes = [];
         sheet.staves
             .map(function (stave) { return stave.notes; })
@@ -148,26 +145,48 @@ var AudioEngine = /** @class */ (function () {
             var time = _this._getTime(note.staveIndex, note.noteIndex, note.duration);
             return { notes: notes, time: time, duration: duration, isRest: note.isRest };
         });
-        var _loop_1 = function (pn) {
+        var _loop_1 = function (index) {
+            var pn = partNotes[index];
             tone_1.Transport.schedule(function (time) {
-                if (!pn.isRest)
+                if (!pn.isRest) {
                     synth.triggerAttackRelease(pn.notes, pn.duration, time);
+                }
+                _this.seekBar = {
+                    bar: parseInt(pn.time.split(":")[0]),
+                    beat: parseInt(pn.time.split(":")[1]),
+                    sixteenth: parseInt(pn.time.split(":")[2]),
+                    position: {
+                        current: index,
+                        total: partNotes.length
+                    }
+                };
             }, pn.time);
         };
-        try {
-            for (var partNotes_1 = __values(partNotes), partNotes_1_1 = partNotes_1.next(); !partNotes_1_1.done; partNotes_1_1 = partNotes_1.next()) {
-                var pn = partNotes_1_1.value;
-                _loop_1(pn);
-            }
+        for (var index = 0; index < partNotes.length; index++) {
+            _loop_1(index);
         }
-        catch (e_1_1) { e_1 = { error: e_1_1 }; }
-        finally {
-            try {
-                if (partNotes_1_1 && !partNotes_1_1.done && (_a = partNotes_1.return)) _a.call(partNotes_1);
-            }
-            finally { if (e_1) throw e_1.error; }
-        }
+        var start = partNotes[0].time;
+        var end = partNotes[partNotes.length - 1].time;
+        this.play(start, end);
+    };
+    AudioEngine.prototype.progress = function () {
+        // scale it between 0-1
+        var transport = tone_1.Transport;
+        var progress = (this.seekBar.position.current + 1) / this.seekBar.position.total;
+        console.log(progress * 100);
+        this._onProgress && this._onProgress(this.seekBar);
+        this.animationID = requestAnimationFrame(this.progress.bind(this));
+    };
+    AudioEngine.prototype.play = function (start, end) {
+        tone_1.Transport.loopStart = start;
+        tone_1.Transport.loopEnd = end;
         tone_1.Transport.start();
+        this.animationID = requestAnimationFrame(this.progress.bind(this));
+    };
+    AudioEngine.prototype.stop = function () {
+        tone_1.Transport.stop();
+        tone_1.Transport.cancel();
+        cancelAnimationFrame(this.animationID);
     };
     return AudioEngine;
 }());
