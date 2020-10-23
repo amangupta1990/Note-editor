@@ -12,7 +12,7 @@
       :message="errorMessage"
     />
     <nav class="menu-bar" id="fixed-header">
-  <input type="range" min="0" max="100" step="1" v-model="trackProgress" @input="onTrackbarSeek" :style="{backgroundSize: backgroundSize}">
+  <input type="range" min="0" :max="trackTotal" step="0.1"  @input="onTrackbarSeek" :style="{backgroundSize: backgroundSize}" ref="seekbar">
     </nav>
 
     <div class="container-wrapper">
@@ -52,8 +52,7 @@ import NewSheetDialog from "./newSheetDialog.vue";
 import ErrorDialog from "./errorDialog.vue";
 import {Keyboard} from "./keyboard";
 import {playChord, AudioEngine} from "../../../editor/dist/AudioEngine.js";
-// you probably need to import built-in style
-import 'vue-range-slider/dist/vue-range-slider.css'
+
 
 
 
@@ -81,6 +80,7 @@ export default {
       selectedNote:null,
       selectedStave:null,
       trackProgress: 0,
+      trackTotal: 0,
       backgroundSize: '20% 100%',
       contextMenuOpts:[
         {name: 'Add Stave'},
@@ -135,14 +135,17 @@ export default {
       
     },
     audioEngineOnProgress: function(seekbar){
-      this.trackProgress = seekbar.position.current;
+      const trackbar = this.$refs['seekbar'];
+      trackbar.value = seekbar.position.current;
+      this.trackTotal = seekbar.position.total;
+      this.onTrackbarSeek({target:this.$refs['seekbar']})
     },
     onTrackbarSeek(e) {
             let clickedElement = e.target,
                 min = clickedElement.min,
                 max = clickedElement.max,
                 val = clickedElement.value;
-
+                this.trackProgress = val;
             this.backgroundSize = (val - min) * 100 / (max - min) + '% 100%';
      },
     editorOnUpdate: function(sheet){
