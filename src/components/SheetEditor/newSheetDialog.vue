@@ -3,7 +3,7 @@
     <div
       class="bg-indigo-500 text-white font-bold rounded-lg border shadow-lg p-10"
     >
-    <h1 class="text-white text-xl m-4 text-center" > New Sheet</h1>
+      <h1 class="text-white text-xl m-4 text-center">New Sheet</h1>
       <!--Body-->
 
       <form class="bg-white  rounded px-8 pt-6 pb-8 mb-4">
@@ -36,11 +36,14 @@
             type="text"
             placeholder="4/4"
           />
-          <p v-if="timeSigError" class="text-red-500 text-xs italic"> valid signatures : 4/4 , 3/4 , 6/8 etc </p>
+          <p v-if="timeSigError" class="text-red-500 text-xs italic">
+            valid signatures : 4/4 , 3/4 , 6/8 etc
+          </p>
         </div>
 
         <div class="flex justify-end pt-2">
-          <button v-on:click="onClickHandler"
+          <button
+            v-on:click="onClickHandler"
             class="modal-close px-4 bg-indigo-500 p-3 rounded-lg text-white hover:bg-indigo-400"
           >
             start
@@ -55,35 +58,32 @@
 export default {
   name: "NewSheetDialog",
   mixins: [],
-  props: {
-
-  },
+  props: {},
   data: function() {
     return {
       key: "c",
       time: "4/4",
-      timeSigError: false,
+      timeSigError: false
     };
   },
   mounted: function() {},
   methods: {
-    onClickHandler:function(event) {
+    onClickHandler: function(event) {
       event.preventDefault();
 
-      if(this.time.indexOf("/") === -1  ) {
+      if (this.time.indexOf("/") === -1) {
         this.timeSigError = true;
-        return ;
+        return;
       }
 
-      
       const opts = {
         key: this.key,
         timeSig: this.time
       };
 
-     this.$emit('onClickStart',opts)
-    },
-  },
+      this.$emit("onClickStart", opts);
+    }
+  }
 };
 </script>
 <style>

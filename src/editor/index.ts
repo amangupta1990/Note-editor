@@ -1,8 +1,3 @@
-import Editor from './SheetEditor';
+import Editor from "./SheetEditor";
 
-
-
-export {
-    Editor
-    
-};
+export { Editor };
