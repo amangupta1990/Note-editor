@@ -199,8 +199,6 @@ export default {
 };
 </script>
 <style>
-@import url(https://cdnjs.cloudflare.com/ajax/libs/MaterialDesign-Webfont/5.3.45/css/materialdesignicons.min.css);
-
 .key-wrapper {
   @apply w-10 px-1 mb-2;
 }

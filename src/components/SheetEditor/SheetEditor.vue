@@ -12,6 +12,10 @@
       :message="errorMessage"
     />
     <nav class="menu-bar" id="fixed-header">
+      <playback-controls
+        style="float: right"
+        @playbackevent="playbackEventHandler"
+      ></playback-controls>
       <input
         type="range"
         min="0"
@@ -65,6 +69,7 @@ import NewSheetDialog from "./newSheetDialog.vue";
 import ErrorDialog from "./errorDialog.vue";
 import { Keyboard } from "./keyboard";
 import { playChord, AudioEngine } from "@/editor/AudioEngine";
+import PlaybackControls from "./playback/playbackControls.vue";
 
 export default {
   name: "SheetEditor",
@@ -73,7 +78,8 @@ export default {
   components: {
     NewSheetDialog,
     ErrorDialog,
-    Keyboard
+    Keyboard,
+    PlaybackControls,
   },
   data() {
     return {
@@ -92,7 +98,7 @@ export default {
       trackProgress: 0,
       trackTotal: 0,
       backgroundSize: "20% 100%",
-      contextMenuOpts: [{ name: "Add Stave" }]
+      contextMenuOpts: [{ name: "Add Stave" }],
     };
   },
   mounted: function() {
@@ -205,12 +211,29 @@ export default {
           break;
       }
     },
+    playbackEventHandler: function(eventName) {
+      switch (eventName) {
+        case "play":
+          this.audioEngine.play();
+          break;
+        case "pause":
+          this.audioEngine.pause();
+          break;
+        case "next":
+          this.audioEngine.SkiptoNextMeasure();
+          break;
+        case "prev":
+          this.audioEngine.SkipToPreviousMeasure();
+          break;
+        default: break;
+      }
+    },
     onChordSelected: function(chord) {
       const variation = chord.variation.replace(chord.tonic, "");
       const notes = this.api.addChord(chord.tonic, variation);
       playChord(notes);
-    }
-  }
+    },
+  },
 };
 </script>
 

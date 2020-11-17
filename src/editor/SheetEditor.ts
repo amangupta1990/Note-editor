@@ -660,7 +660,7 @@ class Editor {
     svgElem.addEventListener("click", (event) => {
       event.preventDefault();
       // eslint-disable-next-line
-      const [ type, staveIndex, noteIndex] = this._getSelectedElement(event);
+      const [ ele,type, staveIndex, noteIndex] = this._getSelectedElement(event);
 
       switch (type) {
         case "note": {

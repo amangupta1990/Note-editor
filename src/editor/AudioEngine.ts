@@ -145,9 +145,9 @@ export class AudioEngine {
       }, pn.time);
     }
 
-    const start = partNotes[0].time;
-    const end = partNotes[partNotes.length - 1].time;
-    this.play(start, end);
+    // const start = partNotes[0].time;
+    // const end = partNotes[partNotes.length - 1].time;
+    // this.play(start, end);
   }
   progress() {
     // scale it between 0-1
