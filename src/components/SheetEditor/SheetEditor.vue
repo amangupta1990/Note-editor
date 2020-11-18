@@ -64,11 +64,11 @@
 </template>
 
 <script>
-import { Editor } from "@/editor";
+import Editor from "./SheetEditor";
 import NewSheetDialog from "./newSheetDialog.vue";
 import ErrorDialog from "./errorDialog.vue";
 import { Keyboard } from "./keyboard";
-import { playChord, AudioEngine } from "@/editor/AudioEngine";
+import { playChord } from "./playback/AudioEngine";
 import PlaybackControls from "./playback/playbackControls.vue";
 
 export default {

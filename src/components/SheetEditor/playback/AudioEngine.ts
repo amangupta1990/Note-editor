@@ -3,7 +3,7 @@
 /* eslint-disable @typescript-eslint/class-name-casing */
 import { concat } from "lodash";
 import { PolySynth, now, Transport, start as startAudio } from "tone";
-import { ed_note, ed_sheet, ed_stave } from "./models";
+import { ed_note, ed_sheet, ed_stave } from "../../../shared/models";
 
 document.addEventListener("click", async () => {
   await startAudio();
@@ -44,7 +44,6 @@ function getToneNotes(notes: ed_note[]) {
 }
 
 export function playChord(_notes: ed_note[]) {
-  return;
   const _now = now();
   const notesToPlay = getToneNotes(_notes);
   notesToPlay.map(n => {
@@ -70,6 +69,8 @@ export class AudioEngine {
   private timeSig: number[];
   private _numTracks = 0;
   private _tracks: any = {};
+  private _startTime: string;
+  private _endTime: string;
   private notes: ed_note[];
   private animationID: any;
   private seekBar: au_seek;
@@ -95,6 +96,7 @@ export class AudioEngine {
     this.timeSig = [...timeSig.split("/")].map(sig => parseInt(sig));
     Transport.bpm.value = this.bpm;
     Transport.timeSignature = this.timeSig;
+    this._startTime = this._endTime = "";
     this.updateTrack(sheet);
     Transport.on("stop", () => {
       console.log("transportEnded");
@@ -145,19 +147,22 @@ export class AudioEngine {
       }, pn.time);
     }
 
-    // const start = partNotes[0].time;
-    // const end = partNotes[partNotes.length - 1].time;
-    // this.play(start, end);
+    this._startTime = partNotes[0].time;
+    this._endTime = partNotes[partNotes.length - 1].time;
   }
   progress() {
     // scale it between 0-1
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const progress =
       (this.seekBar.position.current + 1) / this.seekBar.position.total;
-    console.log(progress * 100);
-    this._onProgress && this._onProgress(this.seekBar);
     this.animationID = requestAnimationFrame(this.progress.bind(this));
+    if (this.seekBar.position.current === this.seekBar.position.total - 1) {
+      this.seekBar.position.current = 0;
+      this.stop();
+    }
+    this._onProgress && this._onProgress(this.seekBar);
   }
-  play(start: string, end: string) {
+  play(start = this._startTime, end = this._endTime) {
     Transport.loopStart = start;
     Transport.loopEnd = end;
     Transport.start();

@@ -15,7 +15,7 @@ import {ed_note,
         ed_state,
         ed_stave,
         ed_tie
-        } from './models'
+        } from '../../shared/models'
 
 const REST_POSITIONS = (key:string)=>{
 
