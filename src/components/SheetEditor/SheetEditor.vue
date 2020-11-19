@@ -16,17 +16,7 @@
         style="float: right"
         @playbackevent="playbackEventHandler"
       ></playback-controls>
-      <input
-        type="range"
-        min="0"
-        :max="trackTotal"
-        step="0.1"
-        @input="onTrackbarSeek"
-        :style="{ backgroundSize: backgroundSize }"
-        ref="seekbar"
-      />
     </nav>
-
     <div class="container-wrapper">
       <div class="container">
         <div class="row">
@@ -70,6 +60,7 @@ import ErrorDialog from "./errorDialog.vue";
 import { Keyboard } from "./keyboard";
 import { playChord } from "./playback/AudioEngine";
 import PlaybackControls from "./playback/playbackControls.vue";
+import { EventBus } from "@/main";
 
 export default {
   name: "SheetEditor",
@@ -84,7 +75,6 @@ export default {
   data() {
     return {
       editor: null,
-      audioEngine: null,
       api: null,
       keySig: "",
       showNewSheetDialog: true,
@@ -95,9 +85,6 @@ export default {
       noteYpos: null,
       selectedNote: null,
       selectedStave: null,
-      trackProgress: 0,
-      trackTotal: 0,
-      backgroundSize: "20% 100%",
       contextMenuOpts: [{ name: "Add Stave" }],
     };
   },
@@ -128,12 +115,11 @@ export default {
         this.editor = new Editor(this.$refs.svgcontainer, opts);
         this.api = this.editor.API();
         const sheet = this.api.sheet();
-        this.audioEngine = new AudioEngine(
+        EventBus.$emit("AE_INIT", {
           sheet,
-          opts.timeSig,
-          120,
-          this.audioEngineOnProgress
-        );
+          timeSig: opts.timeSig,
+          bpm: 120
+        })
       });
       this.showNewSheetDialog = false;
     },
@@ -149,22 +135,8 @@ export default {
       this.noteXPos = x;
       this.noteYpos = y;
     },
-    audioEngineOnProgress: function(seekbar) {
-      const trackbar = this.$refs["seekbar"];
-      trackbar.value = seekbar.position.current;
-      this.trackTotal = seekbar.position.total;
-      this.onTrackbarSeek({ target: this.$refs["seekbar"] });
-    },
-    onTrackbarSeek(e) {
-      const clickedElement = e.target,
-        min = clickedElement.min,
-        max = clickedElement.max,
-        val = clickedElement.value;
-      this.trackProgress = val;
-      this.backgroundSize = ((val - min) * 100) / (max - min) + "% 100%";
-    },
     editorOnUpdate: function(sheet) {
-      if (this.audioEngine) this.audioEngine.updateTrack(sheet);
+      EventBus.$emit("AE_UPDATE", { sheet } );
     },
     handleClick(event) {
       this.$refs.vueSimpleContextMenu.showMenu(event, this.selectedNote);
@@ -214,16 +186,16 @@ export default {
     playbackEventHandler: function(eventName) {
       switch (eventName) {
         case "play":
-          this.audioEngine.play();
+          EventBus.$emit("AE_PLAY");
           break;
         case "pause":
-          this.audioEngine.pause();
+          EventBus.$emit("AE_PAUSE");
           break;
         case "next":
-          this.audioEngine.SkiptoNextMeasure();
+          EventBus.$emit("AE_NEXT");
           break;
         case "prev":
-          this.audioEngine.SkipToPreviousMeasure();
+          EventBus.$emit("AE_PREV");
           break;
         default: break;
       }

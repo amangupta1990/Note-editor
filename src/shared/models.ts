@@ -56,3 +56,13 @@ export interface ed_state {
   sheet: string;
   selected: string;
 }
+
+export interface au_seek {
+  bar: number;
+  beat: number;
+  sixteenth: number;
+  position: {
+    current: number;
+    total: number;
+  };
+}

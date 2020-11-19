@@ -3,7 +3,7 @@
 /* eslint-disable @typescript-eslint/class-name-casing */
 import { concat } from "lodash";
 import { PolySynth, now, Transport, start as startAudio } from "tone";
-import { ed_note, ed_sheet, ed_stave } from "../../../shared/models";
+import { ed_note, ed_sheet, ed_stave , au_seek} from "../../../shared/models";
 
 document.addEventListener("click", async () => {
   await startAudio();
@@ -54,18 +54,11 @@ export function playChord(_notes: ed_note[]) {
 
 // exact should be an exact replica of the sheet object in vexflow
 
-interface au_seek {
-  bar: number;
-  beat: number;
-  sixteenth: number;
-  position: {
-    current: number;
-    total: number;
-  };
-}
+
 
 export class AudioEngine {
   private bpm: number;
+  private _isPlaying: boolean;
   private timeSig: number[];
   private _numTracks = 0;
   private _tracks: any = {};
@@ -74,14 +67,19 @@ export class AudioEngine {
   private notes: ed_note[];
   private animationID: any;
   private seekBar: au_seek;
-  private _onProgress!: Function;
+  private _onProgress: Function;
+  private _onPlayEnd: Function;
 
   constructor(
     sheet: ed_sheet,
     timeSig: string,
     BPM: number,
-    onProgress: Function
+    onProgress: Function,
+    onPlayEnd: Function
   ) {
+    this._onProgress = onProgress;
+    this._onPlayEnd = onPlayEnd;
+    this._isPlaying = false;
     this.seekBar = {
       bar: 0,
       beat: 0,
@@ -101,7 +99,6 @@ export class AudioEngine {
     Transport.on("stop", () => {
       console.log("transportEnded");
     });
-    this._onProgress = onProgress;
   }
 
   _add() {
@@ -155,22 +152,28 @@ export class AudioEngine {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const progress =
       (this.seekBar.position.current + 1) / this.seekBar.position.total;
-    this.animationID = requestAnimationFrame(this.progress.bind(this));
-    if (this.seekBar.position.current === this.seekBar.position.total - 1) {
-      this.seekBar.position.current = 0;
+    if (
+      this.seekBar.position.current === this.seekBar.position.total - 1 &&
+      this._isPlaying
+    ) {
       this.stop();
     }
     this._onProgress && this._onProgress(this.seekBar);
+    this.animationID = requestAnimationFrame(this.progress.bind(this));
   }
   play(start = this._startTime, end = this._endTime) {
+    this._isPlaying = true;
     Transport.loopStart = start;
     Transport.loopEnd = end;
     Transport.start();
     this.animationID = requestAnimationFrame(this.progress.bind(this));
   }
   stop() {
+    this._isPlaying = false;
     Transport.stop();
-    Transport.cancel();
     cancelAnimationFrame(this.animationID);
+    this.seekBar.position.current = 0;
+    this._onProgress && this._onProgress(this.seekBar);
+    this._onPlayEnd && this._onPlayEnd();
   }
 }
