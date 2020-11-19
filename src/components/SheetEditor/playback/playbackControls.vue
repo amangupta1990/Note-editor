@@ -70,6 +70,7 @@ export default Vue.extend({
       trackbar.value = seekbar.position.current;
       this.trackTotal = seekbar.position.total;
       this.onTrackbarSeek({ target: this.$refs["seekbar"] });
+      this.eventBus.$emit("AE_PROGRESS", { seekbar });
     },
     audioEngineOnStop(){
       this.isPlaying = false;

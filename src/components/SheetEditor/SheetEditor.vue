@@ -12,10 +12,7 @@
       :message="errorMessage"
     />
     <nav class="menu-bar" id="fixed-header">
-      <playback-controls
-        style="float: right"
-        @playbackevent="playbackEventHandler"
-      ></playback-controls>
+      <playback-controls style="float: right"></playback-controls>
     </nav>
     <div class="container-wrapper">
       <div class="container">
@@ -70,7 +67,7 @@ export default {
     NewSheetDialog,
     ErrorDialog,
     Keyboard,
-    PlaybackControls,
+    PlaybackControls
   },
   data() {
     return {
@@ -85,12 +82,13 @@ export default {
       noteYpos: null,
       selectedNote: null,
       selectedStave: null,
-      contextMenuOpts: [{ name: "Add Stave" }],
+      contextMenuOpts: [{ name: "Add Stave" }]
     };
   },
   mounted: function() {
     this.tab = "note";
     this.showChordDrawer = false;
+    this.playbackEventHandler();
   },
   methods: {
     toggleChordDrawer: function(val) {
@@ -119,7 +117,7 @@ export default {
           sheet,
           timeSig: opts.timeSig,
           bpm: 120
-        })
+        });
       });
       this.showNewSheetDialog = false;
     },
@@ -136,7 +134,7 @@ export default {
       this.noteYpos = y;
     },
     editorOnUpdate: function(sheet) {
-      EventBus.$emit("AE_UPDATE", { sheet } );
+      EventBus.$emit("AE_UPDATE", { sheet });
     },
     handleClick(event) {
       this.$refs.vueSimpleContextMenu.showMenu(event, this.selectedNote);
@@ -183,29 +181,18 @@ export default {
           break;
       }
     },
-    playbackEventHandler: function(eventName) {
-      switch (eventName) {
-        case "play":
-          EventBus.$emit("AE_PLAY");
-          break;
-        case "pause":
-          EventBus.$emit("AE_PAUSE");
-          break;
-        case "next":
-          EventBus.$emit("AE_NEXT");
-          break;
-        case "prev":
-          EventBus.$emit("AE_PREV");
-          break;
-        default: break;
-      }
+    playbackEventHandler: function() {
+      EventBus.$on("AE_PROGRESS", data => {
+        const seekbar = data.seekbar;
+        this.api.highlightStave(seekbar.bar);
+      });
     },
     onChordSelected: function(chord) {
       const variation = chord.variation.replace(chord.tonic, "");
       const notes = this.api.addChord(chord.tonic, variation);
       playChord(notes);
-    },
-  },
+    }
+  }
 };
 </script>
 

@@ -585,7 +585,7 @@ class Editor {
 
 
     this.selected.staves.map((staveIndex:number)=>{
-      this._highlightStaveElement(
+      return this._highlightStaveElement(
         this.svgElm.querySelector(
           `#vf-${staveIndex}`
         ),
@@ -650,6 +650,7 @@ class Editor {
 
   // eslint-disable-next-line no-unused-vars
  private _highlightStaveElement(ele:any, color = "transparent") {
+   console.log(ele)
     ele.style.fill = color;
     ele.style.opacity = "0.4";
   }
@@ -989,7 +990,7 @@ class Editor {
   }
 
 
-  withStateSave(func:Function)  : Function  {
+  private withStateSave(func:Function)  : Function  {
     return (...args:any[])=>{
       this.saveState();
       let res = func.apply(this,args);
@@ -997,7 +998,7 @@ class Editor {
     }
   }
 
-  withDraw(func:Function)  : Function  {
+  private withDraw(func:Function)  : Function  {
     return (...args:any[])=>{
       let res = func.apply(this,args);
       this.Draw();
@@ -1005,6 +1006,9 @@ class Editor {
     }
   }
 
+  highlightStave(staveIndex:number){
+    this.selected.staves = [staveIndex];
+  }
 
 
   API(){
@@ -1020,6 +1024,7 @@ class Editor {
       cursorBack: this.withDraw(this._cursorBack),
       cursorForward: this.withDraw(this._cursorForward),
       setCursor: this.withDraw(this._setCursor),
+      highlightStave: this.withDraw(  this.highlightStave ),
       sheet: ()=> this.sheet
 
     }

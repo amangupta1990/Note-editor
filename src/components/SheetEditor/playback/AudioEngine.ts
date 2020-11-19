@@ -3,7 +3,7 @@
 /* eslint-disable @typescript-eslint/class-name-casing */
 import { concat } from "lodash";
 import { PolySynth, now, Transport, start as startAudio } from "tone";
-import { ed_note, ed_sheet, ed_stave , au_seek} from "../../../shared/models";
+import { ed_note, ed_sheet, ed_stave, au_seek } from "../../../shared/models";
 
 document.addEventListener("click", async () => {
   await startAudio();
@@ -53,8 +53,6 @@ export function playChord(_notes: ed_note[]) {
 }
 
 // exact should be an exact replica of the sheet object in vexflow
-
-
 
 export class AudioEngine {
   private bpm: number;
@@ -110,7 +108,6 @@ export class AudioEngine {
   }
 
   updateTrack(sheet: ed_sheet) {
-    this.stop();
     this.notes = [];
     sheet.staves
       .map((stave: ed_stave) => stave.notes)
@@ -158,8 +155,11 @@ export class AudioEngine {
     ) {
       this.stop();
     }
-    this._onProgress && this._onProgress(this.seekBar);
-    this.animationID = requestAnimationFrame(this.progress.bind(this));
+
+    if (this._isPlaying) {
+      this._onProgress && this._onProgress(this.seekBar);
+      this.animationID = requestAnimationFrame(this.progress.bind(this));
+    }
   }
   play(start = this._startTime, end = this._endTime) {
     this._isPlaying = true;
