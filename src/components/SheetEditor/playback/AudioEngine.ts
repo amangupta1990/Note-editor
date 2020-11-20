@@ -7,7 +7,6 @@ import { ed_note, ed_sheet, ed_stave, au_seek } from "../../../shared/models";
 
 document.addEventListener("click", async () => {
   await startAudio();
-  console.log("context started");
 });
 
 const DURATION_VALUES = (key: string) => {
@@ -94,16 +93,13 @@ export class AudioEngine {
     Transport.timeSignature = this.timeSig;
     this._startTime = this._endTime = "";
     this.updateTrack(sheet);
-    Transport.on("stop", () => {
-      console.log("transportEnded");
-    });
   }
 
   _add() {
     this._tracks[this._numTracks] = [];
   }
 
-  _getTime(staveIndex: number, noteIndex: number) {
+  _getTime(staveIndex: number, noteIndex: number, duration: string) {
     return `${staveIndex}:${noteIndex}:0`;
   }
 
@@ -122,7 +118,7 @@ export class AudioEngine {
     const partNotes = _notes.map((note: ed_note) => {
       const { notes, duration } = getToneNotes([note])[0];
 
-      const time = this._getTime(note.staveIndex, note.noteIndex);
+      const time = this._getTime(note.staveIndex, note.noteIndex, duration);
       return { notes, time, duration, isRest: note.isRest };
     });
 
@@ -130,6 +126,7 @@ export class AudioEngine {
       const pn = partNotes[index];
       Transport.schedule(time => {
         if (!pn.isRest) {
+          console.log(pn);
           synth.triggerAttackRelease(pn.notes, pn.duration, time);
         }
         this.seekBar = {
