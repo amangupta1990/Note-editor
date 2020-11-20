@@ -64,7 +64,9 @@ export interface au_seek {
   beat: number;
   sixteenth: number;
   position: {
-    current: number;
+    currentNote: number;
+    currentBar: number;
+    totalBars: number;
     total: number;
   };
 }

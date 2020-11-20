@@ -59,7 +59,7 @@ export default Vue.extend({
           break;
         case "pause":
           this.isPlaying = false;
-          this.audioEngine.stop();
+          this.audioEngine.pause();
           break;
       }
       this.$emit("playbackevent", eventName);
@@ -67,8 +67,8 @@ export default Vue.extend({
     // eslint-disable-next-line @typescript-eslint/camelcase
     audioEngineOnProgress(seekbar: au_seek) {
       const trackbar = this.$refs["seekbar"] as any;
-      trackbar.value = seekbar.position.current;
-      this.trackTotal = seekbar.position.total;
+      trackbar.value = seekbar.position.currentBar+1;
+      this.trackTotal = seekbar.position.totalBars;
       this.onTrackbarSeek({ target: this.$refs["seekbar"] });
       this.eventBus.$emit("AE_PROGRESS", { seekbar });
     },

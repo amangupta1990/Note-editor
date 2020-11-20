@@ -58,6 +58,7 @@ export function playChord(_notes: ed_note[]) {
 export class AudioEngine {
   private bpm: number;
   private _isPlaying: boolean;
+  private _isPaused: boolean;
   private timeSig: number[];
   private _numTracks = 0;
   private _tracks: any = {};
@@ -79,12 +80,15 @@ export class AudioEngine {
     this._onProgress = onProgress;
     this._onPlayEnd = onPlayEnd;
     this._isPlaying = false;
+    this._isPaused = false;
     this.seekBar = {
       bar: 0,
       beat: 0,
       sixteenth: 0,
       position: {
-        current: 0,
+        currentNote: 0,
+        currentBar: 0,
+        totalBars: 0,
         total: 0
       }
     };
@@ -148,36 +152,42 @@ export class AudioEngine {
           beat: parseInt(pn.time.split(":")[1]),
           sixteenth: parseInt(pn.time.split(":")[2]),
           position: {
-            current: index,
+            currentNote: index,
+            currentBar: parseInt(pn.time.split(":")[0]),
+            totalBars: Math.ceil(partNotes.length / this.timeSig[1]),
             total: partNotes.length
           }
         };
       }, pn.time);
     }
 
-    this._startTime = partNotes[0].time;
+    this._startTime = "0:0:0";
     this._endTime = partNotes[partNotes.length - 1].time;
   }
   progress() {
     // scale it between 0-1
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const progress =
-      (this.seekBar.position.current + 1) / this.seekBar.position.total;
-    if (
-      this.seekBar.position.current === this.seekBar.position.total - 1 &&
-      this._isPlaying
-    ) {
-      this.stop();
-    }
-
     if (this._isPlaying) {
       this._onProgress && this._onProgress(this.seekBar);
       this.animationID = requestAnimationFrame(this.progress.bind(this));
     }
+
+    if (
+      this.seekBar.position.currentNote === this.seekBar.position.total - 1 &&
+      this._isPlaying
+    ) {
+      this.stop();
+    }
   }
-  play(start = this._startTime, end = this._endTime) {
+  play(start = "0:0:0", end = this._endTime) {
     this._isPlaying = true;
-    Transport.loopStart = start;
+    // resume if paused
+
+    if (!this._isPaused) {
+      Transport.loopStart = start;
+    } else {
+      Transport.loopStart = this._startTime;
+    }
     Transport.loopEnd = end;
     Transport.start();
     this.animationID = requestAnimationFrame(this.progress.bind(this));
@@ -186,8 +196,15 @@ export class AudioEngine {
     this._isPlaying = false;
     Transport.stop();
     cancelAnimationFrame(this.animationID);
-    this.seekBar.position.current = 0;
+    this.seekBar.position.currentNote = 0;
     this._onProgress && this._onProgress(this.seekBar);
     this._onPlayEnd && this._onPlayEnd();
+  }
+  pause() {
+    this._isPlaying = false;
+    this._isPaused = true;
+    Transport.pause();
+    cancelAnimationFrame(this.animationID);
+    this._startTime = `${this.seekBar.bar}:0:0`;
   }
 }
