@@ -536,7 +536,7 @@ class Editor {
 
        var formatter = new Vex.Flow.Formatter();
        var notes = renderedNotes
-       var voice = new Vex.Flow.Voice({num_beats: this.timeSigTop, beat_value:this.timeSigBottom, resolution: Vex.Flow.RESOLUTION}).setMode(renderedNotes.length);
+       var voice = new Vex.Flow.Voice({num_beats: this.timeSigTop, beat_value:this.timeSigBottom, resolution: Vex.Flow.RESOLUTION}).setMode(3);
        
        voice.addTickables(notes);
        formatter.joinVoices([voice]).formatToStave([voice], stave);
