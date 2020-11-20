@@ -5,7 +5,6 @@
 
 
 import Vex from "vexflow";
-import * as lodash from "lodash";
 import {Chord, Note} from "@tonaljs/tonal"
 
 import {ed_note,
@@ -16,6 +15,7 @@ import {ed_note,
         ed_stave,
         ed_tie
         } from '../../shared/models'
+import { groupBy, flatten, isArray, uniq, capitalize, clone } from 'lodash';
 
 const REST_POSITIONS = (key:string)=>{
 
@@ -104,7 +104,7 @@ class Editor {
     },
 
     set notes(value){
-      if(!lodash.isArray(value)) this._notes = this._notes;
+      if(!isArray(value)) this._notes = this._notes;
       else {
         
         const sortedNotes = value.sort((a,b)=> a.noteIndex - b.noteIndex);
@@ -214,12 +214,10 @@ class Editor {
     
 
     let notes:ed_note[] = new Array(this.timeSigTop).fill({keys:[REST_POSITIONS(durationValue)] ,duration:durationValue,isRest:true})
-                            .map((n,i)=> { return  {...n,accidentals:[null],staveIndex:index, noteIndex:i} })
+                            .map((n,i)=> { return  {...n,accidentals:[null],staveIndex:index, noteIndex:i, beat:i, subDivision: 0} })
     this.sheet.staves.splice(index, 0, {notes});
   }
 
-  setMode( mode: "chord" | "note" | "rythm" ){
-  }
 
   private _addNote(noteName:string,accidental:any  = null) {
     // modify the rest of the stave to join the notes
@@ -263,8 +261,11 @@ class Editor {
     let stave = this.sheet.staves[note.staveIndex];
     let isRest = note.isRest;
     let duration =  note.duration.replace('r','');
-    let keys = isRest ? [noteToAdd] :   lodash.uniq([...note.keys, noteToAdd]);
+    let keys = isRest ? [noteToAdd] :   uniq([...note.keys, noteToAdd]);
     let accidentals:any[] = [];
+    const beat = note.beat;
+    debugger;
+    const subDivision = note.subDivision;
 
     switch(true){
       case isRest: accidentals = [accidental || null]; break;
@@ -272,7 +273,7 @@ class Editor {
     }
    
 
-    let newNote = {keys,duration,isRest:false,staveIndex:  note.staveIndex,noteIndex: note.noteIndex, accidentals, clef: note.clef, dotted: note.dotted};
+    let newNote = {keys,duration,isRest:false,staveIndex:  note.staveIndex,noteIndex: note.noteIndex, accidentals, clef: note.clef, dotted: note.dotted , beat , subDivision};
     stave.notes[note.noteIndex] = newNote;
     this.sheet.staves[note.staveIndex] = stave;
     return newNote;
@@ -414,7 +415,9 @@ class Editor {
       staveIndex:oldNote.staveIndex,
       noteIndex: oldNote.noteIndex,
       accidentals: [],
-      clef: oldNote.clef
+      clef: oldNote.clef,
+      beat: oldNote.beat,
+      subDivision: oldNote.subDivision
     }
     stave.notes[note.noteIndex] = newNote;
     this.sheet.staves[note.staveIndex] = stave;
@@ -479,7 +482,7 @@ class Editor {
 
           stave.addTimeSignature(`${this.timeSigTop}/${this.timeSigBottom}`);
           stave.addClef(this.clef);
-          stave.addKeySignature( lodash.capitalize(this.keySig));
+          stave.addKeySignature( capitalize(this.keySig));
       }
 
       stave.setContext(this.ctx).draw(); 
@@ -697,9 +700,9 @@ class Editor {
 
   private _addtoSelectedNotes(note:ed_note,shiftActive?:boolean){
     if(shiftActive){
-      let notes = lodash.clone(this.selected.notes);
+      let notes = clone(this.selected.notes);
       notes.push(note)
-      notes = lodash.uniq(notes);
+      notes = uniq(notes);
       this.selected.notes = notes;
     }
     else{
@@ -730,9 +733,9 @@ class Editor {
 
   private _addtoSelectedStaves(stave:number){
     if(this.shiftActive){
-      let staves = lodash.clone(this.selected.staves);
+      let staves = clone(this.selected.staves);
       staves.push(stave)
-      staves = lodash.uniq( staves );
+      staves = uniq( staves );
       this.selected.staves = staves;
     }
     else{
@@ -761,7 +764,10 @@ class Editor {
     let isRest = selectedNote.isRest;
     let clef = selectedNote.clef;
     let newNotes = new Array(2).fill(null)
-    // create a new duration
+    let beat = selectedNote.beat;
+
+    // create a new duration 
+
 
     switch(duration){
       case "w": duration = "h"; break;
@@ -772,19 +778,22 @@ class Editor {
       default: return ;
     }
 
+
+
     newNotes = newNotes.map( () => { return {
       clef,
       keys,
       duration,
       isRest,
-      accidentals
-
+      accidentals,
+      beat,
     }
     })
 
   notes.splice(this.selected.cursor.noteIndex,1,...newNotes);
   stave.notes = notes;
-  this._remapIds()
+  this._remapIds();
+  this._remapSubDivs();
   // this.setCursor(this.selected.cursor.staveIndex,this.selected.cursor.noteIndex+1);
 
     
@@ -811,6 +820,41 @@ class Editor {
     this.sheet.staves = staves;
 
 
+ }
+
+ private _remapSubDivs(){
+   let currMeasure;
+   let curBeat;
+   debugger;
+  const staves =  this.sheet.staves.map((stave:ed_stave,staveIndex: number)=>{
+
+    const beatGroups = groupBy(stave.notes,"beat");
+    const beats  = Object.keys(beatGroups).map((bi)=> beatGroups[bi]);
+    
+      const remappedNotes = beats.map((_notes,beatIndex)=>{
+
+
+          let currSubDiv = 0;
+
+          const notes = _notes.map((note)=>{
+            note.subDivision = currSubDiv;
+            note.beat = beatIndex;
+            // calculate next subdiv according to current not duration;
+            switch(note.duration){
+              case '8': currSubDiv +=2; break;
+              case '16': currSubDiv +=1;
+            }
+            return note;
+          })
+          return notes;
+      })
+
+      const _notes =  flatten(remappedNotes)
+      stave.notes = _notes;
+      return stave; 
+    })
+
+    this.sheet.staves = staves;
  }
 
   private _mergeNotes(){
@@ -864,7 +908,7 @@ class Editor {
          let keys1 = a.isRest?  [] : a.keys;
          let keys2 = b.isRest? [] : b.keys;
          let  keys  = [...keys1, ...keys2];
-          keys = keys.length ? lodash.uniq(keys) : [REST_POSITIONS(mergedDuration)] ;
+          keys = keys.length ? uniq(keys) : [REST_POSITIONS(mergedDuration)] ;
      
 
           return {
@@ -888,6 +932,7 @@ class Editor {
       // re-calcualte note id's 
 
       this._remapIds();
+      this._remapSubDivs();
 
 
   }

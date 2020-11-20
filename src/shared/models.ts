@@ -8,6 +8,8 @@ export interface ed_note {
   isRest: boolean;
   staveIndex: number;
   noteIndex: number;
+  beat: number;
+  subDivision: number;
 }
 
 export interface ed_tie {

@@ -2,7 +2,7 @@
 /* eslint-disable @typescript-eslint/camelcase */
 /* eslint-disable @typescript-eslint/class-name-casing */
 import { concat } from "lodash";
-import { PolySynth, now, Transport, start as startAudio } from "tone";
+import { PolySynth, now, Transport, start as startAudio, Time } from "tone";
 import { ed_note, ed_sheet, ed_stave, au_seek } from "../../../shared/models";
 
 document.addEventListener("click", async () => {
@@ -36,7 +36,9 @@ function getToneNotes(notes: ed_note[]) {
 
     return {
       notes: _note.keys.map((k, i) => k.replace("/", accidentals[i] || "")),
-      duration: DURATION_VALUES(_note.duration)
+      duration: DURATION_VALUES(_note.duration),
+      beat: _note.beat,
+      subDivision: _note.subDivision
     };
   });
   return tone_notes;
@@ -99,8 +101,14 @@ export class AudioEngine {
     this._tracks[this._numTracks] = [];
   }
 
-  _getTime(staveIndex: number, noteIndex: number, duration: string) {
-    return `${staveIndex}:${noteIndex}:0`;
+  _getTime(
+    staveIndex: number,
+    noteIndex: number,
+    duration: string,
+    beat: number,
+    subDivision: number
+  ) {
+    return `${staveIndex}:${beat}:${subDivision}`;
   }
 
   updateTrack(sheet: ed_sheet) {
@@ -116,9 +124,15 @@ export class AudioEngine {
     const _notes = this.notes;
 
     const partNotes = _notes.map((note: ed_note) => {
-      const { notes, duration } = getToneNotes([note])[0];
+      const { notes, duration, beat, subDivision } = getToneNotes([note])[0];
 
-      const time = this._getTime(note.staveIndex, note.noteIndex, duration);
+      const time = this._getTime(
+        note.staveIndex,
+        note.noteIndex,
+        duration as string,
+        beat,
+        subDivision
+      );
       return { notes, time, duration, isRest: note.isRest };
     });
 
