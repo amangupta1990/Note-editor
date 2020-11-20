@@ -108,6 +108,9 @@ export class AudioEngine {
   }
 
   updateTrack(sheet: ed_sheet) {
+    if (this._isPlaying) return;
+    Transport.stop();
+    Transport.cancel("0:0:0");
     this.notes = [];
     sheet.staves
       .map((stave: ed_stave) => stave.notes)

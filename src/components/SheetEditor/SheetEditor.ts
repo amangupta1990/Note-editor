@@ -176,7 +176,7 @@ class Editor {
   saveState(){
     const sheet = JSON.stringify(this.sheet);
     const selected = JSON.stringify(this.selected);
-    this.states.push({sheet,selected}) ; console.log("state saved",this.states);
+    this.states.push({sheet,selected}) ; 
   }
   
 
@@ -650,7 +650,7 @@ class Editor {
 
   // eslint-disable-next-line no-unused-vars
  private _highlightStaveElement(ele:any, color = "transparent") {
-   console.log(ele)
+
     ele.style.fill = color;
     ele.style.opacity = "0.4";
   }
