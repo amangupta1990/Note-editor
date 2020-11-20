@@ -69,6 +69,7 @@ export class AudioEngine {
   private seekBar: au_seek;
   private _onProgress: Function;
   private _onPlayEnd: Function;
+  private loop: boolean;
 
   constructor(
     sheet: ed_sheet,
@@ -81,6 +82,7 @@ export class AudioEngine {
     this._onPlayEnd = onPlayEnd;
     this._isPlaying = false;
     this._isPaused = false;
+    this.loop = false;
     this.seekBar = {
       bar: 0,
       beat: 0,
@@ -154,7 +156,7 @@ export class AudioEngine {
           position: {
             currentNote: index,
             currentBar: parseInt(pn.time.split(":")[0]),
-            totalBars: Math.ceil(partNotes.length / this.timeSig[1]),
+            totalBars: Math.floor(partNotes.length / this.timeSig[1]),
             total: partNotes.length
           }
         };
@@ -174,7 +176,8 @@ export class AudioEngine {
 
     if (
       this.seekBar.position.currentNote === this.seekBar.position.total - 1 &&
-      this._isPlaying
+      this._isPlaying &&
+      !this.loop
     ) {
       this.stop();
     }
@@ -206,5 +209,9 @@ export class AudioEngine {
     Transport.pause();
     cancelAnimationFrame(this.animationID);
     this._startTime = `${this.seekBar.bar}:0:0`;
+  }
+  toggleLoop(toggle:boolean){
+    this.loop = toggle;
+    Transport.loop = toggle;
   }
 }

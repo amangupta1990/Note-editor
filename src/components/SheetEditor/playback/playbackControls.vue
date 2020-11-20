@@ -1,23 +1,30 @@
 <template>
   <div>
     <i
+      class="mdi  control mdi-repeat text-2xl"
+      v-if="repeat"
+      v-on:click="toggleRepeat(false)"
+    ></i>
+    <i
+      class="mdi  control mdi-repeat-off text-2xl"
+      v-if="!repeat"
+      v-on:click="toggleRepeat(true)"
+    ></i>
+    <i
       class="mdi  control mdi-skip-previous text-2xl"
-      v-on:click="playBackEvent('prev')"
+      v-on:click="skipPrev()"
     ></i>
     <i
       class="mdi control mdi-play text-2xl"
       v-if="!isPlaying"
-      v-on:click="playBackEvent('play')"
+      v-on:click="play()"
     ></i>
     <i
       class="mdi control mdi-pause text-2xl"
       v-if="isPlaying"
-      v-on:click="playBackEvent('pause')"
+      v-on:click="pause()"
     ></i>
-    <i
-      class="mdi control mdi-skip-next text-2xl"
-      v-on:click="playBackEvent('next')"
-    ></i>
+    <i class="mdi control mdi-skip-next text-2xl" v-on:click="skipNext()"></i>
     <input
       type="range"
       min="0"
@@ -44,25 +51,29 @@ export default Vue.extend({
       audioEngine: {} as AudioEngine,
       trackProgress: 0,
       trackTotal: 0,
-      backgroundSize: "20% 100%"
+      backgroundSize: "20% 100%",
+      repeat: false
     };
   },
-  props: {
-    play: Boolean
-  },
+  props: {},
   methods: {
-    playBackEvent(eventName: string) {
-      switch (eventName) {
-        case "play":
-          this.isPlaying = true;
-          this.audioEngine.play();
-          break;
-        case "pause":
-          this.isPlaying = false;
-          this.audioEngine.pause();
-          break;
-      }
-      this.$emit("playbackevent", eventName);
+    play() {
+      this.isPlaying = true;
+      this.audioEngine.play();
+    },
+    pause() {
+      this.isPlaying = false;
+      this.audioEngine.pause();
+    },
+    skipNext(){
+      return;
+    },
+    skipPrev() {
+      return;
+    },
+    toggleRepeat(repeat: boolean) {
+      this.repeat = repeat;
+      this.audioEngine.toggleLoop(repeat);
     },
     // eslint-disable-next-line @typescript-eslint/camelcase
     audioEngineOnProgress(seekbar: au_seek) {
@@ -75,7 +86,8 @@ export default Vue.extend({
     audioEngineOnStop(){
       this.isPlaying = false;
     },
-    onTrackbarSeek(e: Event ) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    onTrackbarSeek(e: Event | { target: any }) {
       const clickedElement = e.target as HTMLInputElement,
         min = parseInt(clickedElement?.min),
         max = parseInt(clickedElement?.max),

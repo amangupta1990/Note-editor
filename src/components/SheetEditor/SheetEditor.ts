@@ -264,7 +264,7 @@ class Editor {
     let keys = isRest ? [noteToAdd] :   uniq([...note.keys, noteToAdd]);
     let accidentals:any[] = [];
     const beat = note.beat;
-    debugger;
+    
     const subDivision = note.subDivision;
 
     switch(true){
@@ -825,7 +825,7 @@ class Editor {
  private _remapSubDivs(){
    let currMeasure;
    let curBeat;
-   debugger;
+   
   const staves =  this.sheet.staves.map((stave:ed_stave,staveIndex: number)=>{
 
     const beatGroups = groupBy(stave.notes,"beat");
