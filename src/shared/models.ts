@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/camelcase */
 // types
 export interface ed_note {
   clef: any;
@@ -31,6 +32,7 @@ export interface ed_selected_note {
 
 export interface ed_stave {
   notes: ed_note[];
+  staveIndex?:number;
 }
 
 export interface ed_sheet {

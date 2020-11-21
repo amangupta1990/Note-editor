@@ -1,31 +1,31 @@
 <template>
   <div class=" w-full ">
     <div class="controls">
-    <i
-      class="mdi  control mdi-repeat text-2xl"
-      v-if="repeat"
-      v-on:click="toggleRepeat(false)"
-    ></i>
-    <i
-      class="mdi  control mdi-repeat-off text-2xl"
-      v-if="!repeat"
-      v-on:click="toggleRepeat(true)"
-    ></i>
-    <i
-      class="mdi  control mdi-skip-previous text-2xl"
-      v-on:click="skipPrev()"
-    ></i>
-    <i
-      class="mdi control mdi-play text-2xl"
-      v-if="!isPlaying"
-      v-on:click="play()"
-    ></i>
-    <i
-      class="mdi control mdi-pause text-2xl"
-      v-if="isPlaying"
-      v-on:click="pause()"
-    ></i>
-    <i class="mdi control mdi-skip-next text-2xl" v-on:click="skipNext()"></i>
+      <i
+        class="mdi  control mdi-repeat text-2xl"
+        v-if="repeat"
+        v-on:click="toggleRepeat(false)"
+      ></i>
+      <i
+        class="mdi  control mdi-repeat-off text-2xl"
+        v-if="!repeat"
+        v-on:click="toggleRepeat(true)"
+      ></i>
+      <i
+        class="mdi  control mdi-skip-previous text-2xl"
+        v-on:click="skipPrev()"
+      ></i>
+      <i
+        class="mdi control mdi-play text-2xl"
+        v-if="!isPlaying"
+        v-on:click="play()"
+      ></i>
+      <i
+        class="mdi control mdi-pause text-2xl"
+        v-if="isPlaying"
+        v-on:click="pause()"
+      ></i>
+      <i class="mdi control mdi-skip-next text-2xl" v-on:click="skipNext()"></i>
     </div>
     <input
       type="range"
@@ -43,7 +43,7 @@ import Vue from "vue";
 import { AudioEngine } from "./AudioEngine";
 import { EventBus } from "@/main";
 // eslint-disable-next-line @typescript-eslint/camelcase
-import { au_seek, ed_sheet } from "@/shared/models";
+import { au_seek, ed_selected, ed_sheet, ed_stave } from "@/shared/models";
 export default Vue.extend({
   name: "PlaybackControls",
   data: function() {
@@ -67,7 +67,7 @@ export default Vue.extend({
       this.isPlaying = false;
       this.audioEngine.pause();
     },
-    skipNext(){
+    skipNext() {
       return;
     },
     skipPrev() {
@@ -80,12 +80,12 @@ export default Vue.extend({
     // eslint-disable-next-line @typescript-eslint/camelcase
     audioEngineOnProgress(seekbar: au_seek) {
       const trackbar = this.$refs["seekbar"] as any;
-      trackbar.value = seekbar.position.currentBar+1;
+      trackbar.value = seekbar.position.currentBar + 1;
       this.trackTotal = seekbar.position.totalBars;
       this.onTrackbarSeek({ target: this.$refs["seekbar"] });
       this.eventBus.$emit("AE_PROGRESS", { seekbar });
     },
-    audioEngineOnStop(){
+    audioEngineOnStop() {
       this.isPlaying = false;
     },
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -115,9 +115,16 @@ export default Vue.extend({
 
     // not neeed as of now but for later
 
-    this.eventBus.$on("AE_UPDATE", (data: any) =>
-      this.audioEngine.updateTrack(data.sheet)
+    // eslint-disable-next-line @typescript-eslint/camelcase
+    this.eventBus.$on("AE_UPDATE", (data: { sheet: ed_sheet }) =>
+      this.audioEngine && this.audioEngine.updateTrack(data.sheet)
     );
+
+    // eslint-disable-next-line @typescript-eslint/camelcase
+    this.eventBus.$on("AE_SEEK", (data: { staves: number[] }) => {
+      const stave = data.staves[0];
+      this.audioEngine && this.audioEngine.setStart(stave);
+    });
     // this.eventBus.$on("AE_PAUSE", () => {
     //   /*TODO*/
     // });

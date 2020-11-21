@@ -108,6 +108,7 @@ export default {
       this.keySig = opts.key;
       opts.errorHandler = this.editorErrorHandler;
       opts.onNoteSelected = this.editorOnNoteSelected;
+      opts.onStaveSelected = this.editorOnStaveSelected;
       opts.onRender = this.editorOnUpdate;
       this.$nextTick().then(() => {
         this.editor = new Editor(this.$refs.svgcontainer, opts);
@@ -132,6 +133,9 @@ export default {
       const { x, y } = notes[0];
       this.noteXPos = x;
       this.noteYpos = y;
+    },
+    editorOnStaveSelected: function(staves) {
+      EventBus.$emit("AE_SEEK", { staves });
     },
     editorOnUpdate: function(sheet) {
       EventBus.$emit("AE_UPDATE", { sheet });

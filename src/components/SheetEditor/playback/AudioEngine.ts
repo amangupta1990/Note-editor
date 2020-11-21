@@ -163,7 +163,7 @@ export class AudioEngine {
       }, pn.time);
     }
 
-    this._startTime = "0:0:0";
+    this._startTime = this._startTime || "0:0:0";
     this._endTime = `${partNotes.length / this.timeSig[0]}:0:0`;
   }
   progress() {
@@ -182,17 +182,13 @@ export class AudioEngine {
       this.stop();
     }
   }
-  play(start = "0:0:0", end = this._endTime) {
+  play() {
     this._isPlaying = true;
     // resume if paused
 
-    if (!this._isPaused) {
-      Transport.loopStart = start;
-    } else {
-      Transport.loopStart = this._startTime;
-    }
-    Transport.loopEnd = end;
-    Transport.start();
+    Transport.loopStart = this._startTime;
+    Transport.loopEnd = this._endTime;
+    Transport.start(now(), this._startTime);
     this.animationID = requestAnimationFrame(this.progress.bind(this));
   }
   stop() {
@@ -202,6 +198,7 @@ export class AudioEngine {
     this._onProgress && this._onProgress(this.seekBar);
     this._onPlayEnd && this._onPlayEnd();
     this.seekBar.position.currentNote = 0;
+    this._startTime = "0:0:0";
   }
   pause() {
     this._isPlaying = false;
@@ -213,5 +210,9 @@ export class AudioEngine {
   toggleLoop(toggle:boolean){
     this.loop = toggle;
     Transport.loop = toggle;
+  }
+
+  setStart(bar: number) {
+    this._startTime = `${bar}:0:0`;
   }
 }
