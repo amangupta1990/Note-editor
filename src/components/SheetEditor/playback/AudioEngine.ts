@@ -164,7 +164,7 @@ export class AudioEngine {
     }
 
     this._startTime = "0:0:0";
-    this._endTime = partNotes[partNotes.length - 1].time;
+    this._endTime = `${partNotes.length / this.timeSig[0]}:0:0`;
   }
   progress() {
     // scale it between 0-1
@@ -196,12 +196,12 @@ export class AudioEngine {
     this.animationID = requestAnimationFrame(this.progress.bind(this));
   }
   stop() {
+    cancelAnimationFrame(this.animationID);
     this._isPlaying = false;
     Transport.stop();
-    cancelAnimationFrame(this.animationID);
-    this.seekBar.position.currentNote = 0;
     this._onProgress && this._onProgress(this.seekBar);
     this._onPlayEnd && this._onPlayEnd();
+    this.seekBar.position.currentNote = 0;
   }
   pause() {
     this._isPlaying = false;
