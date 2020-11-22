@@ -5,7 +5,7 @@
 
 
 import Vex from "vexflow";
-import {Chord, Note} from "@tonaljs/tonal"
+import {Chord, note, Note} from "@tonaljs/tonal"
 
 import {ed_note,
         ed_selected_note,
@@ -460,7 +460,8 @@ class Editor {
       accidentals: [],
       clef: oldNote.clef,
       beat: oldNote.beat,
-      subDivision: oldNote.subDivision
+      subDivision: oldNote.subDivision,
+      dotted: oldNote.dotted
     }
     stave.notes[note.noteIndex] = newNote;
     this.sheet.staves[note.staveIndex] = stave;
@@ -873,22 +874,29 @@ class Editor {
 
     const beatGroups = groupBy(stave.notes,"beat");
     const beats  = Object.keys(beatGroups).map((bi)=> beatGroups[bi]);
-    
-      const remappedNotes = beats.map((_notes,beatIndex)=>{
-
+    let currBeat = 0;
+      const remappedNotes = beats.map((_notes)=>{
+       
 
           let currSubDiv = 0;
 
           const notes = _notes.map((note)=>{
             note.subDivision = currSubDiv;
-            note.beat = beatIndex;
+            note.beat = currBeat;
             // calculate next subdiv according to current not duration;
             switch(note.duration){
               case '8': currSubDiv +=2; break;
-              case '16': currSubDiv +=1;
+              case '16': currSubDiv +=1; break;
+              case 'h': 
+                        if(note.dotted) currBeat +=2;
+                        break;
             }
+            currBeat+=1;
+            // calculate beat 
+
             return note;
           })
+
           return notes;
       })
 
@@ -902,6 +910,8 @@ class Editor {
 
   private _mergeNotes(){
 
+      const sIndex = this.selected.notes[0].staveIndex;
+      const nIndex = this.selected.notes[0].noteIndex;
       const selectedNotes: ed_note[] = this.selected.notes.map(sn=> {
 
         const  staveIndex = sn.staveIndex;
@@ -966,16 +976,17 @@ class Editor {
       })
 
 
-      newNote.staveIndex =  this.selected.notes[0].staveIndex;
-      newNote.noteIndex = this.selected.notes[0].noteIndex;
+      newNote.staveIndex =  sIndex;
+      newNote.noteIndex = nIndex;
 
-      this.sheet.staves[this.selected.notes[0].staveIndex].notes.splice(this.selected.notes[0].noteIndex,this.selected.notes.length,newNote)
+      this.sheet.staves[sIndex].notes.splice(nIndex,this.selected.notes.length,newNote)
       this.selected.notes = [newNote]
 
       // re-calcualte note id's 
 
       this._remapIds();
       this._remapSubDivs();
+      this._setCursor(sIndex,nIndex)
 
 
   }

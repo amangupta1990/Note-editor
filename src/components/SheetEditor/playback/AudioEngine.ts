@@ -37,6 +37,7 @@ function getToneNotes(notes: ed_note[]) {
     return {
       notes: _note.keys.map((k, i) => k.replace("/", accidentals[i] || "")),
       duration: DURATION_VALUES(_note.duration),
+      dotted: _note.dotted,
       beat: _note.beat,
       subDivision: _note.subDivision
     };
@@ -107,13 +108,7 @@ export class AudioEngine {
     this._tracks[this._numTracks] = [];
   }
 
-  _getTime(
-    staveIndex: number,
-    noteIndex: number,
-    duration: string,
-    beat: number,
-    subDivision: number
-  ) {
+  _getTime(staveIndex: number, beat: number, subDivision: number) {
     return `${staveIndex}:${beat}:${subDivision}`;
   }
 
@@ -130,16 +125,18 @@ export class AudioEngine {
     const _notes = this.notes;
 
     const partNotes = _notes.map((note: ed_note) => {
-      const { notes, duration, beat, subDivision } = getToneNotes([note])[0];
+      const { notes, duration, beat, subDivision, dotted } = getToneNotes([
+        note
+      ])[0];
 
-      const time = this._getTime(
-        note.staveIndex,
-        note.noteIndex,
-        duration as string,
-        beat,
-        subDivision
-      );
-      return { notes, time, duration, isRest: note.isRest };
+      const time = this._getTime(note.staveIndex, beat, subDivision);
+      return {
+        notes,
+        time,
+        duration,
+        dotted,
+        isRest: note.isRest
+      };
     });
 
     for (let index = 0; index < partNotes.length; index++) {
@@ -147,7 +144,12 @@ export class AudioEngine {
       Transport.schedule(time => {
         if (!pn.isRest) {
           console.log(pn);
-          synth.triggerAttackRelease(pn.notes, pn.duration, time);
+
+          // caulculate duration taking dotted note into account
+          const duration = Time(
+            (pn.duration as string) + (pn.dotted ? "." : "")
+          ).toNotation();
+          synth.triggerAttackRelease(pn.notes, duration, time);
         }
         this.seekBar = {
           bar: parseInt(pn.time.split(":")[0]),
@@ -207,7 +209,7 @@ export class AudioEngine {
     cancelAnimationFrame(this.animationID);
     this._startTime = `${this.seekBar.bar}:0:0`;
   }
-  toggleLoop(toggle:boolean){
+  toggleLoop(toggle: boolean) {
     this.loop = toggle;
     Transport.loop = toggle;
   }

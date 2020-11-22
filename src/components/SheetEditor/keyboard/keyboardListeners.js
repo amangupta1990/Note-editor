@@ -51,7 +51,6 @@ export default function KeyboardListeners(event, cb) {
 
     case event.key === "t": {
       if (event.ctrlKey || event.metaKey) {
-        debugger;
         cb("tieNotes");
         break;
       }
