@@ -183,6 +183,9 @@ export default {
         case "mergeNote":
           this.api.mergeNotes();
           break;
+        case "tie": 
+          this.api.tieNotes();
+          break;
       }
     },
     playbackEventHandler: function() {
