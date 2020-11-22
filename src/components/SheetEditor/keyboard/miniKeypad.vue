@@ -87,6 +87,7 @@ export default {
           type === "leftArrow" ||
           type === "addStave" ||
           type === "mergeNote" ||
+          type === "tieNotes" ||
           type === "splitNote":
           this.$emit("onKey", { type, value });
           break;

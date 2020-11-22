@@ -183,7 +183,7 @@ export default {
         case "mergeNote":
           this.api.mergeNotes();
           break;
-        case "tie": 
+        case "tieNotes":
           this.api.tieNotes();
           break;
       }

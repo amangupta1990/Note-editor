@@ -15,7 +15,7 @@ import {ed_note,
         ed_stave,
         ed_tie
         } from '../../shared/models'
-import { groupBy, flatten, isArray, uniq, capitalize, clone } from 'lodash';
+import { groupBy, flatten, isArray, uniq, capitalize, clone, concat } from 'lodash';
 
 const REST_POSITIONS = (key:string)=>{
 
@@ -310,7 +310,49 @@ class Editor {
 
  // note editing functions 
 
-  changeOctave(octave:number,keyNote:string){
+ _tieNotes(){
+
+  const getId = (a:ed_selected_note,b:ed_selected_note)=>{
+      return `${a.staveIndex}${b.staveIndex}_${a.noteIndex}${b.noteIndex}`;
+  }
+  
+  const ties:any = []
+  if(this.selected.notes.length <= 1)
+    {
+      console.error("a tie must be between two notes atleast")
+      return ;
+    }
+
+    // if a tie already exists then remove it 
+
+    for(let i = 0; i < this.selected.notes.length - 1; i++ ){
+      ties.push({
+        id: getId(this.selected.notes[i],this.selected.notes[i+1]),
+        first_note: this.selected.notes[i],
+        last_note: this.selected.notes[i+1],
+        first_indices: [0],
+        last_indices: [0]
+      })
+    }
+
+    let existingTies = this.sheet.ties.filter(st=> ties.find((t:ed_tie)=> t.id === st.id )!= null  )
+
+    if(existingTies.length){
+
+    this.sheet.ties = this.sheet.ties.filter(t=>   existingTies.find(et=>  et.id === t.id  )==null  )
+    }
+    else{
+      let concatedTies  = concat(this.sheet.ties,ties)
+      this.sheet.ties = concatedTies;
+    }
+    
+
+
+
+}
+
+  // NOT used at the moment
+  _changeOctave(octave:number,keyNote:string){
 
 
    this.selected.notes.map(selectedNote=>{
@@ -339,7 +381,8 @@ class Editor {
 
   }
 
-  replaceNote(currentNote:string, newNote: string){ 
+  // NOT used anymore
+  _replaceNote(currentNote:string, newNote: string){ 
 
     this.selected.notes.map(selectedNote=>{
 
@@ -362,7 +405,7 @@ class Editor {
 
   }
 
-  changeaccidental(key:string, accidental: string){ 
+  changeAccidental(key:string, accidental: string){ 
 
     // check if accidental type is invalid
 
@@ -1063,6 +1106,8 @@ class Editor {
       addChord: this.withDraw(this.withStateSave(this._addChord)),
       splitSelectedNote: this.withDraw(this.withStateSave(this._splitSelectedNote)),
       mergeNotes: this.withDraw(this.withStateSave(this._mergeNotes)),
+      tieNotes: this.withDraw(this.withStateSave(this._tieNotes)),
+      changeOctave: this.withDraw(this.withStateSave(this._changeOctave)),
       undo: this.withDraw(this.undo),
       redo: this.withDraw(this.redo),
       deleteNotes: this.withDraw(this.withStateSave(this._deleteNotes)),
